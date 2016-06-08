@@ -14,23 +14,26 @@ namespace NubiloSoft.CoverageExt
         {
             try
             {
-                var d = dte as DTE2;
-                if (d != null && d.ToolWindows != null && d.ToolWindows.OutputWindow != null)
+                lock (windowLock)
                 {
-                    var o = d.ToolWindows.OutputWindow;
-                    for (int i = 1; i <= o.OutputWindowPanes.Count; ++i)
+                    var d = dte as DTE2;
+                    if (d != null && d.ToolWindows != null && d.ToolWindows.OutputWindow != null)
                     {
-                        var wnd = o.OutputWindowPanes.Item(i);
-                        if (wnd.Name == "CodeCoverage")
+                        var o = d.ToolWindows.OutputWindow;
+                        for (int i = 1; i <= o.OutputWindowPanes.Count; ++i)
                         {
-                            window = wnd;
-                            break;
+                            var wnd = o.OutputWindowPanes.Item(i);
+                            if (wnd.Name == "CodeCoverage")
+                            {
+                                window = wnd;
+                                break;
+                            }
                         }
-                    }
 
-                    if (window == null)
-                    {
-                        window = o.OutputWindowPanes.Add("CodeCoverage");
+                        if (window == null)
+                        {
+                            window = o.OutputWindowPanes.Add("CodeCoverage");
+                        }
                     }
                 }
             }
@@ -40,12 +43,28 @@ namespace NubiloSoft.CoverageExt
         }
 
         private OutputWindowPane window;
+        private static object windowLock = new object();
+
+        public void Clear()
+        {
+            if (window != null)
+            {
+                lock (windowLock)
+                {
+                    window.Clear();
+                    window.Activate();
+                }
+            }
+        }
 
         public void WriteLine(string format, params object[] par)
         {
             if (window != null)
             {
-                window.OutputString(string.Format(format, par) + "\r\n");
+                lock (windowLock)
+                {
+                    window.OutputString(string.Format(format, par) + "\r\n");
+                }
             }
         }
     }

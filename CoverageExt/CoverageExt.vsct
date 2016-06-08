@@ -65,7 +65,7 @@
         <Parent guid="guidProjectSpecificMenuCmdSet" id="RunCoverageMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
         <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>DefaultInvisible</CommandFlag>
+        <!-- CommandFlag DefaultInvisible - Apparently not working correctly. Unsure why. -->
         <Strings>
           <CommandName>cmdCoverageGenerate</CommandName>
           <ButtonText>Run code coverage</ButtonText>
