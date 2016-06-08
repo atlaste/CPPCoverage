@@ -47,16 +47,30 @@ namespace NubiloSoft.CoverageExt
             }
 
             StringBuilder argumentBuilder = new StringBuilder();
-            argumentBuilder.Append("--quiet --export_type cobertura:\"");
-            argumentBuilder.Append(resultFile);
-            argumentBuilder.Append("\" --continue_after_cpp_exception --cover_children ");
-            argumentBuilder.Append("--sources ");
-            argumentBuilder.Append(sourcesFilter);
-            argumentBuilder.Append(" -- ");
-            argumentBuilder.Append(@"""C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe""");
-            argumentBuilder.Append(" /Platform:x64 \"");
-            argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
-            argumentBuilder.Append("\"");
+            if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+            {
+                argumentBuilder.Append("--quiet --export_type cobertura:\"");
+                argumentBuilder.Append(resultFile);
+                argumentBuilder.Append("\" --continue_after_cpp_exception --cover_children ");
+                argumentBuilder.Append("--sources ");
+                argumentBuilder.Append(sourcesFilter);
+                argumentBuilder.Append(" -- \"");
+                argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
+                argumentBuilder.Append("\"");
+            }
+            else
+            {
+                argumentBuilder.Append("--quiet --export_type cobertura:\"");
+                argumentBuilder.Append(resultFile);
+                argumentBuilder.Append("\" --continue_after_cpp_exception --cover_children ");
+                argumentBuilder.Append("--sources ");
+                argumentBuilder.Append(sourcesFilter);
+                argumentBuilder.Append(" -- ");
+                argumentBuilder.Append(@"""C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe""");
+                argumentBuilder.Append(" /Platform:x64 \"");
+                argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
+                argumentBuilder.Append("\"");
+            }
 
             process.StartInfo.Arguments = argumentBuilder.ToString();
             process.StartInfo.CreateNoWindow = true;
