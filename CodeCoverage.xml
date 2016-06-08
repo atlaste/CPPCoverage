@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<coverage line-rate="1">
+  <packages>
+    <package name="C:\Users\atlas\Desktop\Eigen projectjes\Tests\OpenCPPCoverage\x64\Debug\MinimumTest.dll" line-rate="1">
+      <classes>
+        <class name="code.cpp" filename="users\atlas\desktop\eigen projectjes\tests\opencppcoverage\library\code.cpp" line-rate="1">
+          <lines>
+            <line number="4" hits="1"/>
+            <line number="6" hits="1"/>
+          </lines>
+        </class>
+        <class name="unittest1.cpp" filename="users\atlas\desktop\eigen projectjes\tests\opencppcoverage\minimumtest\unittest1.cpp" line-rate="1">
+          <lines>
+            <line number="16" hits="1"/>
+            <line number="17" hits="1"/>
+            <line number="18" hits="1"/>
+            <line number="20" hits="1"/>
+            <line number="21" hits="1"/>
+          </lines>
+        </class>
+      </classes>
+    </package>
+  </packages>
+  <sources>
+    <source>c:</source>
+  </sources>
+</coverage>
