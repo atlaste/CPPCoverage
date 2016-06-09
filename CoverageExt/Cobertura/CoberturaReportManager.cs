@@ -38,6 +38,14 @@ namespace NubiloSoft.CoverageExt.Cobertura
             }
         }
 
+        public void ResetData()
+        {
+            lock (lockObject)
+            {
+                this.activeCoverageReport = null;
+            }
+        }
+
         private ICoverageData UpdateDataImpl()
         {
             try

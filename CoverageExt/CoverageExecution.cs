@@ -13,12 +13,15 @@ namespace NubiloSoft.CoverageExt
     {
         public CoverageExecution(EnvDTE.DTE dte)
         {
+            this.dte = dte;
             this.output = new OutputWindow(dte);
         }
 
         private StringBuilder sb = new StringBuilder();
         private StringBuilder tb = new StringBuilder();
         private DateTime lastEvent = DateTime.UtcNow;
+
+        private EnvDTE.DTE dte;
         private OutputWindow output;
 
         private int running = 0;
@@ -152,6 +155,8 @@ namespace NubiloSoft.CoverageExt
             {
                 output.WriteLine("Uncaught error during coverage execution: {0}", ex.Message);
             }
+
+            Data.ReportManagerSingleton.Instance(dte).ResetData();
 
             Interlocked.Exchange(ref running, 0);
         }

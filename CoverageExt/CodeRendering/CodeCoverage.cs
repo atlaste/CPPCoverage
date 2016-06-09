@@ -81,6 +81,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
+            CoverageState[] currentFile = new CoverageState[0];
+
             string activeFilename = GetActiveFilename();
             if (activeFilename != null)
             {
@@ -102,30 +104,27 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
                 if (activeReport != null)
                 {
-                    try
+                    currentFile = new CoverageState[activeReport.Count];
+
+                    foreach (var item in activeReport.Enumerate())
                     {
-                        CoverageState[] currentFile = new CoverageState[activeReport.Count];
-
-                        foreach (var item in activeReport.Enumerate())
+                        if (item.Value)
                         {
-                            if (item.Value)
-                            {
-                                currentFile[item.Key] = CoverageState.Covered;
-                            }
-                            else
-                            {
-                                currentFile[item.Key] = CoverageState.Uncovered;
-                            }
+                            currentFile[item.Key] = CoverageState.Covered;
                         }
-                        this.currentCoverage = currentFile;
-
-                        foreach (ITextViewLine line in e.NewOrReformattedLines)
+                        else
                         {
-                            HighlightCoverage(currentCoverage, line);
+                            currentFile[item.Key] = CoverageState.Uncovered;
                         }
                     }
-                    catch { } // Don't highlight if we have an error or old file.
                 }
+            }
+
+            this.currentCoverage = currentFile;
+
+            foreach (ITextViewLine line in e.NewOrReformattedLines)
+            {
+                HighlightCoverage(currentCoverage, line);
             }
         }
 
