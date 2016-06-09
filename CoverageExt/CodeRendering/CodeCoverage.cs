@@ -38,13 +38,15 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             this.dte = dte;
             this.view = view;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
+            this.layer.Opacity = 0.4;
 
-            //Listen to any event that changes the layout (text changes, scrolling, etc)
+            // Listen to any event that changes the layout (text changes, scrolling, etc)
             view.LayoutChanged += OnLayoutChanged;
 
-            Brush brush = new SolidColorBrush(Color.FromArgb(0xF0, 0xF2, 0xE4, 0xDF));
+            // Color for uncovered code:
+            Brush brush = new SolidColorBrush(Color.FromArgb(0xFF, 0xFF, 0xCF, 0xB8));
             brush.Freeze();
-            Brush penBrush = new SolidColorBrush(Color.FromArgb(0xB0, 0xF2, 0xE4, 0xDF));
+            Brush penBrush = new SolidColorBrush(Color.FromArgb(0xD0, 0xFF, 0xCF, 0xB8));
             penBrush.Freeze();
             Pen pen = new Pen(penBrush, 0.5);
             pen.Freeze();
@@ -52,10 +54,10 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             uncoveredBrush = brush;
             uncoveredPen = pen;
 
-            // Partially covered:
-            brush = new SolidColorBrush(Color.FromArgb(0xF0, 0xE2, 0xF2, 0xDF));
+            // Color for covered code:
+            brush = new SolidColorBrush(Color.FromArgb(0xFF, 0xBD, 0xFC, 0xBF));
             brush.Freeze();
-            penBrush = new SolidColorBrush(Color.FromArgb(0xB0, 0xDA, 0xF2, 0xD5));
+            penBrush = new SolidColorBrush(Color.FromArgb(0xD0, 0xBD, 0xFC, 0xBF));
             penBrush.Freeze();
             pen = new Pen(penBrush, 0.5);
             pen.Freeze();
