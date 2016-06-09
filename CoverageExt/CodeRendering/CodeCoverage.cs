@@ -203,9 +203,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private void HighlightCoverage(CoverageState[] coverdata, ITextViewLine line)
         {
-            // TODO: Highlight lines based on coverdata. If count = 0 -> light red. Else: leave it as-is.
-
-            //grab a reference to the lines in the current TextView 
             IWpfTextViewLineCollection textViewLines = view.TextViewLines;
 
             int lineno = 1 + view.TextSnapshot.GetLineNumberFromPosition(line.Extent.Start);
