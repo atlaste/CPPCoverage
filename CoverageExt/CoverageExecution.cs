@@ -113,7 +113,7 @@ namespace NubiloSoft.CoverageExt
                 process.BeginErrorReadLine();
 
                 bool exited = false;
-                while (!exited && lastEvent.AddMinutes(1) > DateTime.UtcNow)
+                while (!exited && lastEvent.AddMinutes(15) > DateTime.UtcNow)
                 {
                     exited = process.WaitForExit(1000 * 60);
                 }
