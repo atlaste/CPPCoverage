@@ -102,8 +102,11 @@ namespace NubiloSoft.CoverageExt.Cobertura
                                                 file = "\\" + file;
                                             }
 
-                                            current = new BitVector();
-                                            lookup.Add(file.ToLower(), current);
+                                            if (!lookup.TryGetValue(file.ToLower(), out current))
+                                            {
+                                                current = new BitVector();
+                                                lookup.Add(file.ToLower(), current);
+                                            }
                                         }
                                         break;
 
