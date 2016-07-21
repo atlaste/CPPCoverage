@@ -11,10 +11,10 @@ namespace NubiloSoft.CoverageExt
 {
     public class CoverageExecution
     {
-        public CoverageExecution(EnvDTE.DTE dte)
+        public CoverageExecution(EnvDTE.DTE dte, OutputWindow output)
         {
             this.dte = dte;
-            this.output = new OutputWindow(dte);
+            this.output = output;
         }
 
         private StringBuilder sb = new StringBuilder();
@@ -26,12 +26,12 @@ namespace NubiloSoft.CoverageExt
 
         private int running = 0;
 
-        public void Start(string solutionFolder, string dllFolder, string dllFilename)
+        public void Start(string solutionFolder, string platform, string dllFolder, string dllFilename)
         {
             // We want 1 thread to do this; never more.
             if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
-                Thread t = new Thread(() => StartImpl(solutionFolder, dllFolder, dllFilename))
+                Thread t = new Thread(() => StartImpl(solutionFolder, platform, dllFolder, dllFilename))
                 {
                     IsBackground = true,
                     Name = "Code coverage generator thread"
@@ -44,7 +44,7 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private void StartImpl(string solutionFolder, string dllFolder, string dllFilename)
+        private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename)
         {
             try
             {
@@ -58,7 +58,24 @@ namespace NubiloSoft.CoverageExt
 
                 // Create your Process
                 Process process = new Process();
-                process.StartInfo.FileName = @"c:\Program Files\OpenCppCoverage\OpenCppCoverage.exe";
+                if (platform == "x86")
+                {
+                    process.StartInfo.FileName = @"c:\Program Files\OpenCppCoverage\x86\OpenCppCoverage.exe";
+
+                    if (!File.Exists(process.StartInfo.FileName))
+                    {
+                        process.StartInfo.FileName = @"c:\Program Files (x86)\OpenCppCoverage\x86\OpenCppCoverage.exe";
+                    }
+                }
+                else
+                {
+                    process.StartInfo.FileName = @"c:\Program Files\OpenCppCoverage\OpenCppCoverage.exe";
+                }
+
+                if (!File.Exists(process.StartInfo.FileName))
+                {
+                    throw new NotSupportedException("OpenCPPCoverage was not found. Expected: " + process.StartInfo.FileName);
+                }
 
                 string sourcesFilter = solutionFolder;
                 int smidx = sourcesFilter.IndexOf(' ');
@@ -93,7 +110,7 @@ namespace NubiloSoft.CoverageExt
                     argumentBuilder.Append(sourcesFilter);
                     argumentBuilder.Append(" -- ");
                     argumentBuilder.Append(@"""C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe""");
-                    argumentBuilder.Append(" /Platform:x64 \"");
+                    argumentBuilder.Append(" /Platform:" + platform + " \"");
                     argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
                     argumentBuilder.Append("\"");
                 }

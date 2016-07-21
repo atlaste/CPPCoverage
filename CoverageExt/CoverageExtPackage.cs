@@ -139,33 +139,84 @@ namespace NubiloSoft.CoverageExt
 
         private void ProjectContextMenuItemCallback(object sender, EventArgs e)
         {
-            OleMenuCommand menuCommand = sender as OleMenuCommand;
-            if (menuCommand != null && dte != null)
+            var dte = this.dte.DTE;
+            OutputWindow outputWindow = null;
+            try
             {
-                Array selectedProjects = (Array)dte.ActiveSolutionProjects;
-                //only support 1 selected project
-                if (selectedProjects.Length == 1)
+                outputWindow = new OutputWindow(dte);
+
+                OleMenuCommand menuCommand = sender as OleMenuCommand;
+                if (menuCommand != null && dte != null)
                 {
-                    EnvDTE.Project project = (EnvDTE.Project)selectedProjects.GetValue(0);
-                    var vcproj = project.Object as VCProject;
-                    if (vcproj != null)
+                    Array selectedProjects = (Array)dte.ActiveSolutionProjects;
+                    //only support 1 selected project
+                    if (selectedProjects.Length == 1)
                     {
-                        IVCCollection configs = (IVCCollection)vcproj.Configurations;
-                        VCConfiguration config = (VCConfiguration)configs.Item("Debug|x64");
-
-                        var primaryOutput = config.PrimaryOutput;
-
-                        if (primaryOutput != null)
+                        EnvDTE.Project project = (EnvDTE.Project)selectedProjects.GetValue(0);
+                        var vcproj = project.Object as VCProject;
+                        if (vcproj != null)
                         {
-                            var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
+                            IVCCollection configs = (IVCCollection)vcproj.Configurations;
+                            VCConfiguration cfg = (VCConfiguration)vcproj.ActiveConfiguration;
+                            VCPlatform currentPlatform = (VCPlatform)cfg.Platform;
 
-                            CoverageExecution executor = new CoverageExecution(dte.DTE);
-                            executor.Start(
-                                solutionFolder,
-                                System.IO.Path.GetDirectoryName(primaryOutput),
-                                System.IO.Path.GetFileName(primaryOutput));
+                            string platform = currentPlatform == null ? null : currentPlatform.Name;
+                            if (platform != null)
+                            {
+                                platform = platform.ToLower();
+                                if (platform.Contains("x64"))
+                                {
+                                    platform = "x64";
+                                }
+                                else if (platform.Contains("x86") || platform.Contains("win32"))
+                                {
+                                    platform = "x86";
+                                }
+                                else
+                                {
+                                    throw new NotSupportedException("Platform is not supported.");
+                                }
+                            }
+                            else
+                            {
+                                cfg = (VCConfiguration)configs.Item("Debug|x64");
+                                platform = "x64";
+
+                                if (cfg == null)
+                                {
+                                    throw new NotSupportedException("Cannot find x64 platform for project.");
+                                }
+                            }
+
+                            var primaryOutput = cfg.PrimaryOutput;
+
+                            if (primaryOutput != null)
+                            {
+                                var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
+
+                                CoverageExecution executor = new CoverageExecution(dte, outputWindow);
+                                executor.Start(
+                                    solutionFolder,
+                                    platform,
+                                    System.IO.Path.GetDirectoryName(primaryOutput),
+                                    System.IO.Path.GetFileName(primaryOutput));
+                            }
                         }
                     }
+                }
+            }
+            catch (NotSupportedException ex)
+            {
+                if (outputWindow != null)
+                {
+                    outputWindow.WriteLine("Error running coverage: {0}", ex.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (outputWindow != null)
+                {
+                    outputWindow.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
                 }
             }
         }
