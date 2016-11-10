@@ -1,6 +1,6 @@
 # VSOpenCPPCoverage
 
-VSOpenCPPCoverage is a Visual Studio extension for OpenCPPCoverage. The combination provides you friendly C++ code coverage, right from Visual Studio. 
+VSOpenCPPCoverage is a Visual Studio extension for OpenCPPCoverage. The combination provides you easy-to-use, light-weight C++ code coverage, right from Visual Studio. 
 
 This extension works with both the 32-bit and 64-bit versions of OpenCPPCoverage. 
 
