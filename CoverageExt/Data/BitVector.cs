@@ -12,7 +12,7 @@ namespace NubiloSoft.CoverageExt.Data
         public void Set(int index, bool value)
         {
             int byteIndex = index >> 2;
-            int bitIndex = index & 0x3;
+            int bitIndex = (index & 0x3);
 
             if (byteIndex >= data.Length)
             {
@@ -33,8 +33,8 @@ namespace NubiloSoft.CoverageExt.Data
 
         public bool IsSet(int index)
         {
-            int byteIndex = index / 4;
-            int bitIndex = index % 4;
+            int byteIndex = index >> 2;
+            int bitIndex = (index & 0x3);
 
             if (byteIndex >= data.Length)
             {
@@ -48,8 +48,8 @@ namespace NubiloSoft.CoverageExt.Data
 
         public bool IsFound(int index)
         {
-            int byteIndex = index / 4;
-            int bitIndex = index % 4;
+            int byteIndex = index >> 2;
+            int bitIndex = (index & 0x3);
 
             if (byteIndex >= data.Length)
             {
@@ -61,12 +61,25 @@ namespace NubiloSoft.CoverageExt.Data
             }
         }
 
+        public void Remove(int index)
+        {
+            int byteIndex = index >> 2;
+            int bitIndex = (index & 0x3);
+
+            if (byteIndex < data.Length)
+            {
+                byte b = data[byteIndex];
+                byte mask = (byte)(0xFF ^ (0x11 << bitIndex));
+                data[byteIndex] = (byte)(mask & b);
+            }
+        }
+
         public IEnumerable<KeyValuePair<int, bool>> Enumerate()
         {
             for (int index = 0; index < data.Length * 4; ++index)
             {
                 int byteIndex = index >> 2;
-                int bitIndex = index & 3;
+                int bitIndex = (index & 0x3);
 
                 if (((data[byteIndex] >> bitIndex) & 0x10) != 0)
                 {

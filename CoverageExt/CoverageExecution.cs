@@ -64,7 +64,7 @@ namespace NubiloSoft.CoverageExt
 
                     if (!File.Exists(process.StartInfo.FileName))
                     {
-                        process.StartInfo.FileName = @"c:\Program Files (x86)\OpenCppCoverage\x86\OpenCppCoverage.exe";
+                        process.StartInfo.FileName = @"c:\Program Files (x86)\OpenCppCoverage\OpenCppCoverage.exe";
                     }
                 }
                 else
@@ -115,6 +115,7 @@ namespace NubiloSoft.CoverageExt
                     argumentBuilder.Append("\"");
                 }
 
+                process.StartInfo.WorkingDirectory = Path.GetDirectoryName(resultFile);
                 process.StartInfo.Arguments = argumentBuilder.ToString();
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.UseShellExecute = false;

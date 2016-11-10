@@ -46,5 +46,14 @@ namespace MinimumTest
 				c.Main();
 			}
 		}
+
+		TEST_METHOD(TestMethod2)
+		{
+#pragma DisableCodeCoverage
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+#pragma EnableCodeCoverage
+		}
 	};
 }

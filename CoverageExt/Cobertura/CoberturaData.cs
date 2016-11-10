@@ -51,6 +51,22 @@ namespace NubiloSoft.CoverageExt.Cobertura
             }
         }
 
+        private void PostProcess(string filename)
+        {
+            filename = filename.Replace('/', '\\').ToLower();
+            int idx = filename.IndexOf('\\');
+            string basefolder = (idx >= 0)?filename.Substring(0, idx+1):"\\";
+
+            foreach (var item in lookup)
+            {
+                string file = item.Key;
+                file = file.Replace('/', '\\').ToLower();
+                if (!file.StartsWith("\\")) { file = basefolder + file; }
+
+                HandlePragmas.Update(file, item.Value);
+            }
+        }
+
         public CoberturaData(string filename)
         {
             // Start initializing the data
@@ -199,6 +215,8 @@ namespace NubiloSoft.CoverageExt.Cobertura
             {
                 throw new Exception("Error during parsing; expected close to correspond to our open tags");
             }
+
+            PostProcess(filename);
         }
     }
 }

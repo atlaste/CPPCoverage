@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSExt.ConverageExt", "CoverageExt\VSExt.ConverageExt.csproj", "{44D448F1-CEF9-420E-B49A-C3D3B15CE653}"
 EndProject
@@ -12,6 +12,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinimumTest", "MinimumTest\MinimumTest.vcxproj", "{6BD563E5-54E4-41B2-963E-708AEF612D20}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BareMinimumTest", "BareMinimumTest\BareMinimumTest.vcxproj", "{27FB4D7A-38ED-4F44-A4F7-DE5707198B70}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Git stuff", "Git stuff", "{CBE50351-048D-4762-87DD-0FB7AC596E8D}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

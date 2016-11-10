@@ -147,6 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cobertura\CoberturaData.cs" />
+    <Compile Include="Cobertura\HandlePragmas.cs" />
     <Compile Include="Cobertura\State.cs" />
     <Compile Include="CodeRendering\CodeCoverage.cs" />
     <Compile Include="CodeRendering\CodeCoverageFactory.cs" />
