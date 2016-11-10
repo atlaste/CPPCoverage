@@ -18,31 +18,45 @@ namespace NubiloSoft.CoverageExt.Cobertura
         {
             bool enabled = true;
 
-            string[] lines = File.ReadAllLines(filename);
-            for (int i = 0; i < lines.Length; ++i)
+            try
             {
-                string line = lines[i];
-                int idx = line.IndexOf("#pragma");
-                if (idx >= 0)
+                string[] lines = File.ReadAllLines(filename);
+                for (int i = 0; i < lines.Length; ++i)
                 {
-                    idx += "#pragma ".Length;
-                    string t = line.Substring(idx).TrimStart();
-                    if (t.StartsWith("EnableCodeCoverage"))
+                    string line = lines[i];
+                    int idx = line.IndexOf("#pragma");
+                    if (idx >= 0)
                     {
-                        enabled = true;
+                        idx += "#pragma ".Length;
+                        string t = line.Substring(idx).TrimStart();
+                        if (t.StartsWith("EnableCodeCoverage"))
+                        {
+                            data.Remove(i + 1);
+                            enabled = true;
+                        }
+                        else if (t.StartsWith("DisableCodeCoverage"))
+                        {
+                            enabled = false;
+                        }
                     }
-                    else if (t.StartsWith("DisableCodeCoverage"))
+
+                    // Update data accordingly:
+                    if (!enabled)
                     {
-                        enabled = false;
+                        data.Remove(i + 1);
                     }
                 }
 
-                // Update data accordingly:
                 if (!enabled)
                 {
-                    data.Remove(i);
+                    var count = data.Count;
+                    for (int i = lines.Length; i < count; ++i)
+                    {
+                        data.Remove(i + 1);
+                    }
                 }
             }
+            catch { } // we don't want this to crash our program.
         }
     }
 }
