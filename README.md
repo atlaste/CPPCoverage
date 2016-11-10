@@ -1,9 +1,8 @@
 # VSOpenCPPCoverage
 
-VSOpenCPPCoverage is a Visual Studio extension for OpenCPPCoverage. Currently it works with the 64-bit version of OpenCPPCoverage.
+VSOpenCPPCoverage is a Visual Studio extension for OpenCPPCoverage. The combination provides you friendly C++ code coverage, right from Visual Studio. 
 
-NOTE: This is a Visual Studio extension that only works when https://opencppcoverage.codeplex.com (64-bit) is installed. Tested with 
-Visual Studio 2015 Community Edition.
+This extension works with both the 32-bit and 64-bit versions of OpenCPPCoverage. 
 
 # Installation
 
@@ -17,6 +16,7 @@ Prerequisites: VS2013 or VS2015. Any edition should work, even though this is on
 Working with VSOpenCPPCoverage is a breeze. Basically install and use, there's nothing more to it:
 
 - Either create a standard C++ / MS Test application, or run a simple C++ / console application. Note that OpenCppCoverage assumes that there is no user input during the test run.
+- Build your solution in Debug mode.
 - Right-click in solution explorer on the test or application project, click "Run code coverage".
 - Open a file that you want to show coverage info for. If the file is already open, close it and open it again. 
 - For an overview, go to Tools -> Coverage report
