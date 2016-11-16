@@ -158,6 +158,8 @@
     <Compile Include="Data\IReportManager.cs" />
     <Compile Include="Data\ReportManagerSingleton.cs" />
     <Compile Include="DTEInitializer.cs" />
+    <Compile Include="Native\NativeData.cs" />
+    <Compile Include="Native\NativeReportManager.cs" />
     <Compile Include="Report\CoverageReport.xaml.cs">
       <DependentUpon>CoverageReport.xaml</DependentUpon>
     </Compile>
@@ -173,6 +175,7 @@
     <Compile Include="CoverageExtPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PkgCmdID.cs" />
+    <Compile Include="Settings.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources.resx">
@@ -202,6 +205,14 @@
     <None Include="Resources\Images.png" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\Coverage-x64.exe">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Coverage-x86.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Images\Coverage.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
@@ -220,7 +231,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup>
     <UseCodebase>true</UseCodebase>
   </PropertyGroup>

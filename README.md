@@ -1,6 +1,7 @@
 # VSOpenCPPCoverage
 
-VSOpenCPPCoverage is a Visual Studio extension for OpenCPPCoverage. The combination provides you easy-to-use, light-weight C++ code coverage, right from Visual Studio. 
+VSOpenCPPCoverage is a Visual Studio extension that calculates code coverage for C++ applications and Visual Studio C++ native tests. Basically it provides 
+you easy-to-use, light-weight C++ code coverage, right from Visual Studio and with the features you expect from code coverage. 
 
 This extension works with both the 32-bit and 64-bit versions of OpenCPPCoverage. 
 
@@ -50,6 +51,34 @@ business, we are willing to make it available for free. Simple as that.
 
 Over the period that we've used this extension, it has proven to be both reliable and stable, resulting in only a very few issues and very little work for us to maintain it. 
 However, if you do find a bug or think the tool lacks a feature, please let us know by posting it in 'issues'. 
+
+# Coming up
+
+Over the past year we have used OpenCPPCoverage with our coverage tool. And even though OpenCPPCoverage is pretty decent, we feel it just cannot deliver everything that we need.
+Therefore we've been working on a better alternative:
+
+- OpenCPPCoverage seems to be pretty heavy. We wanted something that's fast as hell, since we're measuring all the time. During early tests, we've measured our toolkit to be 
+  10x faster.
+- The relevant #pragma's are handled by the coverage tool, so that files are properly ignored by the coverage engine.
+- We're working with production-grade software, so we want the memory footprint of out coverage tool to be very small. 
+- We want integration in our test suites. It makes little sense to run a separate memory leak checker, a separate coverage checker and a separate unit test runner. We want all 
+  those things at once.
+- Better handling of filters for "normal" solutions. We want to measure coverage on our solution, nothing more and nothing less.
+- IsDebuggerAttached is giving us a hard time. We've implemented a workaround for this in the new coverage tool.
+
+Because of this, we decided to implement our own full-fledged C++ code coverage toolkit. 
+
+Even though the new coverage tools support Cobertura XML files, it's not preferred. We've created a new text-based file, which is way smaller and more suitable for code coverage. 
+
+The projects Coverage-x86 and Coverage-x64 are the result of this, which already provide an extremely fast code coverage tool. For the most part it already works great; for 
+most applications you don't even notice that coverage is being measured. However, there are still some problems to be solved, most notably the ones with child processes. 
+This current limitation makes it impossible to run VS unit tests, so the current build is still aimed at using OpenCPPCoverage. In the next days (weeks?) this will be solved 
+though. 
+
+More importantly, the code base for 'Coverage' is small, making it possible to integrate code coverage in your custom-made test applications. For example, our test code 
+measures things like memory leaks on-the-fly.
+
+If you want to toy with it, grab the solution, go to 'Settings.cs' and change UseNativeCoverageSupport to 'true'. Build, install visx.
 
 # License
 

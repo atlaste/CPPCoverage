@@ -23,7 +23,14 @@ namespace NubiloSoft.CoverageExt.Data
                 {
                     if (instance == null)
                     {
-                        instance = new Cobertura.CoberturaReportManager(dte);
+                        if (Settings.UseNativeCoverageSupport)
+                        {
+                            instance = new Native.NativeReportManager(dte);
+                        }
+                        else
+                        {
+                            instance = new Cobertura.CoberturaReportManager(dte);
+                        }
                     }
                 }
             }

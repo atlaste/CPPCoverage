@@ -1,6 +1,18 @@
-#include "Code.h"
+#include <iostream>
 
-void Code::Main()
+struct MyClass
 {
-	// Do something. Don't care.
+	static void DoSomething()
+	{
+		std::cout << "Hello from DLL" << std::endl;
+	}
+};
+
+extern "C"
+{
+	__declspec(dllexport) int __stdcall RunAll()
+	{
+		MyClass::DoSomething();
+		return 0;
+	}
 }
