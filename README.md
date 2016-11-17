@@ -18,6 +18,7 @@ Working with CPPCoverage is a breeze. Basically install and use, there's nothing
 - Right-click in solution explorer on the test or application project, click "Run code coverage".
 - Open a file that you want to show coverage info for. If the file is already open, close it and open it again. 
 - For an overview, go to Tools -> Coverage report
+- Coverage is measured in a background thread. Watch the output window to see when it's finished.
 
 # Features
 
@@ -87,6 +88,16 @@ everything that we need. Therefore we've been working on a better alternative, w
 
 The projects Coverage-x86 and Coverage-x64 are the result of this, which provide this new coverage tool. For the most part it already works great; for 
 most applications you don't even notice that coverage is being measured. 
+
+# Templates, templates...
+
+If you have templated code, code coverage will be measured for any of the templates. This was not an easy decision, after all: if you have a different template parameter, 
+you actually end up with different code. Still, if the specialization for type A and type B will run the same code, we find it unlikely that the quality of your tests is 
+affected (just because you test A and not B). In most (but not all!) cases, we believe it's the coverage of the members of A and B that you call that tell the story.
+
+In fact, our Coverage engine measures this and emits 'p' for 'partial coverage' in the results. 
+
+So... in short: if a template specialization is hit, we'll mark the line as green, regardless if all possible template arguments are tested or not.
 
 # License
 

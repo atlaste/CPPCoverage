@@ -70,11 +70,11 @@ namespace NubiloSoft.CoverageExt.Native
                             for (int i = 0; i < cov.Length; ++i)
                             {
                                 char c = cov[i];
-                                if (c == 'c')
+                                if (c == 'c' || c == 'p')
                                 {
                                     currentVector.Set(i + 1, true);
                                 }
-                                else if (c == 'u' || c == 'p')
+                                else if (c == 'u')
                                 {
                                     currentVector.Set(i + 1, false);
                                 }
