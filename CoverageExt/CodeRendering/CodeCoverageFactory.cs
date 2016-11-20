@@ -25,7 +25,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         [Export(typeof(AdornmentLayerDefinition))]
         [Name("CodeCoverage")]
-        [Order(After = PredefinedAdornmentLayers.Selection, Before = PredefinedAdornmentLayers.Text)]
+        [Order(Before = PredefinedAdornmentLayers.BraceCompletion)]
         public AdornmentLayerDefinition editorAdornmentLayer = null;
 
         [Import]

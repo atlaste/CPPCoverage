@@ -10,13 +10,13 @@ namespace NubiloSoft.CoverageExt.Native
 {
     public class NativeData : ICoverageData
     {
-        private Dictionary<string, BitVector> lookup = new Dictionary<string, BitVector>();
+        private Dictionary<string, Tuple<BitVector, ProfileVector>> lookup = new Dictionary<string, Tuple<BitVector, ProfileVector>>();
 
-        public BitVector GetData(string filename)
+        public Tuple<BitVector, ProfileVector> GetData(string filename)
         {
             filename = filename.Replace('/', '\\').ToLower();
 
-            BitVector result = null;
+            Tuple<BitVector, ProfileVector> result = null;
             lookup.TryGetValue(filename, out result);
             return result;
         }
@@ -29,7 +29,7 @@ namespace NubiloSoft.CoverageExt.Native
             {
                 int covered = 0;
                 int uncovered = 0;
-                foreach (var item in kv.Value.Enumerate())
+                foreach (var item in kv.Value.Item1.Enumerate())
                 {
                     if (item.Value)
                     {
@@ -53,8 +53,8 @@ namespace NubiloSoft.CoverageExt.Native
             // Read file:
             using (var sr = new System.IO.StreamReader(filename))
             {
-                string name;
-                while ((name = sr.ReadLine()) != null)
+                string name = sr.ReadLine();
+                while (name != null)
                 {
                     if (name.StartsWith("FILE: "))
                     {
@@ -80,10 +80,50 @@ namespace NubiloSoft.CoverageExt.Native
                                 }
                             }
 
-                            lookup.Add(currentFile.ToLower(), currentVector);
+                            ProfileVector currentProfile = new Data.ProfileVector(currentVector.Count);
+
+                            string prof = sr.ReadLine();
+                            if (prof.StartsWith("PROF: "))
+                            {
+                                prof = prof.Substring("PROF: ".Length);
+                                int line = 0;
+
+                                for (int i = 0; i < prof.Length;)
+                                {
+                                    int deep = 0;
+                                    while (i < prof.Length && prof[i] != ',')
+                                    {
+                                        char c = prof[i];
+                                        deep = deep * 10 + (c - '0');
+                                        ++i;
+                                    }
+                                    ++i;
+
+                                    int shallow = 0;
+                                    while (i < prof.Length && prof[i] != ',')
+                                    {
+                                        char c = prof[i];
+                                        shallow = shallow * 10 + (c - '0');
+                                        ++i;
+                                    }
+                                    ++i;
+
+                                    currentProfile.Set(line, deep, shallow);
+                                    ++line;
+                                }
+                            }
+                            else
+                            {
+                                name = prof;
+                                continue;
+                            }
+
+                            lookup.Add(currentFile.ToLower(), new Tuple<BitVector, ProfileVector>(currentVector, currentProfile));
                         }
                     }
-                    // otherwise: ignore
+                    // otherwise: ignore; grab next line
+
+                    name = sr.ReadLine();
                 }
             }
         }

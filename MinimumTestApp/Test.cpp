@@ -40,10 +40,22 @@ static void TestDLL()
 	}
 }
 
+void TestFoo(int d)
+{
+	if (d < 10)
+	{
+		for (int i = 0; i < 10; ++i)
+		{
+			std::cout << "Hello world!" << d << std::endl;
+		}
+		TestFoo(d + 1);
+	}
+}
+
 int main()
 {
 	TestDLL();
-	std::cout << "Hello world!" << std::endl;
+	TestFoo(0);
 
 	return 0;
 }

@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using NubiloSoft.CoverageExt.Data;
+using System.Globalization;
 
 namespace NubiloSoft.CoverageExt.CodeRendering
 {
@@ -32,6 +33,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private EnvDTE.DTE dte;
 
         private CoverageState[] currentCoverage;
+        private ProfileVector currentProfile;
 
         public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte)
         {
@@ -84,11 +86,12 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
             CoverageState[] currentFile = new CoverageState[0];
+            ProfileVector currentProf = new Data.ProfileVector(0);
 
             string activeFilename = GetActiveFilename();
             if (activeFilename != null)
             {
-                BitVector activeReport = null;
+                Tuple<BitVector, ProfileVector> activeReport = null;
                 DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
 
                 var dataProvider = Data.ReportManagerSingleton.Instance(dte);
@@ -106,9 +109,10 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
                 if (activeReport != null)
                 {
-                    currentFile = new CoverageState[activeReport.Count];
+                    currentProf = activeReport.Item2;
+                    currentFile = new CoverageState[activeReport.Item1.Count];
 
-                    foreach (var item in activeReport.Enumerate())
+                    foreach (var item in activeReport.Item1.Enumerate())
                     {
                         if (item.Value)
                         {
@@ -123,10 +127,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             }
 
             this.currentCoverage = currentFile;
+            this.currentProfile = currentProf;
 
             foreach (ITextViewLine line in e.NewOrReformattedLines)
             {
-                HighlightCoverage(currentCoverage, line);
+                HighlightCoverage(currentCoverage, currentProfile, line);
             }
         }
 
@@ -203,7 +208,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             return lines;
         }
 
-        private void HighlightCoverage(CoverageState[] coverdata, ITextViewLine line)
+        private void HighlightCoverage(CoverageState[] coverdata, ProfileVector profiledata, ITextViewLine line)
         {
             IWpfTextViewLineCollection textViewLines = view.TextViewLines;
 
@@ -215,6 +220,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             {
                 SnapshotSpan span = new SnapshotSpan(view.TextSnapshot, Span.FromBounds(line.Start, line.End));
                 Geometry g = textViewLines.GetMarkerGeometry(span);
+                g = new RectangleGeometry(new Rect(g.Bounds.X, g.Bounds.Y, view.ViewportWidth, g.Bounds.Height));
+
                 if (g != null)
                 {
                     GeometryDrawing drawing = (covered == CoverageState.Covered) ?
@@ -234,6 +241,38 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                     Canvas.SetTop(image, g.Bounds.Top);
 
                     layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, span, null, image, null);
+                }
+            }
+
+            var profile = profiledata.Get(lineno);
+            if (profile.Item1 != 0 || profile.Item2 != 0)
+            {
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                sb.Append(profile.Item1);
+                sb.Append("%/");
+                sb.Append(profile.Item2);
+                sb.Append("%");
+
+                SnapshotSpan span = new SnapshotSpan(view.TextSnapshot, Span.FromBounds(line.Start, line.End));
+                Geometry g = textViewLines.GetMarkerGeometry(span);
+
+                double x = g.Bounds.X + g.Bounds.Width + 20;
+                if (x < view.ViewportWidth / 2) { x = view.ViewportWidth / 2; }
+                g = new RectangleGeometry(new Rect(x, g.Bounds.Y, 30, g.Bounds.Height));
+
+                if (g != null)
+                {
+                    Label lbl = new Label();
+                    lbl.FontSize = 7;
+                    lbl.Foreground = Brushes.Black;
+                    lbl.Background = Brushes.Transparent;
+                    lbl.FontFamily = new FontFamily("Verdana");
+                    lbl.Content = sb.ToString();
+
+                    Canvas.SetLeft(lbl, g.Bounds.Left);
+                    Canvas.SetTop(lbl, g.Bounds.Top);
+
+                    layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, span, null, lbl, null);
                 }
             }
         }

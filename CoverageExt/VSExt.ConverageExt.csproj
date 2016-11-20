@@ -156,6 +156,7 @@
     <Compile Include="Data\BitVector.cs" />
     <Compile Include="Data\ICoverageData.cs" />
     <Compile Include="Data\IReportManager.cs" />
+    <Compile Include="Data\ProfileVector.cs" />
     <Compile Include="Data\ReportManagerSingleton.cs" />
     <Compile Include="DTEInitializer.cs" />
     <Compile Include="Native\NativeData.cs" />

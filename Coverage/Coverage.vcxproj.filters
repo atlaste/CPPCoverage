@@ -19,5 +19,7 @@
     <ClInclude Include="RuntimeOptions.h" />
     <ClInclude Include="ProcessInfo.h" />
     <ClInclude Include="CallbackInfo.h" />
+    <ClInclude Include="StackTrace.h" />
+    <ClInclude Include="ProfileNode.h" />
   </ItemGroup>
 </Project>

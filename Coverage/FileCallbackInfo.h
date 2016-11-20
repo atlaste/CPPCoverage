@@ -5,6 +5,7 @@
 #include "BreakpointData.h"
 #include "RuntimeOptions.h"
 #include "CallbackInfo.h"
+#include "ProfileNode.h"
 
 #include <string>
 #include <set>
@@ -82,12 +83,12 @@ struct FileCallbackInfo
 		}
 	}
 
-	void WriteReport(RuntimeOptions::ExportFormatType exportFormat, const std::string& filename)
+	void WriteReport(RuntimeOptions::ExportFormatType exportFormat, std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>& mergedProfileInfo, const std::string& filename)
 	{
 		switch (exportFormat)
 		{
 			case RuntimeOptions::Cobertura: WriteCobertura(filename); break;
-			default: WriteNative(filename); break;
+			default: WriteNative(filename, mergedProfileInfo); break;
 		}
 	}
 
@@ -177,7 +178,7 @@ struct FileCallbackInfo
 		ofs << "</coverage>" << std::endl;
 	}
 
-	void WriteNative(const std::string& filename)
+	void WriteNative(const std::string& filename, std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>& mergedProfileInfo)
 	{
 		std::string reportFilename = filename;
 		std::ofstream ofs(reportFilename);
@@ -217,6 +218,22 @@ struct FileCallbackInfo
 			}
 
 			ofs << "RES: " << result << std::endl;
+
+			auto profInfo = mergedProfileInfo.find(it.first);
+
+			if (profInfo == mergedProfileInfo.end())
+			{
+				ofs << "PROF: " << std::endl;
+			}
+			else
+			{
+				ofs << "PROF: ";
+				for (auto& it : *(profInfo->second.get()))
+				{
+					ofs << int(it.Deep) << ',' << int(it.Shallow) << ',';
+				}
+				ofs << std::endl;
+			}
 		}
 	}
 };

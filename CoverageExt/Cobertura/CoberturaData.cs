@@ -13,7 +13,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
         private string source = null;
         private Dictionary<string, BitVector> lookup = new Dictionary<string, BitVector>();
 
-        public BitVector GetData(string filename)
+        public Tuple<BitVector, ProfileVector> GetData(string filename)
         {
             filename = filename.Replace('/', '\\').ToLower();
             int idx = filename.IndexOf('\\');
@@ -24,8 +24,10 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 string file = filename.Substring(idx);
                 lookup.TryGetValue(file, out result);
             }
-            return result;
+            return new Tuple<BitVector, ProfileVector>(result, emptyVector);
         }
+
+        private static ProfileVector emptyVector = new ProfileVector(0);
 
         public DateTime FileDate { get; set; }
 
