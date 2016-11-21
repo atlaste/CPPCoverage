@@ -54,8 +54,12 @@ void TestFoo(int d)
 
 int main()
 {
+	
 	TestDLL();
-	TestFoo(0);
+	for (int i = 0; i < 10; ++i)
+	{
+		TestFoo(0);
+	}
 
 	return 0;
 }

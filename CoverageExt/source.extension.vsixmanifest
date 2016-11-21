@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="9A15C37B-BC55-41A6-8B2C-CD50D43BED43" Version="1.12" Language="en-US" Publisher="NubiloSoft" />
+    <Identity Id="9A15C37B-BC55-41A6-8B2C-CD50D43BED43" Version="2.13" Language="en-US" Publisher="NubiloSoft" />
     <DisplayName>CPP Code Coverage Extension</DisplayName>
-    <Description xml:space="preserve">CPP Code Coverage Visual Studio Extension is an extension that allows you to see what has been covered by your unit tests. 
+    <Description xml:space="preserve">CPP Code Coverage is a Visual Studio extension that measures code coverage and profiling data. 
 
 Create your unit tests, and use it as simple as right-click and run code coverage. Rather test your exe? Right click on that and run code coverage the same way. 
 
-CPPCoverage is 100% open source and free.</Description>
+CPPCoverage is 100% open source and free under the BSD license. It doesn't get much better than that.</Description>
     <MoreInfo>https://github.com/atlaste/CPPCoverage</MoreInfo>
     <License>License.txt</License>
     <Icon>Coverage.png</Icon>

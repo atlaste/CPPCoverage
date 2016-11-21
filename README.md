@@ -1,7 +1,7 @@
 # Free C++ Code Coverage
 
-CPPCoverage is a Visual Studio extension that calculates code coverage for C++ applications and Visual Studio C++ native tests. Basically it provides 
-you easy-to-use, light-weight C++ code coverage, right from Visual Studio and with the features you expect from code coverage. 
+CPPCoverage is a Visual Studio extension that calculates code coverage and profile data for C++ applications and Visual Studio C++ native tests. Basically it provides 
+you with an easy-to-use, light-weight C++ code coverage and profiler, right from Visual Studio and with the features you expect from tools like these. 
 
 # Installation
 
@@ -38,7 +38,11 @@ Working with CPPCoverage is a breeze. Basically install and use, there's nothing
 
 ![alt tag](Screenshots/Pragmas.png)
 
-- IsDebuggerAttached is overwritten with 'return false'. 
+- Sampling-based profiling data is gathered as a by-product
+
+![alt tag](Screenshots/ProfileData.png)
+
+- IsDebuggerAttached is overwritten with 'return false' so that you can distinguish between debugger and test sessions. 
 - The CodeCoverage output window will give you the current status of the process. Stdout is forwarded here as well.
 - Small memory footprint and very fast. Even if you have a million lines of code, CPPCoverage will only use kilobytes of memory for coverage.
 
@@ -73,6 +77,10 @@ If you want even more control, grab the code from the Coverage project, change t
 
 # Measuring code coverage
 
+In a nutshell, our test tool measures everything by creating a debugger process and putting breakpoints on every line of code. After a breakpoint has been hit, the breakpoint 
+(assembler) instruction is removed from the program again. This breakpoint process has only a tiny bit of overhead, because it basically relies on a single context switch 
+per breakpoint. Also, this means that the amount of memory that you need is roughly bound by the number of lines in your application. 
+
 In the early versions of this tool, we've used OpenCPPCoverage as an external dependency. And even though OpenCPPCoverage is pretty decent, we feel it just cannot deliver 
 everything that we need. Therefore we've been working on a better alternative, which is available *now*:
 
@@ -88,6 +96,22 @@ everything that we need. Therefore we've been working on a better alternative, w
 
 The projects Coverage-x86 and Coverage-x64 are the result of this, which provide this new coverage tool. For the most part it already works great; for 
 most applications you don't even notice that coverage is being measured. 
+
+# Profile data
+
+Our profile data is gathered in a very simple way: every millisecond we simply force a context switch, after which we gather the stack trace. For the entire stack trace, we then 
+update the number of times that line has been hit (both for the top-most frame and for all frames). We only consider code that is available; performance is *not* measured for 
+third-party libraries, even if the PDB is available.
+
+This process will give us two numbers, that are shown in Visual Studio: 
+
+1. The percentage of time the method spends on this line of code. Note that if this is a function call, the time spent could be very high.
+2. The percentage of time the application spends on this specific line of code. This is excluding function calls, so most lines will have very low numbers.
+
+For those familiar with the tools, this is pretty similar to what tools like Sleepy and Very Sleepy do.
+
+As an example, if you spot "50%/20%" after a line of code, this basically means that 50% of the time is spent on this line of code (or in one of the child function calls) and 
+20% of the time is spent on this line of code (in total). 
 
 # Templates, templates...
 
