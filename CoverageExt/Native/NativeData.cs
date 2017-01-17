@@ -78,6 +78,10 @@ namespace NubiloSoft.CoverageExt.Native
                                 {
                                     currentVector.Set(i + 1, false);
                                 }
+                                else
+                                {
+                                    currentVector.Ensure(i + 1);
+                                }
                             }
 
                             ProfileVector currentProfile = new Data.ProfileVector(currentVector.Count);

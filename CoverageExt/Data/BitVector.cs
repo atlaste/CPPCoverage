@@ -31,6 +31,16 @@ namespace NubiloSoft.CoverageExt.Data
             }
         }
 
+        public void Ensure(int index)
+        {
+            int byteIndex = index >> 2;
+
+            if (byteIndex >= data.Length)
+            {
+                Array.Resize(ref data, byteIndex * 2);
+            }
+        }
+
         public bool IsSet(int index)
         {
             int byteIndex = index >> 2;

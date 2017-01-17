@@ -17,7 +17,10 @@ namespace NubiloSoft.CoverageExt.Data
 
         public void Set(int line, int deep, int shallow)
         {
-            ProfileData[line] = (ushort)(deep << 8 | shallow);
+            if (line < ProfileData.Length)
+            {
+                ProfileData[line] = (ushort)(deep << 8 | shallow);
+            }
         }
 
         public Tuple<int, int> Get(int line)
