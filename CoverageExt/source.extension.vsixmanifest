@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="9A15C37B-BC55-41A6-8B2C-CD50D43BED43" Version="1.12" Language="en-US" Publisher="NubiloSoft" />
+    <Identity Id="9A15C37B-BC55-41A6-8B2C-CD50D43BED43" Version="1.13" Language="en-US" Publisher="NubiloSoft" />
     <DisplayName>CPP Code Coverage Extension</DisplayName>
     <Description xml:space="preserve">CPP Code Coverage Visual Studio Extension is an extension that allows you to see what has been covered by your unit tests. 
 

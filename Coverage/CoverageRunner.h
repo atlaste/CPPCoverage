@@ -440,9 +440,9 @@ struct CoverageRunner
 						{
 							std::cout << "Process exited with code: " << debugEvent.u.ExitProcess.dwExitCode << "." << std::endl;
 						}
-						continueDebugging = false;
 
 						processMap.erase(debugEvent.dwProcessId);
+						continueDebugging = processMap.empty() ? false : true;
 					}
 					break;
 
