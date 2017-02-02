@@ -376,7 +376,7 @@ struct CoverageRunner
 
 		while (continueDebugging)
 		{
-			if (!WaitForDebugEvent(&debugEvent, 2))
+			if (!WaitForDebugEvent(&debugEvent, 5))
 			{
 				// Collect sample:
 				for (auto& proc : processMap)
@@ -694,6 +694,7 @@ struct CoverageRunner
 		}
 
 		// Group profile data together:
+		std::cout << "Gathering profile data of " << profileInfo.size() << " sources..." << std::endl;
 		std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>> mergedInfo;
 
 		float totalDeep = 0;

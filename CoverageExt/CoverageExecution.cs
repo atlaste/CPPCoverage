@@ -94,7 +94,7 @@ namespace NubiloSoft.CoverageExt
                     StringBuilder argumentBuilder = new StringBuilder();
                     if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        argumentBuilder.Append("--quiet -o \"");
+                        argumentBuilder.Append("-o \"");
                         argumentBuilder.Append(resultFile);
                         argumentBuilder.Append("\" -p \"");
                         argumentBuilder.Append(solutionFolder.TrimEnd('\\','/'));
@@ -104,7 +104,7 @@ namespace NubiloSoft.CoverageExt
                     }
                     else
                     {
-                        argumentBuilder.Append("--quiet -o \"");
+                        argumentBuilder.Append("-o \"");
                         argumentBuilder.Append(resultFile);
                         argumentBuilder.Append("\" -p \"");
                         argumentBuilder.Append(solutionFolder.TrimEnd('\\', '/'));

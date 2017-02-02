@@ -175,11 +175,14 @@ namespace NubiloSoft.CoverageExt.Report
             {
                 this.loaded.Clear();
 
-                this.loaded.Add(new FileCoverage() { Count = count, Total = total, Name = "Grand total", Filename = null });
+                if (total != 0)
+                {
+                    this.loaded.Add(new FileCoverage() { Count = count, Total = total, Name = "Grand total", Filename = null });
+                }
 
                 this.loaded.AddRange(dict.
                     OrderBy((a) => a.Key).
-                    Where((a) => a.Value.Filename.IndexOf(".test", StringComparison.InvariantCultureIgnoreCase) < 0).
+                    Where((a) => a.Value.Filename.IndexOf(".test", StringComparison.InvariantCultureIgnoreCase) < 0 && a.Value.Total > 0).
                     Select((a) => a.Value));
             }
 

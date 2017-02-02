@@ -1,7 +1,7 @@
 # Free C++ Code Coverage
 
-CPPCoverage is a Visual Studio extension that calculates code coverage for C++ applications and Visual Studio C++ native tests. Basically it provides 
-you easy-to-use, light-weight C++ code coverage, right from Visual Studio and with the features you expect from code coverage. 
+CPPCoverage is a Visual Studio extension that calculates code coverage and profile data for C++ applications and Visual Studio C++ native tests. Basically it provides 
+you with an easy-to-use, light-weight C++ code coverage and profiler, right from Visual Studio and with the features you expect from tools like these. 
 
 # Installation
 
@@ -38,7 +38,11 @@ Working with CPPCoverage is a breeze. Basically install and use, there's nothing
 
 ![alt tag](Screenshots/Pragmas.png)
 
-- IsDebuggerAttached is overwritten with 'return false'. 
+- Sampling-based profiling data is gathered as a by-product
+
+![alt tag](Screenshots/ProfileData.png)
+
+- IsDebuggerAttached is overwritten with 'return false' so that you can distinguish between debugger and test sessions. 
 - The CodeCoverage output window will give you the current status of the process. Stdout is forwarded here as well.
 - Small memory footprint and very fast. Even if you have a million lines of code, CPPCoverage will only use kilobytes of memory for coverage.
 
@@ -52,11 +56,31 @@ business, we are willing to make it available for free. Simple as that.
 Over the period that we've used this extension, it has proven to be both reliable and stable, resulting in only a very few issues and very little work for us to maintain it. 
 However, if you do find a bug or think the tool lacks a feature, please let us know by posting it in 'issues'. 
 
+# Profile data
+
+Our profile data is gathered in a very simple way: every 5 milliseconds we simply force a context switch, after which we gather the stack trace. For the entire stack trace, we then 
+update the number of times that line has been hit (both for the top-most frame and for all frames). We only consider code that is available; performance is *not* measured for 
+third-party libraries, even if the PDB is available. 
+
+This process will give us two numbers, that are shown in Visual Studio: 
+
+1. The percentage of time the method spends on this line of code. Note that if this is a function call, the time spent could be very high.
+2. The percentage of time the application spends on this specific line of code. This is excluding function calls, so most lines will have very low numbers.
+
+For those familiar with the tools, this is pretty similar to what tools like Sleepy and Very Sleepy do.
+
+As an example, if you spot "50%/20%" after a line of code, this basically means that 50% of the time is spent on this line of code (or in one of the child function calls) and 
+20% of the time is spent on this line of code (in total). 
+
+If profile information is insignificant (e.g. 0%), we simply won't show it. You might ask yourself: why 5 milliseconds? Well, simply put, context switches have a serious impact on 
+performance, and this appears to be the sweatspot where the tool doesn't have significant impact on the performance of your test.
+
 # If the tool doesn't work...
 
 There are a few likely suspects to check:
 
 - Check the Coverage output window in Visual Studio!
+- Have you loaded a solution?
 - Are PDB's available? Can you debug the application? If not, code coverage won't work.
 - If your (Native unit test DLL) unit tests aren't running in Visual Studio, they're also not running in the coverage tool. Obviously this is the same when you're using an executable.
 - Is all your source code in a child folder of your solution? If not, you can run Coverage-x86 or Coverage-x64 as executable and store the output in the solution folder. 
@@ -72,6 +96,10 @@ which can be processed by a lot of tools.
 If you want even more control, grab the code from the Coverage project, change the executable that's executed and you're done. 
 
 # Measuring code coverage
+
+In a nutshell, our test tool measures everything by creating a debugger process and putting breakpoints on every line of code. After a breakpoint has been hit, the breakpoint 
+(assembler) instruction is removed from the program again. This breakpoint process has only a tiny bit of overhead, because it basically relies on a single context switch 
+per breakpoint. Also, this means that the amount of memory that you need is roughly bound by the number of lines in your application. 
 
 In the early versions of this tool, we've used OpenCPPCoverage as an external dependency. And even though OpenCPPCoverage is pretty decent, we feel it just cannot deliver 
 everything that we need. Therefore we've been working on a better alternative, which is available *now*:
