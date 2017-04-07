@@ -210,7 +210,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private void HighlightCoverage(CoverageState[] coverdata, ProfileVector profiledata, ITextViewLine line)
         {
+            if (view == null || profiledata == null || line == null || view.TextSnapshot == null) { return; }
+
             IWpfTextViewLineCollection textViewLines = view.TextViewLines;
+
+            if (textViewLines == null) { return; }
 
             int lineno = 1 + view.TextSnapshot.GetLineNumberFromPosition(line.Extent.Start);
 
@@ -220,10 +224,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             {
                 SnapshotSpan span = new SnapshotSpan(view.TextSnapshot, Span.FromBounds(line.Start, line.End));
                 Geometry g = textViewLines.GetMarkerGeometry(span);
-                g = new RectangleGeometry(new Rect(g.Bounds.X, g.Bounds.Y, view.ViewportWidth, g.Bounds.Height));
 
                 if (g != null)
                 {
+                    g = new RectangleGeometry(new Rect(g.Bounds.X, g.Bounds.Y, view.ViewportWidth, g.Bounds.Height));
+
                     GeometryDrawing drawing = (covered == CoverageState.Covered) ?
                         new GeometryDrawing(coveredBrush, coveredPen, g) :
                         new GeometryDrawing(uncoveredBrush, uncoveredPen, g);
@@ -245,7 +250,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             }
 
             var profile = profiledata.Get(lineno);
-            if (profile.Item1 != 0 || profile.Item2 != 0)
+            if (profile != null && profile.Item1 != 0 || profile.Item2 != 0)
             {
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
                 sb.Append(profile.Item1);
