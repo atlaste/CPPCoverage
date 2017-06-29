@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="9A15C37B-BC55-41A6-8B2C-CD50D43BED43" Version="2.17" Language="en-US" Publisher="NubiloSoft" />
+    <Identity Id="9A15C37B-BC55-41A6-8B2C-CD50D43BED43" Version="2.18" Language="en-US" Publisher="NubiloSoft" />
     <DisplayName>CPP Code Coverage Extension</DisplayName>
     <Description xml:space="preserve">CPP Code Coverage is a Visual Studio extension that measures code coverage and profiling data. 
 
@@ -22,6 +22,8 @@ CPPCoverage is 100% open source and free under the BSD license. It doesn't get m
     <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.7,)" />
   </Dependencies>
   <Assets>
+  
+    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%|" />
   </Assets>
   <Prerequisites>
     <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />
