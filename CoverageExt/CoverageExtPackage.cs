@@ -24,7 +24,7 @@ namespace NubiloSoft.CoverageExt
     /// </summary>
 
     [PackageRegistration(UseManagedResourcesOnly = true)]
-    [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
+    [InstalledProductRegistration("#110", "#115", "1.0", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject)]
     [ProvideToolWindow(typeof(Report.CoverageReportToolWindow))]
