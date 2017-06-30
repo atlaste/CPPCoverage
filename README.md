@@ -46,6 +46,13 @@ Working with CPPCoverage is a breeze. Basically install and use, there's nothing
 - The CodeCoverage output window will give you the current status of the process. Stdout is forwarded here as well.
 - Small memory footprint and very fast. Even if you have a million lines of code, CPPCoverage will only use kilobytes of memory for coverage.
 
+# Experimental Features
+
+- Static code analysis can be enabled, to get rid of if-then-else quirks. 
+- In your test code, you can tell the coverage tool to ignore files and folders. So, everything is handled from code; no pesky configuration files need to be managed. 
+
+For an overview of these [runtime notifications](notifications.md).
+
 # Support and maintenance 
 
 CPPCoverage is 100% open source and 100% for free.
