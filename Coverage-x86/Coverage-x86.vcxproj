@@ -124,6 +124,9 @@
   <ItemGroup>
     <ClInclude Include="..\Coverage\BreakpointData.h" />
     <ClInclude Include="..\Coverage\CoverageRunner.h" />
+    <ClInclude Include="..\Coverage\Disassembler\ReachabilityAnalysis.h" />
+    <ClInclude Include="..\Coverage\Disassembler\X86DisassemblerDecoder.h" />
+    <ClInclude Include="..\Coverage\Disassembler\X86DisassemblerDecoderCommon.h" />
     <ClInclude Include="..\Coverage\FileCallbackInfo.h" />
     <ClInclude Include="..\Coverage\FileInfo.h" />
     <ClInclude Include="..\Coverage\FileLineInfo.h" />
@@ -131,7 +134,13 @@
     <ClInclude Include="..\Coverage\Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Coverage\Disassembler\ReachabilityAnalysis.cpp" />
+    <ClCompile Include="..\Coverage\Disassembler\X86DisassemblerDecoder.cpp" />
     <ClCompile Include="..\Coverage\Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Coverage\Disassembler\X86GenDisassemblerTables.inc" />
+    <None Include="..\Coverage\Disassembler\X86GenInstrInfo.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

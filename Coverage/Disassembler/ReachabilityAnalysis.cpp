@@ -1,5 +1,7 @@
 #include "ReachabilityAnalysis.h"
 
+#include "../Util.h"
+#include <iostream>
 #include "X86DisassemblerDecoder.h"
 #include <cstdint>
 
@@ -142,13 +144,23 @@ struct Helper
 	}
 };
 
-ReachabilityAnalysis::ReachabilityAnalysis(PHANDLE processHandle, DWORD64 baseAddress, DWORD64 methodStart, SIZE_T numberBytes) :
+ReachabilityAnalysis::ReachabilityAnalysis(HANDLE processHandle, DWORD64 methodStart, SIZE_T numberBytes) :
 	state(0),
+	methodStart(methodStart),
 	numberBytes(numberBytes)
 {
+	if (numberBytes == 0) { return; }
+
 	auto data = new uint8_t[numberBytes];
 	SIZE_T numberBytesRead;
-	ReadProcessMemory(processHandle, reinterpret_cast<LPVOID>(methodStart), data, numberBytes, &numberBytesRead);
+	if (!ReadProcessMemory(processHandle, reinterpret_cast<LPVOID>(methodStart), data, numberBytes, &numberBytesRead))
+	{
+		auto err = Util::GetLastErrorAsString();
+		std::cout << "Error while reading symbol: " << err << std::endl;
+
+		delete[] data;
+		return;
+	}
 
 	// Initialize the disassembler reader
 	reader_info reader;
@@ -158,6 +170,7 @@ ReachabilityAnalysis::ReachabilityAnalysis(PHANDLE processHandle, DWORD64 baseAd
 
 	// Address is the start offset to read the instruction:
 	uint64_t address = 0;
+	DWORD64 baseAddress = methodStart;
 
 	// Initialize state to 0
 	state = new uint8_t[numberBytes];
@@ -280,9 +293,9 @@ ReachabilityAnalysis::ReachabilityAnalysis(PHANDLE processHandle, DWORD64 baseAd
 		}
 		
 		address += size;
-
-		delete[] data;
 	}
 
 	Helper::MarkReachable(state, numberBytes);
+
+	delete[] data;
 }

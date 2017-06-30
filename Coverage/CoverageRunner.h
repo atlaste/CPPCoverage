@@ -6,11 +6,14 @@
 #include "ProfileNode.h"
 #include "Util.h"
 
+#include "Disassembler/ReachabilityAnalysis.h"
+
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 
 #include <Windows.h>
 #include <psapi.h>
@@ -61,6 +64,17 @@ struct CoverageRunner
 			}
 		}
 
+		return TRUE;
+	}
+
+	static BOOL CALLBACK SymEnumSymbolsCallback(PSYMBOL_INFO symInfo, ULONG symbolSize, PVOID userContext)
+	{
+		if (symbolSize != 0)
+		{
+			CallbackInfo* info = reinterpret_cast<CallbackInfo*>(userContext);
+			ReachabilityAnalysis ra(info->processInfo->Handle, DWORD64(symInfo->Address), SIZE_T(symInfo->Size));
+			info->reachableCode.emplace_back(std::move(ra));
+		}
 		return TRUE;
 	}
 
@@ -210,12 +224,6 @@ struct CoverageRunner
 		}
 	}
 
-	static BOOL CALLBACK EnumerateSymbols(PSYMBOL_INFO pSymInfo, ULONG SymbolSize, PVOID UserContext)
-	{
-		std::cout << "Symbol: " << pSymInfo->Name << std::endl;
-		return TRUE;
-	}
-
 	void ProcessDebugInfo(ProcessInfo* proc, LPHANDLE fileHandle, PVOID basePtr, const std::string& filename)
 	{
 		if (filename.size() > 10)
@@ -276,11 +284,66 @@ struct CoverageRunner
 
 					if (SymEnumLines(proc->Handle, dllBase, NULL, NULL, SymEnumLinesCallback, &ci))
 					{
-						if (!quiet)
+						if (!options.UseStaticCodeAnalysis || 
+							!SymEnumSymbols(proc->Handle, dllBase, NULL, SymEnumSymbolsCallback, &ci) || ci.reachableCode.size() == 0)
 						{
-							std::cout << "[Symbols loaded]" << std::endl;
+							auto err = Util::GetLastErrorAsString();
+							if (!quiet)
+							{
+								if (!options.UseStaticCodeAnalysis)
+								{
+									std::cout << "[Symbols loaded]" << std::endl;
+								}
+								else 
+								{
+									std::cout << "[Symbols loaded, but static code analysis failed: " << err << "]" << std::endl;
+								}
+							}
+
+							ci.SetBreakpoints(basePtr, proc->Handle);
 						}
-						ci.SetBreakpoints(basePtr, proc->Handle);
+						else
+						{
+							if (!quiet)
+							{
+								std::cout << "[Symbols loaded]" << std::endl;
+							}
+
+							std::sort(ci.reachableCode.begin(), ci.reachableCode.end());
+
+							std::set<PVOID> breakpointsToSet;
+							size_t index = 0;
+							for (auto it : ci.breakpointsToSet)
+							{
+								auto ptr = reinterpret_cast<size_t>(it);
+								while (index < ci.reachableCode.size() &&
+									   ptr > size_t(ci.reachableCode[index].methodStart + ci.reachableCode[index].numberBytes))
+								{
+									++index;
+								}
+
+								if (index < ci.reachableCode.size())
+								{
+									auto& item = ci.reachableCode[index];
+									if (ptr > item.methodStart && ptr < item.methodStart + item.numberBytes)
+									{
+										if (item.state[ptr - item.methodStart] & 0x10)
+										{
+											breakpointsToSet.insert(it);
+										}
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+
+							std::cout << "[" << ci.breakpointsToSet.size() << " breakpoints total, " << breakpointsToSet.size() << " are reachable]" << std::endl;
+							swap(ci.breakpointsToSet, breakpointsToSet);
+
+							ci.SetBreakpoints(basePtr, proc->Handle);
+						}
 					}
 					else
 					{
@@ -481,7 +544,7 @@ struct CoverageRunner
 						auto name = GetFileNameFromHandle(debugEvent.u.LoadDll.hFile);
 						if (!quiet)
 						{
-							std::cout << "Loading: " << name << "... ";
+							std::cout << "Loading: " << name << "... " << std::endl;
 						}
 
 						dllNameMap[debugEvent.u.LoadDll.lpBaseOfDll] = name;

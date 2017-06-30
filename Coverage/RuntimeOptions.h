@@ -7,6 +7,7 @@ struct RuntimeOptions
 private:
 	RuntimeOptions() :
 		Quiet(false),
+		UseStaticCodeAnalysis(false),
 		ExportFormat(Native)
 	{}
 
@@ -18,6 +19,7 @@ public:
 	}
 
 	bool Quiet;
+	bool UseStaticCodeAnalysis;
 
 	enum ExportFormatType
 	{

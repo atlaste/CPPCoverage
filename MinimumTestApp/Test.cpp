@@ -56,8 +56,9 @@ void TestFoo(int d)
 	{
 		for (int i = 0; i < 10; ++i)
 		{
-			std::cout << "Hello world!" << d << std::endl;
+			std::cout << d << " ";
 		}
+		std::cout << std::endl;
 		TestFoo(d + 1);
 	}
 }
