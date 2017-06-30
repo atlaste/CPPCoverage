@@ -158,6 +158,14 @@ struct RuntimeNotifications
 			std::cout << "Ignoring file: " << file << std::endl;
 			postProcessing.emplace_back(std::make_unique<RuntimeFileFilter>(fullname));
 		}
+		else if (s == "ENABLE CODE ANALYSIS")
+		{
+			RuntimeOptions::Instance().UseStaticCodeAnalysis = true;
+		}
+		else if (s == "DISABLE CODE ANALYSIS")
+		{
+			RuntimeOptions::Instance().UseStaticCodeAnalysis = false;
+		}
 		else
 		{
 			std::cout << "Unknown option passed to coverage: " << s << std::endl;
