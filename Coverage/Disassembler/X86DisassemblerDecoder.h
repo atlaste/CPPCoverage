@@ -524,7 +524,7 @@ typedef enum
 
 struct reader_info
 {
-	const uint8_t *code;
+	uint8_t *code;
 	uint64_t size;
 	uint64_t offset;
 };

@@ -39,6 +39,7 @@
     <ClInclude Include="Disassembler\ReachabilityAnalysis.h">
       <Filter>Disassembler</Filter>
     </ClInclude>
+    <ClInclude Include="RuntimeNotifications.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Disassembler\X86GenDisassemblerTables.inc">

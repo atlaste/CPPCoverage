@@ -1,8 +1,9 @@
 #include <iostream>
+#include <string>
 
 #include <Windows.h>
 
-extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) {} }
+extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) { __nop(); } }
 
 typedef int(__cdecl *InvokeMethodSignature)();
 
@@ -65,7 +66,11 @@ void TestFoo(int d)
 
 int main()
 {
-	PassToCPPCoverage(13, "Hello world!");
+	std::string opts2 = "IGNORE FOLDER: MinimumTest";
+	PassToCPPCoverage(opts2.size(), opts2.data());
+
+	std::string opts = "IGNORE FOLDER: MinimumTestApp";
+	PassToCPPCoverage(opts.size(), opts.data());
 
 	TestNamespace::Foo::Test();
 	

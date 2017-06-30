@@ -26,6 +26,7 @@
     <ClInclude Include="..\Coverage\Disassembler\ReachabilityAnalysis.h">
       <Filter>Disassembler</Filter>
     </ClInclude>
+    <ClInclude Include="..\Coverage\RuntimeNotifications.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Coverage\Main.cpp" />

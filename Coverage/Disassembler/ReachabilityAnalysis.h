@@ -40,6 +40,8 @@ struct ReachabilityAnalysis
 
 	ReachabilityAnalysis(HANDLE processHandle, DWORD64 methodStart, SIZE_T numberBytes);
 
+	static size_t FirstInstructionSize(HANDLE processHandle, DWORD64 methodStart);
+
 	DWORD64 methodStart;
 	size_t numberBytes;
 	uint8_t* state;

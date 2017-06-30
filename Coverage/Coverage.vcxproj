@@ -143,6 +143,7 @@
     <ClInclude Include="FileLineInfo.h" />
     <ClInclude Include="ProcessInfo.h" />
     <ClInclude Include="ProfileNode.h" />
+    <ClInclude Include="RuntimeNotifications.h" />
     <ClInclude Include="RuntimeOptions.h" />
     <ClInclude Include="StackTrace.h" />
     <ClInclude Include="Util.h" />

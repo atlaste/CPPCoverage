@@ -130,6 +130,7 @@
     <ClInclude Include="..\Coverage\FileCallbackInfo.h" />
     <ClInclude Include="..\Coverage\FileInfo.h" />
     <ClInclude Include="..\Coverage\FileLineInfo.h" />
+    <ClInclude Include="..\Coverage\RuntimeNotifications.h" />
     <ClInclude Include="..\Coverage\RuntimeOptions.h" />
     <ClInclude Include="..\Coverage\Util.h" />
   </ItemGroup>

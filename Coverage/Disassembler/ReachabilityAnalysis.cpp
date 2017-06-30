@@ -18,6 +18,25 @@ struct Helper
 		return 0;
 	}
 
+	static int ProcessReader(const struct reader_info *arg, uint8_t* byte, uint64_t address)
+	{
+		if (address > 16) { return -1; } // oops
+
+		auto ptr = reinterpret_cast<HANDLE>(arg->code);
+		
+		BYTE result;
+		SIZE_T numberBytesRead;
+		if (!ReadProcessMemory(ptr, reinterpret_cast<LPVOID>(address + arg->offset), &result, 1, &numberBytesRead))
+		{
+			auto err = Util::GetLastErrorAsString();
+			std::cout << "Error reading memory from target process: " << err << std::endl;
+			return -1;
+		}
+
+		*byte = result;
+		return 0;
+	}
+
 	static void HandleJump(InternalInstruction& instr, uint64_t address, uint8_t* state, size_t numberBytes)
 	{
 		auto immediate = instr.immediates[0];
@@ -197,105 +216,141 @@ ReachabilityAnalysis::ReachabilityAnalysis(HANDLE processHandle, DWORD64 methodS
 			size = (uint16_t)instr.length;
 		}
 
-		// Handle instructions:
-		// - If it's a branch, we basically want to know the destination address, and mark the target with a 1.
-		// - If it's a terminator (e.g. ret, unconditional branch), we want to mark the source with a 2.
-		// - If it's something else, we don't care.
-
-		switch (instr.instructionID)
+		if (instr.operandSize > 0)
 		{
-			// FarJmp, SjLj omitted.
-			// j*
-			// TAILJMP
-			// Ret, iret
+			// Handle instructions:
+			// - If it's a branch, we basically want to know the destination address, and mark the target with a 1.
+			// - If it's a terminator (e.g. ret, unconditional branch), we want to mark the source with a 2.
+			// - If it's something else, we don't care.
 
-			case X86_FARJMP16i:
-			case X86_FARJMP16m:
-			case X86_FARJMP32i:
-			case X86_FARJMP32m:
-			case X86_FARJMP64:
-			case X86_JMP16m:
-			case X86_JMP16r:
-			case X86_JMP32m:
-			case X86_JMP32r:
-			case X86_JMP64m:
-			case X86_JMP64r:
-				Helper::HandleJump(instr, baseAddress + address, state, numberBytes);
-				Helper::HandleTerminator(instr, baseAddress + address, state, numberBytes);
-				break;
+			switch (instr.instructionID)
+			{
+				// FarJmp, SjLj omitted.
+				// j*
+				// TAILJMP
+				// Ret, iret
 
-			case X86_JAE_1:
-			case X86_JA_1:
-			case X86_JBE_1:
-			case X86_JB_1:
-			case X86_JE_1:
-			case X86_JGE_1:
-			case X86_JG_1:
-			case X86_JLE_1:
-			case X86_JL_1:
-			case X86_JMP_1:
-			case X86_JNE_1:
-			case X86_JNO_1:
-			case X86_JNP_1:
-			case X86_JNS_1:
-			case X86_JO_1:
-			case X86_JP_1:
-			case X86_JS_1:
-			case X86_JCXZ:
-			case X86_JRCXZ:
-			case X86_JAE_2:
-			case X86_JA_2:
-			case X86_JB_2:
-			case X86_JBE_2:
-			case X86_JE_2:
-			case X86_JGE_2:
-			case X86_JG_2:
-			case X86_JLE_2:
-			case X86_JL_2:
-			case X86_JMP_2:
-			case X86_JNE_2:
-			case X86_JNO_2:
-			case X86_JNP_2:
-			case X86_JNS_2:
-			case X86_JO_2:
-			case X86_JP_2:
-			case X86_JS_2:
-			case X86_JAE_4:
-			case X86_JA_4:
-			case X86_JBE_4:
-			case X86_JB_4:
-			case X86_JE_4:
-			case X86_JGE_4:
-			case X86_JG_4:
-			case X86_JLE_4:
-			case X86_JL_4:
-			case X86_JMP_4:
-			case X86_JNE_4:
-			case X86_JNO_4:
-			case X86_JNP_4:
-			case X86_JNS_4:
-			case X86_JO_4:
-			case X86_JP_4:
-			case X86_JS_4:
-			case X86_JECXZ_32:
-			case X86_JECXZ_64:
-				Helper::HandleJump(instr, baseAddress + address, state, numberBytes);
-				break;
+				case X86_FARJMP16i:
+				case X86_FARJMP16m:
+				case X86_FARJMP32i:
+				case X86_FARJMP32m:
+				case X86_FARJMP64:
+				case X86_JMP16m:
+				case X86_JMP16r:
+				case X86_JMP32m:
+				case X86_JMP32r:
+				case X86_JMP64m:
+				case X86_JMP64r:
+					Helper::HandleJump(instr, baseAddress + address, state, numberBytes);
+					Helper::HandleTerminator(instr, baseAddress + address, state, numberBytes);
+					break;
 
-			case X86_RETIL:
-			case X86_RETIQ:
-			case X86_RETIW:
-			case X86_RETL:
-			case X86_RETQ:
-			case X86_RETW:
-				Helper::HandleTerminator(instr, baseAddress + address, state, numberBytes);
-				break;
+				case X86_JAE_1:
+				case X86_JA_1:
+				case X86_JBE_1:
+				case X86_JB_1:
+				case X86_JE_1:
+				case X86_JGE_1:
+				case X86_JG_1:
+				case X86_JLE_1:
+				case X86_JL_1:
+				case X86_JMP_1:
+				case X86_JNE_1:
+				case X86_JNO_1:
+				case X86_JNP_1:
+				case X86_JNS_1:
+				case X86_JO_1:
+				case X86_JP_1:
+				case X86_JS_1:
+				case X86_JCXZ:
+				case X86_JRCXZ:
+				case X86_JAE_2:
+				case X86_JA_2:
+				case X86_JB_2:
+				case X86_JBE_2:
+				case X86_JE_2:
+				case X86_JGE_2:
+				case X86_JG_2:
+				case X86_JLE_2:
+				case X86_JL_2:
+				case X86_JMP_2:
+				case X86_JNE_2:
+				case X86_JNO_2:
+				case X86_JNP_2:
+				case X86_JNS_2:
+				case X86_JO_2:
+				case X86_JP_2:
+				case X86_JS_2:
+				case X86_JAE_4:
+				case X86_JA_4:
+				case X86_JBE_4:
+				case X86_JB_4:
+				case X86_JE_4:
+				case X86_JGE_4:
+				case X86_JG_4:
+				case X86_JLE_4:
+				case X86_JL_4:
+				case X86_JMP_4:
+				case X86_JNE_4:
+				case X86_JNO_4:
+				case X86_JNP_4:
+				case X86_JNS_4:
+				case X86_JO_4:
+				case X86_JP_4:
+				case X86_JS_4:
+				case X86_JECXZ_32:
+				case X86_JECXZ_64:
+					Helper::HandleJump(instr, baseAddress + address, state, numberBytes);
+					break;
+
+				case X86_RETIL:
+				case X86_RETIQ:
+				case X86_RETIW:
+				case X86_RETL:
+				case X86_RETQ:
+				case X86_RETW:
+					Helper::HandleTerminator(instr, baseAddress + address, state, numberBytes);
+					break;
+			}
 		}
-		
+
 		address += size;
 	}
 
 	Helper::MarkReachable(state, numberBytes);
 
 	delete[] data;
+}
+
+size_t ReachabilityAnalysis::FirstInstructionSize(HANDLE processHandle, DWORD64 methodStart)
+{
+	// Initialize the disassembler reader
+	reader_info reader;
+	reader.code = reinterpret_cast<uint8_t*>(processHandle);
+	reader.offset = methodStart;
+	reader.size = 16; // not used
+
+	// Address is the start offset to read the instruction:
+	uint64_t address = 0;
+
+	// Initialize state to 0
+	InternalInstruction instr;
+	memset(&instr, 0, offsetof(InternalInstruction, reader));
+
+#if _WIN64
+	auto ret = decodeInstruction(&instr, Helper::ProcessReader, &reader, address, DisassemblerMode::MODE_64BIT);
+#else
+	auto ret = decodeInstruction(&instr, Helper::ProcessReader, &reader, address, DisassemblerMode::MODE_32BIT);
+#endif
+
+	size_t size;
+	if (ret)
+	{
+		size = (uint16_t)(instr.readerCursor - address);
+	}
+	else
+	{
+		size = (uint16_t)instr.length;
+	}
+	return size;
 }

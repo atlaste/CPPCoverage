@@ -6,6 +6,7 @@
 #include "RuntimeOptions.h"
 #include "CallbackInfo.h"
 #include "ProfileNode.h"
+#include "RuntimeNotifications.h"
 
 #include <string>
 #include <set>
@@ -51,7 +52,26 @@ struct FileCallbackInfo
 	std::string sourcePath;
 
 	std::unordered_map<std::string, std::unique_ptr<FileInfo>> lineData;
-	
+
+	void Filter(RuntimeNotifications& notifications)
+	{
+		std::unordered_map<std::string, std::unique_ptr<FileInfo>> newLineData;
+		for (auto& it : lineData)
+		{
+			if (!notifications.IgnoreFile(it.first))
+			{
+				std::unique_ptr<FileInfo> tmp(nullptr);
+				std::swap(tmp, it.second);
+				newLineData[it.first] = std::move(tmp);
+			}
+			else
+			{
+				std::cout << "Removing file " << it.first << std::endl;
+			}
+		}
+		std::swap(lineData, newLineData);
+	}
+
 	bool PathMatches(const char* filename)
 	{
 		const char* ptr = filename;
