@@ -2,7 +2,17 @@
 
 #include <Windows.h>
 
+extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) {} }
+
 typedef int(__cdecl *InvokeMethodSignature)();
+
+namespace TestNamespace
+{
+	struct Foo
+	{
+		__declspec(noinline) static void Test() { }
+	};
+}
 
 static void TestDLL()
 {
@@ -54,6 +64,9 @@ void TestFoo(int d)
 
 int main()
 {
+	PassToCPPCoverage(13, "Hello world!");
+
+	TestNamespace::Foo::Test();
 	
 	TestDLL();
 	for (int i = 0; i < 10; ++i)

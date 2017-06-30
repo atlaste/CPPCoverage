@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <memory>
 #include <Windows.h>
+#include <ctime>
 
 struct FileCallbackInfo
 {
@@ -19,7 +20,7 @@ struct FileCallbackInfo
 		filename(filename)
 	{
 		auto& opts = RuntimeOptions::Instance();
-		if (opts.CodePath.size() == 0)
+		if (opts.CodePath.size() != 0)
 		{
 			auto idx = filename.find("x64");
 			if (idx == std::string::npos)
@@ -87,9 +88,76 @@ struct FileCallbackInfo
 	{
 		switch (exportFormat)
 		{
+			case RuntimeOptions::Clover: WriteClover(filename); break;
 			case RuntimeOptions::Cobertura: WriteCobertura(filename); break;
 			default: WriteNative(filename, mergedProfileInfo); break;
 		}
+	}
+
+	void WriteClover(const std::string& filename)
+	{
+		std::string reportFilename = filename;
+		std::ofstream ofs(reportFilename);
+
+		size_t totalFiles = 0;
+		size_t coveredFiles = 0;
+		size_t totalLines = 0;
+		size_t coveredLines = 0;
+		for (auto& it : lineData)
+		{
+			auto ptr = it.second.get();
+			for (size_t i = 0; i < ptr->numberLines; ++i)
+			{
+				if (ptr->relevant[i] && ptr->lines[i].DebugCount != 0)
+				{
+					++totalFiles;
+					if (ptr->lines[i].HitCount == ptr->lines[i].DebugCount)
+					{
+						++coveredFiles;
+					}
+
+					totalLines += ptr->lines[i].DebugCount;
+					coveredLines += ptr->lines[i].HitCount;
+				}
+			}
+		}
+
+		time_t t = time(0);   // get time now
+		ofs << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
+		ofs << "<clover generated=\"" << t << "\"  clover=\"3.1.5\">" << std::endl;
+		ofs << "<project timestamp=\"" << t << "\">" << std::endl;
+		ofs << "<metrics classes=\"0\" files=\"" << totalFiles << "\" packages=\"1\"  loc=\"" << totalLines << "\" ncloc = \"" << coveredLines << "\" ";
+		// ofs << "coveredstatements=\"300\" statements=\"500\" coveredmethods=\"50\" methods=\"80\" ";
+		// ofs << "coveredconditionals=\"100\" conditionals=\"120\" coveredelements=\"900\" elements=\"1000\" ";
+		ofs << "complexity=\"0\" />" << std::endl;
+		ofs << "<package name=\"Program.exe\">" << std::endl;
+		for (auto& it : lineData)
+		{
+			auto ptr = it.second.get();
+
+			ofs << "<file name=\"" << it.first << "\">" << std::endl;
+
+			for (size_t i = 0; i < ptr->numberLines; ++i)
+			{
+				if (ptr->relevant[i] && ptr->lines[i].DebugCount != 0)
+				{
+					if (ptr->lines[i].HitCount == ptr->lines[i].DebugCount)
+					{
+						ofs << "<line num=\"" << i << "\" count=\"1\" type=\"stmt\"/>" << std::endl;
+					}
+					else
+					{
+						ofs << "<line num=\"" << i << "\" count=\"0\" type=\"stmt\"/>" << std::endl;
+					}
+				}
+			}
+
+			ofs << "</file>" << std::endl;
+		}
+
+		ofs << "</package>" << std::endl;
+		ofs << "</project>" << std::endl;
+		ofs << "</clover>" << std::endl;
 	}
 
 	void WriteCobertura(const std::string& filename)

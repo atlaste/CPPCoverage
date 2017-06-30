@@ -71,6 +71,8 @@ struct CoverageRunner
 	std::unordered_set<std::string> loadedFiles;
 	FileCallbackInfo coverageContext;
 
+	std::vector<PVOID> passToCoverageMethods;
+
 	std::unordered_map<std::string, std::unique_ptr<ProfileFrame> > profileInfo;
 
 	std::string GetFileNameFromHandle(HANDLE hFile)
@@ -153,7 +155,7 @@ struct CoverageRunner
 
 	void InitializeDebugInfo(HANDLE proc)
 	{
-		BOOL initSuccess = SymInitialize(proc, NULL, false);
+		BOOL initSuccess = SymInitialize(proc, NULL, FALSE);
 		debugInfoAvailable = (initSuccess == TRUE);
 		if (!debugInfoAvailable)
 		{
@@ -208,8 +210,24 @@ struct CoverageRunner
 		}
 	}
 
+	static BOOL CALLBACK EnumerateSymbols(PSYMBOL_INFO pSymInfo, ULONG SymbolSize, PVOID UserContext)
+	{
+		std::cout << "Symbol: " << pSymInfo->Name << std::endl;
+		return TRUE;
+	}
+
 	void ProcessDebugInfo(ProcessInfo* proc, LPHANDLE fileHandle, PVOID basePtr, const std::string& filename)
 	{
+		if (filename.size() > 10)
+		{
+			auto str = filename.substr(0, 10);
+			for (auto& it : str) { it = ::tolower(it); }
+			if (str == "c:\\windows")
+			{
+				return;
+			}
+		}
+
 		if (debugInfoAvailable)
 		{
 			bool firstTimeLoad = false;
@@ -244,6 +262,18 @@ struct CoverageRunner
 
 				if (info)
 				{
+#ifdef _WIN64
+					IMAGEHLP_SYMBOL64 img;
+#else
+					IMAGEHLP_SYMBOL img;
+#endif
+
+					if (SymGetSymFromName(proc->Handle, "PassToCPPCoverage", &img))
+					{
+						std::cout << "Found pass method at 0x" << std::hex << img.Address << std::dec << std::endl;
+						passToCoverageMethods.push_back(reinterpret_cast<PVOID>(img.Address));
+					}
+
 					if (SymEnumLines(proc->Handle, dllBase, NULL, NULL, SymEnumLinesCallback, &ci))
 					{
 						if (!quiet)
@@ -295,7 +325,7 @@ struct CoverageRunner
 
 	void Start()
 	{
-		SymSetOptions(SYMOPT_LOAD_LINES);
+		SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_LOAD_ANYTHING);
 
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
@@ -540,7 +570,27 @@ struct CoverageRunner
 									threadContextInfo.Eip--;
 #endif
 									auto addr = exception.ExceptionRecord.ExceptionAddress;
-									// std::cout << "Reset breakpoint at instruction " << std::hex << addr << std::dec << std::endl;
+
+									// Is this a breakpoint in one of the 'pass' functions?
+									for (auto it : passToCoverageMethods)
+									{
+										if (addr == it)
+										{
+#if _WIN64
+											auto numberBytes = threadContextInfo.Rcx;
+											auto pointer = threadContextInfo.Rdx;
+#else
+											auto numberBytes = threadContextInfo.Eax;
+											auto pointer = threadContextInfo.Ecx;
+#endif
+
+											auto data = new char[numberBytes];
+											SIZE_T numberBytesRead;
+											ReadProcessMemory(process->Handle, reinterpret_cast<LPVOID>(pointer), data, numberBytes, &numberBytesRead);
+
+											std::cout << "We have a hit. The process is telling us something: " << data << std::endl;
+										}
+									}
 
 									auto bp = process->breakPoints.find(addr);
 									if (bp != process->breakPoints.end())
@@ -586,7 +636,6 @@ struct CoverageRunner
 											stack.AddrFrame.Mode = AddrModeFlat;
 											stack.AddrStack.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer
 											stack.AddrStack.Mode = AddrModeFlat;
-
 #else
 											STACKFRAME64 stack = { 0 };
 											stack.AddrPC.Offset = threadContextInfo.Eip;    // EIP - Instruction Pointer
@@ -749,8 +798,8 @@ struct CoverageRunner
 				deep = (deep < 0) ? 0 : deep;
 				shallow = (shallow < 0) ? 0 : shallow;
 
-				(*merged)[jt.first].Deep += deep;
-				(*merged)[jt.first].Shallow += shallow;
+				(*merged)[size_t(jt.first)].Deep += deep;
+				(*merged)[size_t(jt.first)].Shallow += shallow;
 			}
 		}
 

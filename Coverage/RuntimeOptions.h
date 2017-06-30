@@ -22,7 +22,8 @@ public:
 	enum ExportFormatType
 	{
 		Native,
-		Cobertura
+		Cobertura,
+		Clover
 
 	} ExportFormat;
 

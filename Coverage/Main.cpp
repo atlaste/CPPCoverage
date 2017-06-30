@@ -30,10 +30,10 @@ void ParseCommandLine(int argc, const char **argv)
 	{
 		throw std::exception("Expected executable filename in command line.");
 	}
-	
+
 	idx += 2;
 	while (idx < cmdLine.size() && cmdLine[idx + 1] == ' ') { ++idx; }
-	
+
 	std::string childCommand = cmdLine.substr(idx);
 	if (childCommand.size() == 0)
 	{
@@ -68,6 +68,10 @@ void ParseCommandLine(int argc, const char **argv)
 			else if (t == "cobertura")
 			{
 				opts.ExportFormat = RuntimeOptions::Cobertura;
+			}
+			else if (t == "clover")
+			{
+				opts.ExportFormat = RuntimeOptions::Clover;
 			}
 			else
 			{
@@ -117,13 +121,12 @@ void ParseCommandLine(int argc, const char **argv)
 			throw std::exception("Incorrect parameter.");
 		}
 	}
-
 }
 
 int main(int argc, const char** argv)
 {
 	RuntimeOptions& opts = RuntimeOptions::Instance();
-	
+
 	try
 	{
 		ParseCommandLine(argc, argv);
