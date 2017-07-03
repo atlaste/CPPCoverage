@@ -72,6 +72,7 @@ int main()
 	std::string opts = "IGNORE FOLDER: MinimumTestApp";
 	PassToCPPCoverage(opts.size(), opts.data());
 
+	/*
 	TestNamespace::Foo::Test();
 	
 	TestDLL();
@@ -79,6 +80,6 @@ int main()
 	{
 		TestFoo(0);
 	}
-
+	*/
 	return 0;
 }
