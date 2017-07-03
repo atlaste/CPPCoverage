@@ -144,7 +144,7 @@ void Test()
 	si.cb = sizeof(si);
 	ZeroMemory(&pi, sizeof(pi));
 
-	auto str = "C:\\Users\\atlas\\Desktop\\Eigen projectjes\\OpenSource\\VSOpenCPPCoverage\\x64\\Debug\\MinimumTestApp.exe";
+	auto str = "C:\\Users\\Stefan\\Desktop\\Eigen projectjes\\OpenSource\\VSOpenCPPCoverage\\x64\\Debug\\MinimumTestApp.exe";
 	auto result = CreateProcess(str, NULL, NULL, NULL, FALSE,
 								DEBUG_PROCESS, NULL, NULL, &si, &pi);
 	if (result == 0)
@@ -260,8 +260,8 @@ int main(int argc, const char** argv)
 		std::cout << "Error: " << e.what() << std::endl;
 	}
 
-	std::string s;
-	std::getline(std::cin, s);
+	// std::string s;
+	// std::getline(std::cin, s);
 
 	return 0;
 }
