@@ -304,12 +304,12 @@ struct CoverageRunner
 		ZeroMemory(&pi, sizeof(pi));
 
 		LPSTR args = NULL;
-		if (options.ExecutableArguments.size() > 0)
+		if( !options.ExecutableArguments.empty() )
 		{
 			args = &*options.ExecutableArguments.begin();
 		}
 
-		auto result = CreateProcess(options.Executable.c_str(), args, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+		auto result = CreateProcess(NULL, args, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, options.WorkingDirectory.c_str(), &si, &pi);
 		if (result == 0)
 		{
 			if (pi.dwProcessId == 0)

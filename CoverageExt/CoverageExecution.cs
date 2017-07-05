@@ -27,12 +27,12 @@ namespace NubiloSoft.CoverageExt
 
         private int running = 0;
 
-        public void Start(string solutionFolder, string platform, string dllFolder, string dllFilename)
+        public void Start(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
         {
             // We want 1 thread to do this; never more.
             if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
-                Thread t = new Thread(() => StartImpl(solutionFolder, platform, dllFolder, dllFilename))
+                Thread t = new Thread(() => StartImpl(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline))
                 {
                     IsBackground = true,
                     Name = "Code coverage generator thread"
@@ -45,7 +45,7 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename)
+        private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
         {
             try
             {
@@ -92,28 +92,51 @@ namespace NubiloSoft.CoverageExt
                     }
 
                     StringBuilder argumentBuilder = new StringBuilder();
-                    if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+
+                    argumentBuilder.Append("-o \"");
+                    argumentBuilder.Append(resultFile);
+                    argumentBuilder.Append("\" -p \"");
+                    argumentBuilder.Append(solutionFolder.TrimEnd('\\', '/'));
+
+                    if (workingDirectory != null && workingDirectory.Length > 0)
                     {
-                        argumentBuilder.Append("-o \"");
-                        argumentBuilder.Append(resultFile);
-                        argumentBuilder.Append("\" -p \"");
-                        argumentBuilder.Append(solutionFolder.TrimEnd('\\','/'));
-                        argumentBuilder.Append("\" -- \"");
-                        argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
-                        argumentBuilder.Append("\"");
+                        // When directory finish by \ : c++ read \" and arguments is badly computed !
+                        workingDirectory = workingDirectory.TrimEnd('\\', '/');
+
+                        argumentBuilder.Append("\" -w \"");
+                        argumentBuilder.Append(workingDirectory);
+                        
                     }
                     else
                     {
-                        argumentBuilder.Append("-o \"");
-                        argumentBuilder.Append(resultFile);
-                        argumentBuilder.Append("\" -p \"");
-                        argumentBuilder.Append(solutionFolder.TrimEnd('\\', '/'));
+                        argumentBuilder.Append("\"");
+                    }
+
+                    if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        argumentBuilder.Append("\" -- \"");
+                    }
+                    else
+                    {
                         argumentBuilder.Append("\" -- ");
                         argumentBuilder.Append(@"""C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe""");
                         argumentBuilder.Append(" /Platform:" + platform + " \"");
-                        argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
+                    }
+
+                    argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
+                    if (commandline != null && commandline.Length > 0)
+                    {
+                        argumentBuilder.Append("\" ");
+                        argumentBuilder.Append(commandline);
+                    }
+                    else
+                    {
                         argumentBuilder.Append("\"");
                     }
+
+#if DEBUG
+                    this.output.WriteLine("Execute coverage: {0}", argumentBuilder.ToString());
+#endif
 
                     process.StartInfo.WorkingDirectory = dllFolder;
                     process.StartInfo.Arguments = argumentBuilder.ToString();
@@ -140,7 +163,7 @@ namespace NubiloSoft.CoverageExt
                     {
                         // Kill process.
                         process.Kill();
-                        throw new Exception("Creating code coverage timed out.");
+                        throw new Exception("Creating code coverage timed out (more than 15min).");
                     }
 
                     string output = tb.ToString();
@@ -238,6 +261,10 @@ namespace NubiloSoft.CoverageExt
                         argumentBuilder.Append("\"");
                     }
 
+#if DEBUG
+                    this.output.WriteLine("Execute coverage: {0}", argumentBuilder.ToString());
+#endif
+
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(resultFile);
                     process.StartInfo.Arguments = argumentBuilder.ToString();
                     process.StartInfo.CreateNoWindow = true;
@@ -306,7 +333,7 @@ namespace NubiloSoft.CoverageExt
         private void OutputHandler(object sender, DataReceivedEventArgs e)
         {
             // Redirect to output window
-            if (e.Data != null)
+            if (!String.IsNullOrEmpty(e.Data))
             {
                 string s = e.Data;
 
