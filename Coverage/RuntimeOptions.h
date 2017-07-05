@@ -29,6 +29,7 @@ public:
 
 	std::string OutputFile;
 
+    std::string WorkingDirectory;
 	std::string CodePath;
 	std::string Executable;
 	std::string ExecutableArguments;
