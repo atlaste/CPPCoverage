@@ -27,6 +27,8 @@ void ParseCommandLine(int argc, const char **argv)
     LPTSTR cmd = GetCommandLine();
     std::string cmdLine = cmd;
     
+	
+	
 	// Parse arguments
 	for (int i = 1; i < argc; ++i)
 	{
@@ -35,6 +37,10 @@ void ParseCommandLine(int argc, const char **argv)
 		if (s == "-quiet" || s == "--quiet")
 		{
 			opts.Quiet = true;
+		}
+		else if (s == "-codeanalysis")
+		{
+			opts.UseStaticCodeAnalysis = true;
 		}
 		else if (s == "-format")
 		{
@@ -52,6 +58,10 @@ void ParseCommandLine(int argc, const char **argv)
 			else if (t == "cobertura")
 			{
 				opts.ExportFormat = RuntimeOptions::Cobertura;
+			}
+			else if (t == "clover")
+			{
+				opts.ExportFormat = RuntimeOptions::Clover;
 			}
 			else
 			{
@@ -114,7 +124,6 @@ void ParseCommandLine(int argc, const char **argv)
 			throw std::exception(message.c_str());
 		}
 	}
-
     auto idx = cmdLine.find(" -- ");
     if (idx == std::string::npos)
     {
@@ -158,7 +167,7 @@ int main(int argc, const char** argv)
 #endif
 
 	RuntimeOptions& opts = RuntimeOptions::Instance();
-	
+
 	try
 	{
 		ParseCommandLine(argc, argv);
@@ -192,6 +201,9 @@ int main(int argc, const char** argv)
 		std::cout << "Error: " << e.what() << std::endl;
         return 2; // Coverage error
 	}
+
+	// std::string s;
+	// std::getline(std::cin, s);
 
 	return 0;
 }

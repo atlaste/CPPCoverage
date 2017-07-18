@@ -1,7 +1,9 @@
 #pragma once
 
 #include "ProcessInfo.h"
+#include "Disassembler/ReachabilityAnalysis.h"
 #include <set>
+#include <vector>
 
 struct FileCallbackInfo;
 
@@ -17,6 +19,8 @@ struct CallbackInfo
 	ProcessInfo* processInfo;
 	bool registerLines;
 	std::set<PVOID> breakpointsToSet;
+
+	std::vector<ReachabilityAnalysis> reachableCode;
 
 	void SetBreakpoints(PVOID baseAddress, HANDLE process)
 	{

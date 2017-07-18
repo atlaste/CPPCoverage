@@ -1,8 +1,19 @@
 #include <iostream>
+#include <string>
 
 #include <Windows.h>
 
+extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) { __nop(); } }
+
 typedef int(__cdecl *InvokeMethodSignature)();
+
+namespace TestNamespace
+{
+	struct Foo
+	{
+		__declspec(noinline) static void Test() { }
+	};
+}
 
 static void TestDLL()
 {
@@ -46,20 +57,29 @@ void TestFoo(int d)
 	{
 		for (int i = 0; i < 10; ++i)
 		{
-			std::cout << "Hello world!" << d << std::endl;
+			std::cout << d << " ";
 		}
+		std::cout << std::endl;
 		TestFoo(d + 1);
 	}
 }
 
 int main()
 {
+	std::string opts2 = "IGNORE FOLDER: MinimumTest";
+	PassToCPPCoverage(opts2.size(), opts2.data());
+
+	std::string opts = "IGNORE FOLDER: MinimumTestApp";
+	PassToCPPCoverage(opts.size(), opts.data());
+
+	/*
+	TestNamespace::Foo::Test();
 	
 	TestDLL();
 	for (int i = 0; i < 10; ++i)
 	{
 		TestFoo(0);
 	}
-
+	*/
 	return 0;
 }

@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{BAB94FD2-1956-45B8-8D2F-904519D7FFA4}</ProjectGuid>
     <RootNamespace>Coveragex86</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -128,14 +128,24 @@
   <ItemGroup>
     <ClInclude Include="..\Coverage\BreakpointData.h" />
     <ClInclude Include="..\Coverage\CoverageRunner.h" />
+    <ClInclude Include="..\Coverage\Disassembler\ReachabilityAnalysis.h" />
+    <ClInclude Include="..\Coverage\Disassembler\X86DisassemblerDecoder.h" />
+    <ClInclude Include="..\Coverage\Disassembler\X86DisassemblerDecoderCommon.h" />
     <ClInclude Include="..\Coverage\FileCallbackInfo.h" />
     <ClInclude Include="..\Coverage\FileInfo.h" />
     <ClInclude Include="..\Coverage\FileLineInfo.h" />
+    <ClInclude Include="..\Coverage\RuntimeNotifications.h" />
     <ClInclude Include="..\Coverage\RuntimeOptions.h" />
     <ClInclude Include="..\Coverage\Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Coverage\Disassembler\ReachabilityAnalysis.cpp" />
+    <ClCompile Include="..\Coverage\Disassembler\X86DisassemblerDecoder.cpp" />
     <ClCompile Include="..\Coverage\Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Coverage\Disassembler\X86GenDisassemblerTables.inc" />
+    <None Include="..\Coverage\Disassembler\X86GenInstrInfo.inc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

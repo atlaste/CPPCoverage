@@ -17,6 +17,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinimumTest", "MinimumTest\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Git stuff", "Git stuff", "{CBE50351-048D-4762-87DD-0FB7AC596E8D}"
 	ProjectSection(SolutionItems) = preProject
+		notifications.md = notifications.md
 		README.md = README.md
 	EndProjectSection
 EndProject
