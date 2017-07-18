@@ -2,15 +2,19 @@
 
 #include "FileCallbackInfo.h"
 #include "RuntimeOptions.h"
+#include "RuntimeNotifications.h"
 #include "CallbackInfo.h"
 #include "ProfileNode.h"
 #include "Util.h"
+
+#include "Disassembler/ReachabilityAnalysis.h"
 
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 
 #include <Windows.h>
 #include <psapi.h>
@@ -64,12 +68,26 @@ struct CoverageRunner
 		return TRUE;
 	}
 
+	static BOOL CALLBACK SymEnumSymbolsCallback(PSYMBOL_INFO symInfo, ULONG symbolSize, PVOID userContext)
+	{
+		if (symbolSize != 0)
+		{
+			CallbackInfo* info = reinterpret_cast<CallbackInfo*>(userContext);
+			ReachabilityAnalysis ra(info->processInfo->Handle, DWORD64(symInfo->Address), SIZE_T(symInfo->Size));
+			info->reachableCode.emplace_back(std::move(ra));
+		}
+		return TRUE;
+	}
+
 	RuntimeOptions& options;
+	RuntimeNotifications notifications;
 	bool quiet;
 	bool debugInfoAvailable;
 	bool debuggerPresentPatched;
 	std::unordered_set<std::string> loadedFiles;
 	FileCallbackInfo coverageContext;
+
+	std::vector<std::tuple<PVOID, BYTE, PVOID, BYTE>> passToCoverageMethods;
 
 	std::unordered_map<std::string, std::unique_ptr<ProfileFrame> > profileInfo;
 
@@ -153,7 +171,7 @@ struct CoverageRunner
 
 	void InitializeDebugInfo(HANDLE proc)
 	{
-		BOOL initSuccess = SymInitialize(proc, NULL, false);
+		BOOL initSuccess = SymInitialize(proc, NULL, FALSE);
 		debugInfoAvailable = (initSuccess == TRUE);
 		if (!debugInfoAvailable)
 		{
@@ -210,6 +228,16 @@ struct CoverageRunner
 
 	void ProcessDebugInfo(ProcessInfo* proc, LPHANDLE fileHandle, PVOID basePtr, const std::string& filename)
 	{
+		if (filename.size() > 10)
+		{
+			auto str = filename.substr(0, 10);
+			for (auto& it : str) { it = ::tolower(it); }
+			if (str == "c:\\windows")
+			{
+				return;
+			}
+		}
+
 		if (debugInfoAvailable)
 		{
 			bool firstTimeLoad = false;
@@ -244,13 +272,94 @@ struct CoverageRunner
 
 				if (info)
 				{
-					if (SymEnumLines(proc->Handle, dllBase, NULL, NULL, SymEnumLinesCallback, &ci))
+#ifdef _WIN64
+					IMAGEHLP_SYMBOL64 img;
+#else
+					IMAGEHLP_SYMBOL img;
+#endif
+
+					if (SymGetSymFromName(proc->Handle, "PassToCPPCoverage", &img))
 					{
+						auto size = ReachabilityAnalysis::FirstInstructionSize(proc->Handle, img.Address);
+
 						if (!quiet)
 						{
-							std::cout << "[Symbols loaded]" << std::endl;
+							std::cout << "Found pass method at 0x" << std::hex << img.Address << std::dec << " with next breakpoint at +" << size << std::endl;
 						}
-						ci.SetBreakpoints(basePtr, proc->Handle);
+
+						BYTE buffer[2];
+						SIZE_T numberRead;
+						if (ReadProcessMemory(proc->Handle, reinterpret_cast<PVOID>(img.Address), buffer, 1, &numberRead) &&
+							ReadProcessMemory(proc->Handle, reinterpret_cast<PVOID>(img.Address), buffer + 1, 1, &numberRead))
+						{
+							passToCoverageMethods.push_back(
+								std::make_tuple(reinterpret_cast<PVOID>(img.Address), buffer[0],
+												reinterpret_cast<PVOID>(img.Address + size), buffer[1]));
+						}
+					}
+
+					if (SymEnumLines(proc->Handle, dllBase, NULL, NULL, SymEnumLinesCallback, &ci))
+					{
+						if (!options.UseStaticCodeAnalysis ||
+							!SymEnumSymbols(proc->Handle, dllBase, NULL, SymEnumSymbolsCallback, &ci) || ci.reachableCode.size() == 0)
+						{
+							auto err = Util::GetLastErrorAsString();
+							if (!quiet)
+							{
+								if (!options.UseStaticCodeAnalysis)
+								{
+									std::cout << "[Symbols loaded]" << std::endl;
+								}
+								else
+								{
+									std::cout << "[Symbols loaded, but static code analysis failed: " << err << "]" << std::endl;
+								}
+							}
+
+							ci.SetBreakpoints(basePtr, proc->Handle);
+						}
+						else
+						{
+							if (!quiet)
+							{
+								std::cout << "[Symbols loaded]" << std::endl;
+							}
+
+							std::sort(ci.reachableCode.begin(), ci.reachableCode.end());
+
+							std::set<PVOID> breakpointsToSet;
+							size_t index = 0;
+							for (auto it : ci.breakpointsToSet)
+							{
+								auto ptr = reinterpret_cast<size_t>(it);
+								while (index < ci.reachableCode.size() &&
+									   ptr > size_t(ci.reachableCode[index].methodStart + ci.reachableCode[index].numberBytes))
+								{
+									++index;
+								}
+
+								if (index < ci.reachableCode.size())
+								{
+									auto& item = ci.reachableCode[index];
+									if (ptr >= item.methodStart && ptr < item.methodStart + item.numberBytes)
+									{
+										if (item.state[ptr - item.methodStart] & 0x10)
+										{
+											breakpointsToSet.insert(it);
+										}
+									}
+								}
+								else
+								{
+									break;
+								}
+							}
+
+							std::cout << "[" << ci.breakpointsToSet.size() << " breakpoints total, " << breakpointsToSet.size() << " are reachable]" << std::endl;
+							swap(ci.breakpointsToSet, breakpointsToSet);
+
+							ci.SetBreakpoints(basePtr, proc->Handle);
+						}
 					}
 					else
 					{
@@ -295,7 +404,7 @@ struct CoverageRunner
 
 	void Start()
 	{
-		SymSetOptions(SYMOPT_LOAD_LINES);
+		SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_LOAD_ANYTHING);
 
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
@@ -451,7 +560,7 @@ struct CoverageRunner
 						auto name = GetFileNameFromHandle(debugEvent.u.LoadDll.hFile);
 						if (!quiet)
 						{
-							std::cout << "Loading: " << name << "... ";
+							std::cout << "Loading: " << name << "... " << std::endl;
 						}
 
 						dllNameMap[debugEvent.u.LoadDll.lpBaseOfDll] = name;
@@ -540,123 +649,202 @@ struct CoverageRunner
 									threadContextInfo.Eip--;
 #endif
 									auto addr = exception.ExceptionRecord.ExceptionAddress;
-									// std::cout << "Reset breakpoint at instruction " << std::hex << addr << std::dec << std::endl;
 
-									auto bp = process->breakPoints.find(addr);
-									if (bp != process->breakPoints.end())
+									bool found = false;
+
+									// Is this a breakpoint in one of the 'pass' functions?
+									for (auto& it : passToCoverageMethods)
 									{
-										// Write back the original data:
-										SIZE_T written;
-										WriteProcessMemory(process->Handle, addr, &bp->second.originalData, 1, &written);
-										FlushInstructionCache(process->Handle, addr, 1);
+										if (addr == std::get<0>(it))
+										{
+#if _WIN64
+											auto numberBytes = threadContextInfo.Rcx;
+											auto pointer = threadContextInfo.Rdx;
+#else
+											auto numberBytes = threadContextInfo.Eax;
+											auto pointer = threadContextInfo.Ecx;
+#endif
 
-										// Set the fact that it's a hit:
-										bp->second.lineInfo->HitCount++;
+											auto data = new char[numberBytes+1];
+											SIZE_T numberBytesRead;
+											ReadProcessMemory(process->Handle, reinterpret_cast<LPVOID>(pointer), data, numberBytes, &numberBytesRead);
+											data[numberBytesRead] = 0;
 
+											if (!quiet)
+											{
+												std::cout << "Child process notification: " << data << std::endl;
+
+												notifications.Handle(data, numberBytesRead);
+											}
+
+											// Reset the first breakpoint, set the second breakpoint
+											SIZE_T written;
+											BYTE orig = std::get<1>(it);
+											BYTE buffer = 0xCC;
+
+											WriteProcessMemory(process->Handle, std::get<0>(it), &orig, 1, &written);
+											FlushInstructionCache(process->Handle, std::get<0>(it), 1);
+
+											WriteProcessMemory(process->Handle, std::get<2>(it), &buffer, 1, &written);
+											FlushInstructionCache(process->Handle, std::get<2>(it), 1);
+
+											found = true;
+
+											// Make sure to 'hit' this breakpoint if necessary:
+											auto bp = process->breakPoints.find(std::get<0>(it));
+											if (bp != process->breakPoints.end())
+											{
+												// Set the fact that it's a hit:
+												bp->second.lineInfo->HitCount++;
+											}
+										}
+										else if (addr == std::get<2>(it))
+										{
+											// Reset the second breakpoint, set the firstbreakpoint
+											SIZE_T written;
+											BYTE buffer = 0xCC;
+											BYTE orig = std::get<3>(it);
+
+											WriteProcessMemory(process->Handle, std::get<0>(it), &buffer, 1, &written);
+											FlushInstructionCache(process->Handle, std::get<0>(it), 1);
+
+											WriteProcessMemory(process->Handle, std::get<2>(it), &orig, 1, &written);
+											FlushInstructionCache(process->Handle, std::get<2>(it), 1);
+
+											found = true;
+
+											// Make sure to 'hit' this breakpoint if necessary:
+											auto bp = process->breakPoints.find(std::get<2>(it));
+											if (bp != process->breakPoints.end())
+											{
+												// Set the fact that it's a hit:
+												bp->second.lineInfo->HitCount++;
+											}
+										}
+									}
+
+									if (found)
+									{
 										// Restore context
 										SetThreadContext(thread, &threadContextInfo);
 									}
 									else
 									{
-										// We don't need to restore the 0xCC; best to fix the RIP/EIP.
-#if _WIN64
-										threadContextInfo.Rip++;
-#else
-										threadContextInfo.Eip++;
-#endif
-										// Usually, a breakpoint is *not* a DebugBreak but rather one of our suspend calls.
-										// Iterate all threads, get stack traces:
-										for (auto& threadPair : process->Threads)
+										auto bp = process->breakPoints.find(addr);
+										if (bp != process->breakPoints.end())
 										{
-											// If the thread is the breaking thread - then we're not interested.
-											if (threadPair.first == debugEvent.dwThreadId)
-											{
-												continue;
-											}
+											// Write back the original data:
+											SIZE_T written;
+											WriteProcessMemory(process->Handle, addr, &bp->second.originalData, 1, &written);
+											FlushInstructionCache(process->Handle, addr, 1);
 
-											CONTEXT threadContextInfo;
-											threadContextInfo.ContextFlags = CONTEXT_ALL;
-											GetThreadContext(threadPair.second, &threadContextInfo);
+											// Set the fact that it's a hit:
+											bp->second.lineInfo->HitCount++;
+
+											// Restore context
+											SetThreadContext(thread, &threadContextInfo);
+										}
+										else
+										{
+											// We don't need to restore the 0xCC; best to fix the RIP/EIP.
+#if _WIN64
+											threadContextInfo.Rip++;
+#else
+											threadContextInfo.Eip++;
+#endif
+											// Usually, a breakpoint is *not* a DebugBreak but rather one of our suspend calls.
+											// Iterate all threads, get stack traces:
+											for (auto& threadPair : process->Threads)
+											{
+												// If the thread is the breaking thread - then we're not interested.
+												if (threadPair.first == debugEvent.dwThreadId)
+												{
+													continue;
+												}
+
+												CONTEXT threadContextInfo;
+												threadContextInfo.ContextFlags = CONTEXT_ALL;
+												GetThreadContext(threadPair.second, &threadContextInfo);
 
 #if _WIN64
-											STACKFRAME64 stack = { 0 };
-											stack.AddrPC.Offset = threadContextInfo.Rip;    // EIP - Instruction Pointer
-											stack.AddrPC.Mode = AddrModeFlat;
-											stack.AddrFrame.Offset = threadContextInfo.Rbp; // EBP
-											stack.AddrFrame.Mode = AddrModeFlat;
-											stack.AddrStack.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer
-											stack.AddrStack.Mode = AddrModeFlat;
-
+												STACKFRAME64 stack = { 0 };
+												stack.AddrPC.Offset = threadContextInfo.Rip;    // EIP - Instruction Pointer
+												stack.AddrPC.Mode = AddrModeFlat;
+												stack.AddrFrame.Offset = threadContextInfo.Rbp; // EBP
+												stack.AddrFrame.Mode = AddrModeFlat;
+												stack.AddrStack.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer
+												stack.AddrStack.Mode = AddrModeFlat;
 #else
-											STACKFRAME64 stack = { 0 };
-											stack.AddrPC.Offset = threadContextInfo.Eip;    // EIP - Instruction Pointer
-											stack.AddrPC.Mode = AddrModeFlat;
-											stack.AddrFrame.Offset = threadContextInfo.Ebp; // EBP
-											stack.AddrFrame.Mode = AddrModeFlat;
-											stack.AddrStack.Offset = threadContextInfo.Esp; // ESP - Stack Pointer
-											stack.AddrStack.Mode = AddrModeFlat;
+												STACKFRAME64 stack = { 0 };
+												stack.AddrPC.Offset = threadContextInfo.Eip;    // EIP - Instruction Pointer
+												stack.AddrPC.Mode = AddrModeFlat;
+												stack.AddrFrame.Offset = threadContextInfo.Ebp; // EBP
+												stack.AddrFrame.Mode = AddrModeFlat;
+												stack.AddrStack.Offset = threadContextInfo.Esp; // ESP - Stack Pointer
+												stack.AddrStack.Mode = AddrModeFlat;
 #endif
 
-											// Let's initialize this once for our process.
-											static SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO *>(calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1));
-											symbol->MaxNameLen = 255;
-											symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+												// Let's initialize this once for our process.
+												static SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO *>(calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1));
+												symbol->MaxNameLen = 255;
+												symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-											BOOL status = S_OK;
+												BOOL status = S_OK;
 
-											std::vector<std::tuple<std::string, DWORD64, std::string>> callStack;
+												std::vector<std::tuple<std::string, DWORD64, std::string>> callStack;
 
-											do
-											{
-												// Process stack item:
-												std::ostringstream oss;
-
-												if (!SymFromAddr(process->Handle, stack.AddrPC.Offset, 0, symbol))
+												do
 												{
-													// Ignore; no source
-												}
-												else
-												{
-													DWORD  dwDisplacement;
-													IMAGEHLP_LINE64 line;
+													// Process stack item:
+													std::ostringstream oss;
 
-													line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-
-													// Get information from PC
-													if (SymGetLineFromAddr64(process->Handle, stack.AddrPC.Offset, &dwDisplacement, &line))
+													if (!SymFromAddr(process->Handle, stack.AddrPC.Offset, 0, symbol))
 													{
-														if (coverageContext.PathMatches(line.FileName))
-														{
-															std::string filename(line.FileName);
+														// Ignore; no source
+													}
+													else
+													{
+														DWORD  dwDisplacement;
+														IMAGEHLP_LINE64 line;
 
-															callStack.push_back(std::make_tuple(filename, line.LineNumber, symbol->Name));
+														line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+														// Get information from PC
+														if (SymGetLineFromAddr64(process->Handle, stack.AddrPC.Offset, &dwDisplacement, &line))
+														{
+															if (coverageContext.PathMatches(line.FileName))
+															{
+																std::string filename(line.FileName);
+
+																callStack.push_back(std::make_tuple(filename, line.LineNumber, symbol->Name));
+															}
 														}
 													}
+
+													// Get next item from stack trace:
+													status = StackWalk64(IMAGE_FILE_MACHINE_AMD64, process->Handle, thread, &stack,
+																		 &threadContextInfo, ReadProcessMemoryInt, SymFunctionTableAccess64,
+																		 SymGetModuleBase64, 0);
 												}
+												while (status);
 
-												// Get next item from stack trace:
-												status = StackWalk64(IMAGE_FILE_MACHINE_AMD64, process->Handle, thread, &stack,
-																	 &threadContextInfo, ReadProcessMemoryInt, SymFunctionTableAccess64,
-																	 SymGetModuleBase64, 0);
-											}
-											while (status);
-
-											// Update the profile graph:
-											for (size_t i = callStack.size(); i > 0; --i)
-											{
-												auto& item = callStack[i - 1];
-												auto line = std::get<1>(item);
-												auto frame = std::get<2>(item);
-
-												auto it = profileInfo.find(frame);
-												if (it == profileInfo.end())
+												// Update the profile graph:
+												for (size_t i = callStack.size(); i > 0; --i)
 												{
-													ProfileFrame* frameInfo = new ProfileFrame(std::get<0>(item), line, i == 1);
-													profileInfo[frame] = std::unique_ptr<ProfileFrame>(frameInfo);
-												}
-												else
-												{
-													it->second->Update(line, i == 1);
+													auto& item = callStack[i - 1];
+													auto line = std::get<1>(item);
+													auto frame = std::get<2>(item);
+
+													auto it = profileInfo.find(frame);
+													if (it == profileInfo.end())
+													{
+														ProfileFrame* frameInfo = new ProfileFrame(std::get<0>(item), line, i == 1);
+														profileInfo[frame] = std::unique_ptr<ProfileFrame>(frameInfo);
+													}
+													else
+													{
+														it->second->Update(line, i == 1);
+													}
 												}
 											}
 										}
@@ -749,10 +937,17 @@ struct CoverageRunner
 				deep = (deep < 0) ? 0 : deep;
 				shallow = (shallow < 0) ? 0 : shallow;
 
-				(*merged)[jt.first].Deep += deep;
-				(*merged)[jt.first].Shallow += shallow;
+				(*merged)[size_t(jt.first)].Deep += deep;
+				(*merged)[size_t(jt.first)].Shallow += shallow;
 			}
 		}
+
+		if (!quiet)
+		{
+			std::cout << "Filtering post-process notifications..." << std::endl;
+		}
+
+		coverageContext.Filter(notifications);
 
 		if (!quiet)
 		{
