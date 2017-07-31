@@ -40,6 +40,7 @@
       <Filter>Disassembler</Filter>
     </ClInclude>
     <ClInclude Include="RuntimeNotifications.h" />
+    <ClInclude Include="MergeRunner.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Disassembler\X86GenDisassemblerTables.inc">

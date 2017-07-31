@@ -1,5 +1,6 @@
 #include "CoverageRunner.h"
 #include "RuntimeOptions.h"
+#include "MergeRunner.h"
 
 #include <algorithm>
 #include <string>
@@ -16,7 +17,13 @@ void ShowHelp()
 	std::cout << "  -o [name]:     write output information to the given filename" << std::endl;
 	std::cout << "  -p [name]:     assume source code can be found in the given path name" << std::endl;
     std::cout << "  -w [name]:     Working directory where we execute the given executable filename" << std::endl;
+    std::cout << "  -m [name]:     Merge current output to given path name or copy output if not existing" << std::endl;
 	std::cout << "  -- [name]:     run coverage on the given executable filename" << std::endl;
+    std::cout << "Return code:" << std::endl;
+    std::cout << "  0:             Success run" << std::endl;
+    std::cout << "  1:             Executable missing" << std::endl;
+    std::cout << "  2:             Coverage failure" << std::endl;
+    std::cout << "  3:             Merge failure" << std::endl;
 	std::cout << std::endl;
 }
 
@@ -26,8 +33,6 @@ void ParseCommandLine(int argc, const char **argv)
 
     LPTSTR cmd = GetCommandLine();
     std::string cmdLine = cmd;
-    
-	
 	
 	// Parse arguments
 	for (int i = 1; i < argc; ++i)
@@ -101,6 +106,17 @@ void ParseCommandLine(int argc, const char **argv)
             std::string t(argv[i]);
             opts.WorkingDirectory = t;
         }
+        else if (s == "-m")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected merge path name.");
+            }
+
+            std::string t(argv[i]);
+            opts.MergedOutput = t;
+        }
 		else if (s == "--")
 		{
 			++i;
@@ -124,6 +140,13 @@ void ParseCommandLine(int argc, const char **argv)
 			throw std::exception(message.c_str());
 		}
 	}
+
+    // Check we can merge
+    if (opts.ExportFormat != RuntimeOptions::Native && !opts.MergedOutput.empty())
+    {
+        throw std::exception("Merge mode is only for RuntimeOptions::Native mode.");
+    }
+
     auto idx = cmdLine.find(" -- ");
     if (idx == std::string::npos)
     {
@@ -202,8 +225,20 @@ int main(int argc, const char** argv)
         return 2; // Coverage error
 	}
 
-	// std::string s;
-	// std::getline(std::cin, s);
-
+    // Merge
+    try
+    {
+        if(!opts.MergedOutput.empty())
+        {
+            std::cout << "Merge into " << opts.MergedOutput << std::endl;
+            MergeRunner merge(opts);
+            merge.execute();
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 3; // Coverage error
+    }
 	return 0;
 }

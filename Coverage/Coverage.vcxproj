@@ -147,6 +147,7 @@
     <ClInclude Include="FileCallbackInfo.h" />
     <ClInclude Include="FileInfo.h" />
     <ClInclude Include="FileLineInfo.h" />
+    <ClInclude Include="MergeRunner.h" />
     <ClInclude Include="ProcessInfo.h" />
     <ClInclude Include="ProfileNode.h" />
     <ClInclude Include="RuntimeNotifications.h" />
