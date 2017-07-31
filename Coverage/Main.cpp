@@ -174,7 +174,7 @@ int main(int argc, const char** argv)
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "Error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 		
 		// When you miss --, exception is throw SO your need syntax help !
         ShowHelp();
@@ -185,7 +185,7 @@ int main(int argc, const char** argv)
 	{
 		if(opts.Executable.empty())
 		{
-            std::cout << "Error: Missing executable file" << std::endl;
+            std::cerr << "Error: Missing executable file" << std::endl;
 			ShowHelp();
             return 1; // Command error
 		}
@@ -198,7 +198,7 @@ int main(int argc, const char** argv)
 	}
 	catch(const std::exception& e)
 	{
-		std::cout << "Error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
         return 2; // Coverage error
 	}
 
