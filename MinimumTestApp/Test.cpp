@@ -3,7 +3,7 @@
 
 #include <Windows.h>
 
-extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) { __nop(); } }
+extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) { __noop(); } }
 
 typedef int(__cdecl *InvokeMethodSignature)();
 
@@ -72,7 +72,6 @@ int main()
 	std::string opts = "IGNORE FOLDER: MinimumTestApp";
 	PassToCPPCoverage(opts.size(), opts.data());
 
-	/*
 	TestNamespace::Foo::Test();
 	
 	TestDLL();
@@ -80,6 +79,6 @@ int main()
 	{
 		TestFoo(0);
 	}
-	*/
+
 	return 0;
 }

@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using EnvDTE;
+using System.Collections.ObjectModel;
 
 namespace NubiloSoft.CoverageExt.Report
 {
@@ -48,6 +49,7 @@ namespace NubiloSoft.CoverageExt.Report
 
             // Link data to UI.
             CollectionViewSource itemCollectionViewSource = (CollectionViewSource)(FindResource("ItemCollectionViewSource"));
+            itemCollectionViewSource.Source = typeof(List);
             itemCollectionViewSource.Source = this.loaded;
 
             BindingOperations.EnableCollectionSynchronization(this.loaded, lockObject);
@@ -180,12 +182,15 @@ namespace NubiloSoft.CoverageExt.Report
                     this.loaded.Add(new FileCoverage() { Count = count, Total = total, Name = "Grand total", Filename = null });
                 }
 
-                this.loaded.AddRange(dict.
-                    OrderBy((a) => a.Key).
+                this.loaded.Clear();
+                foreach (var item in dict.
+                    OrderBy((a)=>a.Key).
                     Where((a) => a.Value.Filename.IndexOf(".test", StringComparison.InvariantCultureIgnoreCase) < 0 && a.Value.Total > 0).
-                    Select((a) => a.Value));
+                    Select((a) => a.Value))
+                {
+                    this.loaded.Add(item);
+                }
             }
-
         }
 
         private void MyToolWindow_GotFocus(object sender, RoutedEventArgs e)
