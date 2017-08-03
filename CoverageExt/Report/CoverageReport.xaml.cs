@@ -49,7 +49,7 @@ namespace NubiloSoft.CoverageExt.Report
 
             // Link data to UI.
             CollectionViewSource itemCollectionViewSource = (CollectionViewSource)(FindResource("ItemCollectionViewSource"));
-            itemCollectionViewSource.Source = typeof(List);
+            itemCollectionViewSource.Source = new ObservableCollection<FileCoverage>();
             itemCollectionViewSource.Source = this.loaded;
 
             BindingOperations.EnableCollectionSynchronization(this.loaded, lockObject);
