@@ -413,29 +413,37 @@ struct CoverageRunner
 		ZeroMemory(&pi, sizeof(pi));
 
 		LPSTR args = NULL;
-		if (options.ExecutableArguments.size() > 0)
+		if( !options.ExecutableArguments.empty() )
 		{
 			args = &*options.ExecutableArguments.begin();
 		}
 
-		auto result = CreateProcess(options.Executable.c_str(), args, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+        // Read working directory (if empty need to set NULL)
+        const char* workingDirectory = NULL;
+        if( !options.WorkingDirectory.empty() )
+        {
+            workingDirectory = options.WorkingDirectory.c_str();
+        }
+
+		auto result = CreateProcess(NULL, args, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, workingDirectory, &si, &pi);
 		if (result == 0)
 		{
 			if (pi.dwProcessId == 0)
 			{
 				if (!quiet)
 				{
-					std::cout << "Error running process; the most likely cause of this is a x86/x64 mix-up. Message: " << Util::GetLastErrorAsString() << std::endl;
+                    const std::string msg = "Error running process; the most likely cause of this is a x86/x64 mix-up. Message " + Util::GetLastErrorAsString();
+                    throw std::exception(msg.c_str());
 				}
 			}
 			else
 			{
 				if (!quiet)
 				{
-					std::cout << "Error running process: " << Util::GetLastErrorAsString() << std::endl;
+                    const std::string msg = "Error running process: " + Util::GetLastErrorAsString();
+					throw std::exception(msg.c_str());
 				}
 			}
-			return;
 		}
 
 		/*
@@ -960,6 +968,7 @@ struct CoverageRunner
 			outputFile = options.Executable + ".cov";
 		}
 
+        // Write report of current execution
 		coverageContext.WriteReport(options.ExportFormat, mergedInfo, outputFile);
 
 		if (!quiet)

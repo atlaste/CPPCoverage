@@ -3,7 +3,7 @@
 
 #include <Windows.h>
 
-extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) { __nop(); } }
+extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) { __noop(); } }
 
 typedef int(__cdecl *InvokeMethodSignature)();
 

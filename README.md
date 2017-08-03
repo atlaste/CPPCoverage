@@ -14,7 +14,7 @@ Prerequisites: VS2013 or VS2015. Any edition should work, even though this is on
 Working with CPPCoverage is a breeze. Basically install and use, there's nothing more to it:
 
 - Either create a standard C++ / MS Test application, or run a simple C++ / console application. Note that OpenCppCoverage assumes that there is no user input during the test run.
-- Build your solution in Debug mode.
+- Build your solution in Debug mode. Make sure to compile with '/DEBUG'; '/DEBUG:FastLink' is currently unsupported .
 - Right-click in solution explorer on the test or application project, click "Run code coverage".
 - Open a file that you want to show coverage info for. If the file is already open, close it and open it again. 
 - For an overview, go to Tools -> Coverage report

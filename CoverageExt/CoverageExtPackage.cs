@@ -24,7 +24,7 @@ namespace NubiloSoft.CoverageExt
     /// </summary>
 
     [PackageRegistration(UseManagedResourcesOnly = true)]
-    [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
+    [InstalledProductRegistration("#110", "#115", "1.0", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject)]
     [ProvideToolWindow(typeof(Report.CoverageReportToolWindow))]
@@ -158,6 +158,18 @@ namespace NubiloSoft.CoverageExt
                         {
                             IVCCollection configs = (IVCCollection)vcproj.Configurations;
                             VCConfiguration cfg = (VCConfiguration)vcproj.ActiveConfiguration;
+                            VCDebugSettings debug = (VCDebugSettings)cfg.DebugSettings;
+
+                            string command = null;
+                            string arguments = null;
+                            string workingDirectory = null;
+                            if(debug != null)
+                            {
+                                command          = cfg.Evaluate(debug.Command);
+                                workingDirectory = cfg.Evaluate(debug.WorkingDirectory);
+                                arguments        = cfg.Evaluate(debug.CommandArguments);
+                            }
+
                             VCPlatform currentPlatform = (VCPlatform)cfg.Platform;
 
                             string platform = currentPlatform == null ? null : currentPlatform.Name;
@@ -188,9 +200,10 @@ namespace NubiloSoft.CoverageExt
                                 }
                             }
 
-                            var primaryOutput = cfg.PrimaryOutput;
+                            if(command == null || String.IsNullOrEmpty(command))
+                                command = cfg.PrimaryOutput;
 
-                            if (primaryOutput != null)
+                            if(command != null)
                             {
                                 var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
 
@@ -198,8 +211,10 @@ namespace NubiloSoft.CoverageExt
                                 executor.Start(
                                     solutionFolder,
                                     platform,
-                                    System.IO.Path.GetDirectoryName(primaryOutput),
-                                    System.IO.Path.GetFileName(primaryOutput));
+                                    System.IO.Path.GetDirectoryName(command),
+                                    System.IO.Path.GetFileName(command),
+                                    workingDirectory,
+                                    arguments);
                             }
                         }
                     }

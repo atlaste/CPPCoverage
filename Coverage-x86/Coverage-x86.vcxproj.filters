@@ -27,6 +27,7 @@
       <Filter>Disassembler</Filter>
     </ClInclude>
     <ClInclude Include="..\Coverage\RuntimeNotifications.h" />
+    <ClInclude Include="..\Coverage\MergeRunner.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Coverage\Main.cpp" />

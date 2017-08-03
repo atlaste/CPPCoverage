@@ -90,7 +90,7 @@ namespace NubiloSoft.CoverageExt {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CoverageReport.
+        ///   Looks up a localized string similar to Coverage report.
         /// </summary>
         public static string ToolWindowTitle {
             get {
