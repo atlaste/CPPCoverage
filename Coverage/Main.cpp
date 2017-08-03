@@ -1,6 +1,8 @@
 #include "CoverageRunner.h"
 #include "RuntimeOptions.h"
+#include "MergeRunner.h"
 
+#include <algorithm>
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -14,7 +16,14 @@ void ShowHelp()
 	std::cout << "  -format [fmt]: specify 'native' for native coverage format or 'cobertura' for cobertura XML" << std::endl;
 	std::cout << "  -o [name]:     write output information to the given filename" << std::endl;
 	std::cout << "  -p [name]:     assume source code can be found in the given path name" << std::endl;
+    std::cout << "  -w [name]:     Working directory where we execute the given executable filename" << std::endl;
+    std::cout << "  -m [name]:     Merge current output to given path name or copy output if not existing" << std::endl;
 	std::cout << "  -- [name]:     run coverage on the given executable filename" << std::endl;
+    std::cout << "Return code:" << std::endl;
+    std::cout << "  0:             Success run" << std::endl;
+    std::cout << "  1:             Executable missing" << std::endl;
+    std::cout << "  2:             Coverage failure" << std::endl;
+    std::cout << "  3:             Merge failure" << std::endl;
 	std::cout << std::endl;
 }
 
@@ -22,27 +31,9 @@ void ParseCommandLine(int argc, const char **argv)
 {
 	RuntimeOptions& opts = RuntimeOptions::Instance();
 
-	LPTSTR cmd = GetCommandLine();
-	std::string cmdLine = cmd;
-
-	auto idx = cmdLine.find(" -- ");
-	if (idx == std::string::npos)
-	{
-		throw std::exception("Expected executable filename in command line.");
-	}
-
-	idx += 2;
-	while (idx < cmdLine.size() && cmdLine[idx + 1] == ' ') { ++idx; }
-
-	std::string childCommand = cmdLine.substr(idx);
-	if (childCommand.size() == 0)
-	{
-		throw std::exception("Expected executable filename in command line.");
-	}
-
-	opts.ExecutableArguments = childCommand;
-	cmdLine = cmdLine.substr(0, idx);
-
+    LPTSTR cmd = GetCommandLine();
+    std::string cmdLine = cmd;
+	
 	// Parse arguments
 	for (int i = 1; i < argc; ++i)
 	{
@@ -104,6 +95,28 @@ void ParseCommandLine(int argc, const char **argv)
 			std::string t(argv[i]);
 			opts.CodePath = t;
 		}
+        else if (s == "-w")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected environment path name.");
+            }
+
+            std::string t(argv[i]);
+            opts.WorkingDirectory = t;
+        }
+        else if (s == "-m")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected merge path name.");
+            }
+
+            std::string t(argv[i]);
+            opts.MergedOutput = t;
+        }
 		else if (s == "--")
 		{
 			++i;
@@ -122,22 +135,82 @@ void ParseCommandLine(int argc, const char **argv)
 		}
 		else
 		{
-			throw std::exception("Incorrect parameter.");
+            std::string message("Incorrect parameter: ");
+            message += s;
+			throw std::exception(message.c_str());
 		}
 	}
+
+    // Check we can merge
+    if (opts.ExportFormat != RuntimeOptions::Native && !opts.MergedOutput.empty())
+    {
+        throw std::exception("Merge mode is only for RuntimeOptions::Native mode.");
+    }
+
+    auto idx = cmdLine.find(" -- ");
+    if (idx == std::string::npos)
+    {
+        throw std::exception("Expected executable filename in command line.");
+    }
+
+    idx += 2;
+    while (idx < cmdLine.size() && cmdLine[idx + 1] == ' ') { ++idx; }
+
+    std::string childCommand = cmdLine.substr(idx+1);
+    if (childCommand.size() == 0)
+    {
+        throw std::exception("Expected executable filename in command line.");
+    }
+
+    opts.ExecutableArguments = childCommand;
+    /*
+    size_t pos = opts.ExecutableArguments.find(opts.Executable);
+    opts.ExecutableArguments = opts.ExecutableArguments.substr( pos + opts.Executable.size());
+    if(opts.ExecutableArguments[0] == '\"')
+        opts.ExecutableArguments = opts.ExecutableArguments.substr( std::min<size_t>(2, opts.ExecutableArguments.size()) );
+    else if(!opts.ExecutableArguments.empty())
+        opts.ExecutableArguments = opts.ExecutableArguments.substr(1);
+    */
+#ifdef _DEBUG
+    std::cout << "Executable: " << opts.Executable << std::endl;
+    std::cout << "Arguments: "  << opts.ExecutableArguments << std::endl;
+#endif
 }
 
 int main(int argc, const char** argv)
 {
+#ifdef _DEBUG
+    int parsing = 0;
+    std::cout << "--- Arguments --- " << std::endl;
+    while(parsing < argc)
+    {
+        std::cout << parsing << ": " << argv[parsing] << std::endl;
+        ++parsing;
+    }
+#endif
+
 	RuntimeOptions& opts = RuntimeOptions::Instance();
 
 	try
 	{
 		ParseCommandLine(argc, argv);
-
-		if (opts.Executable.size() == 0)
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << "Error: " << e.what() << std::endl;
+		
+		// When you miss --, exception is throw SO your need syntax help !
+        ShowHelp();
+        return 1; // Command error
+	}
+	
+	try
+	{
+		if(opts.Executable.empty())
 		{
+            std::cerr << "Error: Missing executable file" << std::endl;
 			ShowHelp();
+            return 1; // Command error
 		}
 		else
 		{
@@ -146,13 +219,26 @@ int main(int argc, const char** argv)
 			debug.Start();
 		}
 	}
-	catch (std::exception& e)
+	catch(const std::exception& e)
 	{
-		std::cout << "Error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
+        return 2; // Coverage error
 	}
 
-	// std::string s;
-	// std::getline(std::cin, s);
-
+    // Merge
+    try
+    {
+        if(!opts.MergedOutput.empty())
+        {
+            std::cout << "Merge into " << opts.MergedOutput << std::endl;
+            MergeRunner merge(opts);
+            merge.execute();
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 3; // Coverage error
+    }
 	return 0;
 }

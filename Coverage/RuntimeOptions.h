@@ -34,6 +34,8 @@ public:
 
 	std::string OutputFile;
 
+    std::string MergedOutput;
+    std::string WorkingDirectory;
 	std::string CodePath;
 	std::string Executable;
 	std::string ExecutableArguments;
