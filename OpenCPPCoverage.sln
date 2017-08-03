@@ -1,19 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSExt.CoverageExt", "CoverageExt\VSExt.CoverageExt.csproj", "{44D448F1-CEF9-420E-B49A-C3D3B15CE653}"
-	ProjectSection(ProjectDependencies) = postProject
-		{70397440-C4F5-4091-8DBE-F2FFE6107D2D} = {70397440-C4F5-4091-8DBE-F2FFE6107D2D}
-		{BAB94FD2-1956-45B8-8D2F-904519D7FFA4} = {BAB94FD2-1956-45B8-8D2F-904519D7FFA4}
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{7A7E6ED9-8154-4643-A506-1E1714A42F13}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library", "Library\Library.vcxproj", "{1B468F45-09F6-4DCE-8BDD-A831066F3175}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinimumTest", "MinimumTest\MinimumTest.vcxproj", "{6BD563E5-54E4-41B2-963E-708AEF612D20}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Git stuff", "Git stuff", "{CBE50351-048D-4762-87DD-0FB7AC596E8D}"
 	ProjectSection(SolutionItems) = preProject
@@ -21,11 +11,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Git stuff", "Git stuff", "{
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Coverage", "Coverage", "{8A6341B3-9141-4255-8C2B-38343873451F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VSExt.CoverageExt", "CoverageExt\VSExt.CoverageExt.csproj", "{44D448F1-CEF9-420E-B49A-C3D3B15CE653}"
+	ProjectSection(ProjectDependencies) = postProject
+		{70397440-C4F5-4091-8DBE-F2FFE6107D2D} = {70397440-C4F5-4091-8DBE-F2FFE6107D2D}
+		{BAB94FD2-1956-45B8-8D2F-904519D7FFA4} = {BAB94FD2-1956-45B8-8D2F-904519D7FFA4}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Library", "Library\Library.vcxproj", "{1B468F45-09F6-4DCE-8BDD-A831066F3175}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinimumTest", "MinimumTest\MinimumTest.vcxproj", "{6BD563E5-54E4-41B2-963E-708AEF612D20}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Coverage-x64", "Coverage\Coverage.vcxproj", "{70397440-C4F5-4091-8DBE-F2FFE6107D2D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Coverage-x86", "Coverage-x86\Coverage-x86.vcxproj", "{BAB94FD2-1956-45B8-8D2F-904519D7FFA4}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Coverage", "Coverage", "{8A6341B3-9141-4255-8C2B-38343873451F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MinimumTestApp", "MinimumTestApp\MinimumTestApp.vcxproj", "{BF2ED12B-E0FC-4FD1-8F95-CEC239453846}"
 EndProject
