@@ -214,7 +214,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
             IWpfTextViewLineCollection textViewLines = view.TextViewLines;
 
-            if (textViewLines == null) { return; }
+            if (textViewLines == null || line.Extent == null) { return; }
 
             int lineno = 1 + view.TextSnapshot.GetLineNumberFromPosition(line.Extent.Start);
 
@@ -261,12 +261,12 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 SnapshotSpan span = new SnapshotSpan(view.TextSnapshot, Span.FromBounds(line.Start, line.End));
                 Geometry g = textViewLines.GetMarkerGeometry(span);
 
-                double x = g.Bounds.X + g.Bounds.Width + 20;
-                if (x < view.ViewportWidth / 2) { x = view.ViewportWidth / 2; }
-                g = new RectangleGeometry(new Rect(x, g.Bounds.Y, 30, g.Bounds.Height));
-
-                if (g != null)
+                if (g != null) // Yes, this apparently happens...
                 {
+                    double x = g.Bounds.X + g.Bounds.Width + 20;
+                    if (x < view.ViewportWidth / 2) { x = view.ViewportWidth / 2; }
+                    g = new RectangleGeometry(new Rect(x, g.Bounds.Y, 30, g.Bounds.Height));
+
                     Label lbl = new Label();
                     lbl.FontSize = 7;
                     lbl.Foreground = Brushes.Black;
