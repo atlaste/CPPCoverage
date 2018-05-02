@@ -237,7 +237,7 @@ struct FileCallbackInfo
 
 			double lineRate = covered / total;
 
-			ofs << "<class name=\"" << name << " filename=\"" << it.first.substr(2) << "\" line-rate=\"" << lineRate << "\">" << std::endl;
+			ofs << "<class name=\"" << name << "\" filename=\"" << it.first.substr(2) << "\" line-rate=\"" << lineRate << "\">" << std::endl;
 			ofs << "<lines>" << std::endl;
 
 			for (size_t i = 0; i < ptr->numberLines; ++i)
