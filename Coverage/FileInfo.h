@@ -78,7 +78,9 @@ struct FileInfo
 		{
 			// Check for the secret 0xFeeFee line number that hides stuff. Also, the lineNumber == numberLines happens 
 			// a lot, but is actually out-of-bounds. We ignore both.
-			if (lineNumber != 0xFeeFee - 1 &&
+			//
+			// Update: Apparently Microsoft has added new reserved line numbers to their debugging symbols. Joy...
+			if (lineNumber < 0xf00000 - 1 &&
 				lineNumber != numberLines)
 			{
 				if (!RuntimeOptions::Instance().Quiet)

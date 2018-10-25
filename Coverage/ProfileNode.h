@@ -30,7 +30,7 @@ struct ProfileFrame
 
 	void Update(DWORD64 lineNumber, bool shallow)
 	{
-		if (lineNumber != 0xFeeFee)
+		if (lineNumber < 0xf00000)
 		{
 			auto it = lineHitCount.find(lineNumber);
 			if (it == lineHitCount.end())
