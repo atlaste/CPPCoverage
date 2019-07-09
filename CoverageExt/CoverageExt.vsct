@@ -46,7 +46,10 @@
       <Group guid="guidProjectSpecificMenuCmdSet" id="RunCoverageMenuGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
       </Group>
-      
+
+      <Group guid="guidFileSpecificMenuCmdSet" id="ShowCoverageMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
     </Groups>
     
     <!--This section defines the elements the user can interact with, like a menu command or a button 
@@ -71,8 +74,19 @@
           <ButtonText>Run code coverage</ButtonText>
         </Strings>
       </Button>
+
+      <Button guid="guidFileSpecificMenuCmdSet" id="cmdCoverageShow" priority="0x0100" type="Button">
+        <Parent guid="guidFileSpecificMenuCmdSet" id="ShowCoverageMenuGroup" />
+        <!--<Icon guid="guidImages" id="bmpPic1" />-->
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <!-- CommandFlag DefaultInvisible - Apparently not working correctly. Unsure why. -->
+        <Strings>
+          <CommandName>cmdCoverageShow</CommandName>
+          <ButtonText>Show coverage</ButtonText>
+        </Strings>
+      </Button>      
     </Buttons>
-   
+    
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
     <Bitmaps>
       <!--  The bitmap id is defined in a way that is a little bit different from the others: 
@@ -94,13 +108,17 @@
       <!-- Main menu item (Generate report) -->
       <IDSymbol name="CoverageMenuGroup" value="0x1020" />
       <IDSymbol name="cmdCoverageReport" value="0x0100" />
-      
     </GuidSymbol>
 
     <GuidSymbol name="guidProjectSpecificMenuCmdSet" value="{CAA6399C-8807-43AB-A999-2CA0DB82A56C}">
       <!-- Context menu (Run coverage) -->
       <IDSymbol name="RunCoverageMenuGroup" value="0x1021" />
       <IDSymbol name="cmdCoverageGenerate" value="0x0102"/>
+    </GuidSymbol>
+
+    <GuidSymbol name ="guidFileSpecificMenuCmdSet" value="{0D8FDCC0-98E9-45AD-915A-D3A3BF5DE720}">
+      <IDSymbol name ="ShowCoverageMenuGroup" value="0x1022"/>
+      <IDSymbol name ="cmdCoverageShow" value="0x0104"/>
     </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{297f4203-5709-4993-bf1d-1d63aa74c564}" >

@@ -1,14 +1,13 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Text.Formatting;
+using NubiloSoft.CoverageExt.Data;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Formatting;
-using NubiloSoft.CoverageExt.Data;
-using System.Globalization;
 
 namespace NubiloSoft.CoverageExt.CodeRendering
 {
@@ -42,32 +41,66 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             this.layer = view.GetAdornmentLayer("CodeCoverage");
             this.layer.Opacity = 0.4;
 
+            // listen to events that change the setting properties
+            Settings.Instance.OnShowCodeCoveragePropertyChanged += Instance_OnShowCodeCoveragePropertyChanged;
+            Settings.Instance.OnColorPropertyChanged += Instance_OnColorPropertyChanged;
+
             // Listen to any event that changes the layout (text changes, scrolling, etc)
             view.LayoutChanged += OnLayoutChanged;
 
-            // Color for uncovered code:
-            Brush brush = new SolidColorBrush(Color.FromArgb(0xFF, 0xFF, 0xCF, 0xB8));
-            brush.Freeze();
-            Brush penBrush = new SolidColorBrush(Color.FromArgb(0xD0, 0xFF, 0xCF, 0xB8));
-            penBrush.Freeze();
-            Pen pen = new Pen(penBrush, 0.5);
-            pen.Freeze();
-
-            uncoveredBrush = brush;
-            uncoveredPen = pen;
-
-            // Color for covered code:
-            brush = new SolidColorBrush(Color.FromArgb(0xFF, 0xBD, 0xFC, 0xBF));
-            brush.Freeze();
-            penBrush = new SolidColorBrush(Color.FromArgb(0xD0, 0xBD, 0xFC, 0xBF));
-            penBrush.Freeze();
-            pen = new Pen(penBrush, 0.5);
-            pen.Freeze();
-
-            coveredBrush = brush;
-            coveredPen = pen;
+            // make sure the burshes are atleast initialized once
+            InitializeColors();
         }
 
+        /// <summary>
+        /// Acts on changes for the settings OnShowCodeCoverage
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Instance_OnShowCodeCoveragePropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            Redraw();
+        }
+
+        /// <summary>
+        /// Acts on change for the settings color(s)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Instance_OnColorPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            InitializeColors();
+            Redraw();
+        }
+
+        /// <summary>
+        /// Initializes the brushes, might also be used to reinitialize them
+        /// </summary>
+        private void InitializeColors()
+        {
+            // Color for uncovered code:
+            uncoveredBrush = new SolidColorBrush(Settings.Instance.UncoveredBrushColor);
+            uncoveredBrush.Freeze();
+
+            Brush penBrush = new SolidColorBrush(Settings.Instance.UncoveredPenColor);
+            penBrush.Freeze();
+            uncoveredPen = new Pen(penBrush, 0.5);
+            uncoveredPen.Freeze();
+
+            // Color for covered code:
+            coveredBrush = new SolidColorBrush(Settings.Instance.CoveredBrushColor);
+            coveredBrush.Freeze();
+
+            penBrush = new SolidColorBrush(Settings.Instance.CoveredPenColor);
+            penBrush.Freeze();
+            coveredPen = new Pen(penBrush, 0.5);
+            coveredPen.Freeze();
+        }
+
+        /// <summary>
+        /// Gets the active filename
+        /// </summary>
+        /// <returns></returns>
         public string GetActiveFilename()
         {
             try
@@ -81,46 +114,69 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         }
 
         /// <summary>
-        /// On layout change add the adornment to any reformatted lines
+        /// Does a full redraw of the addornment layer
         /// </summary>
-        private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
+        private void Redraw()
+        {
+            if (Settings.Instance.ShowCodeCoverage)
+            {
+                InitCurrent();
+
+                foreach (ITextViewLine line in view.TextViewLines)
+                {
+                    HighlightCoverage(currentCoverage, currentProfile, line);
+                }
+            }
+            else
+            {
+                layer.RemoveAllAdornments();
+            }
+        }
+
+        /// <summary>
+        /// Initializes the current coverage data
+        /// </summary>
+        private void InitCurrent()
         {
             CoverageState[] currentFile = new CoverageState[0];
             ProfileVector currentProf = new Data.ProfileVector(0);
 
-            string activeFilename = GetActiveFilename();
-            if (activeFilename != null)
+            if (Settings.Instance.ShowCodeCoverage)
             {
-                Tuple<BitVector, ProfileVector> activeReport = null;
-                DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
-
-                var dataProvider = Data.ReportManagerSingleton.Instance(dte);
-                if (dataProvider != null)
+                string activeFilename = GetActiveFilename();
+                if (activeFilename != null)
                 {
-                    var coverageData = dataProvider.UpdateData();
-                    if (coverageData != null && activeFilename != null)
+                    Tuple<BitVector, ProfileVector> activeReport = null;
+                    DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
+
+                    var dataProvider = Data.ReportManagerSingleton.Instance(dte);
+                    if (dataProvider != null)
                     {
-                        if (coverageData.FileDate >= activeFileLastWrite)
+                        var coverageData = dataProvider.UpdateData();
+                        if (coverageData != null && activeFilename != null)
                         {
-                            activeReport = coverageData.GetData(activeFilename);
+                            if (coverageData.FileDate >= activeFileLastWrite)
+                            {
+                                activeReport = coverageData.GetData(activeFilename);
+                            }
                         }
                     }
-                }
 
-                if (activeReport != null)
-                {
-                    currentProf = activeReport.Item2;
-                    currentFile = new CoverageState[activeReport.Item1.Count];
-
-                    foreach (var item in activeReport.Item1.Enumerate())
+                    if (activeReport != null)
                     {
-                        if (item.Value)
+                        currentProf = activeReport.Item2;
+                        currentFile = new CoverageState[activeReport.Item1.Count];
+
+                        foreach (var item in activeReport.Item1.Enumerate())
                         {
-                            currentFile[item.Key] = CoverageState.Covered;
-                        }
-                        else
-                        {
-                            currentFile[item.Key] = CoverageState.Uncovered;
+                            if (item.Value)
+                            {
+                                currentFile[item.Key] = CoverageState.Covered;
+                            }
+                            else
+                            {
+                                currentFile[item.Key] = CoverageState.Uncovered;
+                            }
                         }
                     }
                 }
@@ -128,6 +184,14 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
             this.currentCoverage = currentFile;
             this.currentProfile = currentProf;
+        }
+
+        /// <summary>
+        /// On layout change add the adornment to any reformatted lines
+        /// </summary>
+        private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
+        {
+            InitCurrent();
 
             foreach (ITextViewLine line in e.NewOrReformattedLines)
             {

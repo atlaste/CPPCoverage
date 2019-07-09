@@ -49,7 +49,7 @@ namespace NubiloSoft.CoverageExt
         {
             try
             {
-                if (Settings.UseNativeCoverageSupport)
+                if (Settings.Instance.UseNativeCoverageSupport)
                 {
                     // Delete old coverage file
                     string resultFile = Path.Combine(solutionFolder, "CodeCoverage.tmp.cov");

@@ -8,5 +8,6 @@ namespace NubiloSoft.CoverageExt
     {
         public const uint cmdCoverageReport = 0x0100;
         public const uint cmdCoverageGenerate = 0x0102;
+        public const uint cmdCoverageShow = 0x0104;
     };
 }
