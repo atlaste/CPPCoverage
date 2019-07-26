@@ -19,7 +19,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         Uncovered
     }
 
-    public class CodeCoverage
+    public class CodeCoverage : IDisposable
     {
         internal IAdornmentLayer layer;
         internal IWpfTextView view;
@@ -50,6 +50,22 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
             // make sure the burshes are atleast initialized once
             InitializeColors();
+        }
+
+        public void Close()
+        {
+            if (view != null)
+            {
+                Settings.Instance.OnShowCodeCoveragePropertyChanged -= Instance_OnShowCodeCoveragePropertyChanged;
+                Settings.Instance.OnColorPropertyChanged -= Instance_OnColorPropertyChanged;
+                view.LayoutChanged -= OnLayoutChanged;
+                view = null;
+            }
+        }
+
+        public void Dispose()
+        {
+            Close();
         }
 
         /// <summary>
@@ -345,5 +361,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 }
             }
         }
+
+
     }
 }
