@@ -228,16 +228,6 @@ struct CoverageRunner
 
 	void ProcessDebugInfo(ProcessInfo* proc, LPHANDLE fileHandle, PVOID basePtr, const std::string& filename)
 	{
-		if (filename.size() > 10)
-		{
-			auto str = filename.substr(0, 10);
-			for (auto& it : str) { it = ::tolower(it); }
-			if (str == "c:\\windows")
-			{
-				return;
-			}
-		}
-
 		if (debugInfoAvailable)
 		{
 			bool firstTimeLoad = false;
@@ -778,9 +768,9 @@ struct CoverageRunner
 												STACKFRAME64 stack = { 0 };
 												stack.AddrPC.Offset = threadContextInfo.Rip;    // EIP - Instruction Pointer
 												stack.AddrPC.Mode = AddrModeFlat;
-												stack.AddrFrame.Offset = threadContextInfo.Rbp; // EBP
+												stack.AddrFrame.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer
 												stack.AddrFrame.Mode = AddrModeFlat;
-												stack.AddrStack.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer
+												stack.AddrStack.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer (again!)
 												stack.AddrStack.Mode = AddrModeFlat;
 #else
 												STACKFRAME64 stack = { 0 };
