@@ -49,7 +49,7 @@ namespace NubiloSoft.CoverageExt
         {
             try
             {
-                if (Settings.UseNativeCoverageSupport)
+                if (Settings.Instance.UseNativeCoverageSupport)
                 {
                     // Delete old coverage file
                     string resultFile = Path.Combine(solutionFolder, "CodeCoverage.tmp.cov");
@@ -105,7 +105,7 @@ namespace NubiloSoft.CoverageExt
 
                         argumentBuilder.Append("\" -w \"");
                         argumentBuilder.Append(workingDirectory);
-                        
+
                     }
                     else
                     {
@@ -118,8 +118,38 @@ namespace NubiloSoft.CoverageExt
                     }
                     else
                     {
+                        // TODO: We can do much better here by using the registry...
+                        var folders = new[]
+                        {
+                            @"\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio\2019\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio\2017\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio 16.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio 15.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                            @"\Microsoft Visual Studio 13.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\"
+                        };
+                        var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86).TrimEnd('\\');
+
+                        string filename = null;
+                        foreach (var fold in folders)
+                        {
+                            string file = pf + fold + "vstest.console.exe";
+                            if (File.Exists(file))
+                            {
+                                filename = file;
+                                break;
+                            }
+                        }
+
                         argumentBuilder.Append("\" -- ");
-                        argumentBuilder.Append(@"""C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe""");
+                        // C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe
+                        argumentBuilder.Append(@"""" + filename + @"""");
                         argumentBuilder.Append(" /Platform:" + platform + " \"");
                     }
 

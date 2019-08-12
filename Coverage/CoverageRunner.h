@@ -483,7 +483,7 @@ struct CoverageRunner
 
 		while (continueDebugging)
 		{
-			if (!WaitForDebugEvent(&debugEvent, 5))
+			if (!WaitForDebugEvent(&debugEvent, 500))
 			{
 				// Collect sample:
 				for (auto& proc : processMap)

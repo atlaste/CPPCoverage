@@ -179,6 +179,7 @@
     <Compile Include="Data\ProfileVector.cs" />
     <Compile Include="Data\ReportManagerSingleton.cs" />
     <Compile Include="DTEInitializer.cs" />
+    <Compile Include="GeneralOptionPageGrid.cs" />
     <Compile Include="Native\NativeData.cs" />
     <Compile Include="Native\NativeReportManager.cs" />
     <Compile Include="Report\CoverageReport.xaml.cs">
@@ -210,7 +211,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>

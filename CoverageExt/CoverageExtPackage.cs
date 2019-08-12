@@ -1,14 +1,11 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.VCProjectEngine;
+using System;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.ComponentModel.Design;
-using Microsoft.Win32;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.OLE.Interop;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.VCProjectEngine;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -29,6 +26,8 @@ namespace NubiloSoft.CoverageExt
     [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject)]
     [ProvideToolWindow(typeof(Report.CoverageReportToolWindow))]
     [Guid(GuidList.guidCoverageExtPkgString)]
+    [ProvideOptionPage(typeof(GeneralOptionPageGrid), "CPPCoverage", "General", 0, 0, true)]
+    [ProvideProfileAttribute(typeof(GeneralOptionPageGrid), "CPPCoverage", "CPPCoverage Settings", 1002, 1003, isToolsOptionPage: true, DescriptionResourceID = 1004)]
     public sealed class CoverageExtPackage : Package
     {
         /// <summary>
@@ -57,20 +56,35 @@ namespace NubiloSoft.CoverageExt
             base.Initialize();
             InitializeDTE();
 
+            // this forces the options to be loaded, since it call the Load function on the OptionPageGrid
+            GeneralOptionPageGrid page = (GeneralOptionPageGrid)GetDialogPage(typeof(GeneralOptionPageGrid));
+
             // Add our command handlers for menu (commands must exist in the .vsct file)
             OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
             if (null != mcs)
             {
                 // Create the command for the tool window
-                CommandID toolwndCommandID = new CommandID(GuidList.guidCoverageExtCmdSet, (int)PkgCmdIDList.cmdCoverageReport);
-                MenuCommand menuToolWin = new MenuCommand(ShowToolWindow, toolwndCommandID);
-                mcs.AddCommand(menuToolWin);
+                {
+                    CommandID menuCommandID = new CommandID(GuidList.guidCoverageExtCmdSet, (int)PkgCmdIDList.cmdCoverageReport);
+                    MenuCommand menuItem = new MenuCommand(ShowToolWindow, menuCommandID);
+                    mcs.AddCommand(menuItem);
+                }
 
                 // Create the command for the context menu
-                CommandID contextMenuCommandID = new CommandID(GuidList.guidProjectSpecificMenuCmdSet, (int)PkgCmdIDList.cmdCoverageGenerate);
-                OleMenuCommand menuItem = new OleMenuCommand(ProjectContextMenuItemCallback, contextMenuCommandID);
-                menuItem.BeforeQueryStatus += ProjectContextMenuItem_BeforeQueryStatus;
-                mcs.AddCommand(menuItem);
+                {
+                    CommandID menuCommandID = new CommandID(GuidList.guidProjectSpecificMenuCmdSet, (int)PkgCmdIDList.cmdCoverageGenerate);
+                    OleMenuCommand menuItem = new OleMenuCommand(ProjectContextMenuItemCallback, menuCommandID);
+                    menuItem.BeforeQueryStatus += ProjectContextMenuItem_BeforeQueryStatus;
+                    mcs.AddCommand(menuItem);
+                }
+
+                // Create the command for the file menu
+                {
+                    CommandID menuCommandID = new CommandID(GuidList.guidFileSpecificMenuCmdSet, (int)PkgCmdIDList.cmdCoverageShow);
+                    OleMenuCommand menuItem = new OleMenuCommand(FileContextMenuItemCallback, menuCommandID);
+                    menuItem.BeforeQueryStatus += FileContextMenuItem_BeforeQueryStatus;
+                    mcs.AddCommand(menuItem);
+                }
             }
         }
 
@@ -163,11 +177,11 @@ namespace NubiloSoft.CoverageExt
                             string command = null;
                             string arguments = null;
                             string workingDirectory = null;
-                            if(debug != null)
+                            if (debug != null)
                             {
-                                command          = cfg.Evaluate(debug.Command);
+                                command = cfg.Evaluate(debug.Command);
                                 workingDirectory = cfg.Evaluate(debug.WorkingDirectory);
-                                arguments        = cfg.Evaluate(debug.CommandArguments);
+                                arguments = cfg.Evaluate(debug.CommandArguments);
                             }
 
                             VCPlatform currentPlatform = (VCPlatform)cfg.Platform;
@@ -200,10 +214,10 @@ namespace NubiloSoft.CoverageExt
                                 }
                             }
 
-                            if(command == null || String.IsNullOrEmpty(command))
+                            if (command == null || String.IsNullOrEmpty(command))
                                 command = cfg.PrimaryOutput;
 
-                            if(command != null)
+                            if (command != null)
                             {
                                 var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
 
@@ -233,6 +247,34 @@ namespace NubiloSoft.CoverageExt
                 {
                     outputWindow.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
                 }
+            }
+        }
+
+        private void FileContextMenuItem_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            OleMenuCommand menuCommand = sender as OleMenuCommand;
+            if (menuCommand != null && dte != null)
+            {
+                menuCommand.Visible = false;  // default to not visible
+                var activeDocument = dte.ActiveDocument;
+                var fullName = activeDocument.FullName;
+
+                if (fullName.EndsWith(".h") || fullName.EndsWith(".cpp"))
+                {
+                    menuCommand.Visible = true;
+                }
+
+                menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
+            }
+        }
+
+        private void FileContextMenuItemCallback(object sender, EventArgs e)
+        {
+            OleMenuCommand menuCommand = sender as OleMenuCommand;
+            if (menuCommand != null)
+            {
+                Settings.Instance.ShowCodeCoverage = !Settings.Instance.ShowCodeCoverage;
+                menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
             }
         }
     }

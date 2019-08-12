@@ -31,8 +31,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         [Import]
         public SVsServiceProvider ServiceProvider = null;
 
-        private CodeCoverage coverage;
-
         /// <summary>
         /// Instantiates a CodeCoverage manager when a textView is created.
         /// </summary>
@@ -42,7 +40,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             DTE dte = (DTE)ServiceProvider.GetService(typeof(DTE));
 
             // Store this thing somewhere so our GC doesn't incidentally destroy it.
-            this.coverage = new CodeCoverage(textView, dte);
+            var cover = new CodeCoverage(textView, dte);
+
+            textView.Closed += (object sender, EventArgs e) => {
+                cover.Close();
+            };
         }
     }
 }
