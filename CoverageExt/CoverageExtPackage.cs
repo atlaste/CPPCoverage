@@ -248,6 +248,8 @@ namespace NubiloSoft.CoverageExt
                     outputWindow.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
                 }
             }
+
+            Settings.Instance.TriggerRedraw();
         }
 
         private void FileContextMenuItem_BeforeQueryStatus(object sender, EventArgs e)

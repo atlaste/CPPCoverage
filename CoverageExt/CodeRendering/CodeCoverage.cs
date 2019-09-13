@@ -41,24 +41,46 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             this.layer = view.GetAdornmentLayer("CodeCoverage");
             this.layer.Opacity = 0.4;
 
-            // listen to events that change the setting properties
-            Settings.Instance.OnShowCodeCoveragePropertyChanged += Instance_OnShowCodeCoveragePropertyChanged;
-            Settings.Instance.OnColorPropertyChanged += Instance_OnColorPropertyChanged;
-
-            // Listen to any event that changes the layout (text changes, scrolling, etc)
-            view.LayoutChanged += OnLayoutChanged;
+            SetupHandleEvents(true);
 
             // make sure the burshes are atleast initialized once
             InitializeColors();
+        }
+
+        private void SetupHandleEvents(bool setup)
+        {
+            if (setup)
+            {             
+                // listen to events that change the setting properties
+                Settings.Instance.OnShowCodeCoveragePropertyChanged += Instance_OnShowCodeCoveragePropertyChanged;
+                Settings.Instance.OnColorPropertyChanged += Instance_OnColorPropertyChanged;
+                Settings.Instance.RedrawNeeded += Instance_OnRedrawNeeded;
+
+                // Listen to any event that changes the layout (text changes, scrolling, etc)
+                view.LayoutChanged += OnLayoutChanged;
+            }
+            else
+            {
+                Settings.Instance.OnShowCodeCoveragePropertyChanged -= Instance_OnShowCodeCoveragePropertyChanged;
+                Settings.Instance.OnColorPropertyChanged -= Instance_OnColorPropertyChanged;
+                Settings.Instance.RedrawNeeded -= Instance_OnRedrawNeeded;
+                view.LayoutChanged -= OnLayoutChanged;
+            }
+        }
+
+        /// <summary>
+        /// Acts on the event of a redraw need
+        /// </summary>
+        private void Instance_OnRedrawNeeded()
+        {
+            Redraw();
         }
 
         public void Close()
         {
             if (view != null)
             {
-                Settings.Instance.OnShowCodeCoveragePropertyChanged -= Instance_OnShowCodeCoveragePropertyChanged;
-                Settings.Instance.OnColorPropertyChanged -= Instance_OnColorPropertyChanged;
-                view.LayoutChanged -= OnLayoutChanged;
+                SetupHandleEvents(false);
                 view = null;
             }
         }
