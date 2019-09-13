@@ -21,6 +21,14 @@ namespace NubiloSoft.CoverageExt
             return true;
         }
 
+        #region general Events
+        public event Action RedrawNeeded;
+        public void TriggerRedraw()
+        {
+            RedrawNeeded();
+        }
+        #endregion
+
         #region general properties
         private bool useNativeCoverageSupport = true;
         public bool UseNativeCoverageSupport
