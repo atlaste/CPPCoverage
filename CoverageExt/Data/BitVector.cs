@@ -11,13 +11,10 @@ namespace NubiloSoft.CoverageExt.Data
 
         public void Set(int index, bool value)
         {
+            Ensure(index + 1);
+
             int byteIndex = index >> 2;
             int bitIndex = (index & 0x3);
-
-            if (byteIndex >= data.Length)
-            {
-                Array.Resize(ref data, byteIndex * 2);
-            }
 
             if (value)
             {

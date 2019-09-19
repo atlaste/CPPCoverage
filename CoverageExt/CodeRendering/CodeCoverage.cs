@@ -50,7 +50,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private void SetupHandleEvents(bool setup)
         {
             if (setup)
-            {             
+            {
                 // listen to events that change the setting properties
                 Settings.Instance.OnShowCodeCoveragePropertyChanged += Instance_OnShowCodeCoveragePropertyChanged;
                 Settings.Instance.OnColorPropertyChanged += Instance_OnColorPropertyChanged;
