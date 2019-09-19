@@ -87,7 +87,7 @@ namespace NubiloSoft.CoverageExt.Native
                             ProfileVector currentProfile = new Data.ProfileVector(currentVector.Count);
 
                             string prof = sr.ReadLine();
-                            if (prof.StartsWith("PROF: "))
+                            if (prof != null && prof.StartsWith("PROF: "))
                             {
                                 prof = prof.Substring("PROF: ".Length);
                                 int line = 0;
@@ -119,6 +119,7 @@ namespace NubiloSoft.CoverageExt.Native
                             else
                             {
                                 name = prof;
+                                lookup.Add(currentFile.ToLower(), new Tuple<BitVector, ProfileVector>(currentVector, currentProfile));
                                 continue;
                             }
 
