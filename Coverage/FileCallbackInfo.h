@@ -206,10 +206,10 @@ struct FileCallbackInfo
 		double lineRate = covered / total;
 
 		ofs << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
-		ofs << "<coverage line-rate=\"" << lineRate << "\">" << std::endl;
-		ofs << "<packages>" << std::endl;
-		ofs << "<package name=\"Program.exe\" line-rate=\"" << lineRate << "\">" << std::endl;
-		ofs << "<classes>" << std::endl;
+		ofs << "<coverage line-rate=\"" << lineRate << "\"" << " " << "version=\"\">" << std::endl;
+		ofs << "\t" << "<packages>" << std::endl;
+		ofs << "\t\t" << "<package name=\"Program.exe\" line-rate=\"" << lineRate << "\">" << std::endl;
+		ofs << "\t\t\t" << "<classes>" << std::endl;
 		for (auto& it : lineData)
 		{
 			auto ptr = it.second.get();
@@ -237,8 +237,8 @@ struct FileCallbackInfo
 
 			double lineRate = covered / total;
 
-			ofs << "<class name=\"" << name << "\" filename=\"" << it.first.substr(2) << "\" line-rate=\"" << lineRate << "\">" << std::endl;
-			ofs << "<lines>" << std::endl;
+			ofs << "\t\t\t\t" << "<class name=\"" << name << "\" filename=\"" << it.first.substr(2) << "\" line-rate=\"" << lineRate << "\">" << std::endl;
+			ofs << "\t\t\t\t\t" << "<lines>" << std::endl;
 
 			for (size_t i = 0; i < ptr->numberLines; ++i)
 			{
@@ -246,22 +246,22 @@ struct FileCallbackInfo
 				{
 					if (ptr->lines[i].HitCount == ptr->lines[i].DebugCount)
 					{
-						ofs << "<line number=\"" << i << "\" hits=\"1\"/>" << std::endl;
+						ofs << "\t\t\t\t\t\t" << "<line number=\"" << i << "\" hits=\"1\"/>" << std::endl;
 					}
 					else
 					{
-						ofs << "<line number=\"" << i << "\" hits=\"0\"/>" << std::endl;
+						ofs << "\t\t\t\t\t\t" << "<line number=\"" << i << "\" hits=\"0\"/>" << std::endl;
 					}
 				}
 			}
 
-			ofs << "</lines>" << std::endl;
-			ofs << "</class>" << std::endl;
+			ofs << "\t\t\t\t\t" << "</lines>" << std::endl;
+			ofs << "\t\t\t\t" << "</class>" << std::endl;
 		}
 
-		ofs << "</classes>" << std::endl;
-		ofs << "</package>" << std::endl;
-		ofs << "</packages>" << std::endl;
+		ofs << "\t\t\t" << "</classes>" << std::endl;
+		ofs << "\t\t" << "</package>" << std::endl;
+		ofs << "\t" << "</packages>" << std::endl;
 		ofs << "<sources><source>c:</source></sources>" << std::endl;
 		ofs << "</coverage>" << std::endl;
 	}
