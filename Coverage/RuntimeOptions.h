@@ -39,6 +39,7 @@ public:
 	std::string CodePath;
 	std::string Executable;
 	std::string ExecutableArguments;
+	std::string PackageName = "Program.exe";
 
 	std::string SourcePath()
 	{
