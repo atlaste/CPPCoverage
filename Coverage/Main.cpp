@@ -9,92 +9,93 @@
 
 void ShowHelp()
 {
-	std::cout << "Usage: coverage.exe [opts] -- [executable] [optional args]" << std::endl;
-	std::cout << std::endl;
-	std::cout << "Options:" << std::endl;
-	std::cout << "  -quiet:        suppress output information from coverage tool" << std::endl;
-	std::cout << "  -format [fmt]: specify 'native' for native coverage format or 'cobertura' for cobertura XML" << std::endl;
-	std::cout << "  -o [name]:     write output information to the given filename" << std::endl;
-	std::cout << "  -p [name]:     assume source code can be found in the given path name" << std::endl;
+    std::cout << "Usage: coverage.exe [opts] -- [executable] [optional args]" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Options:" << std::endl;
+    std::cout << "  -quiet:        suppress output information from coverage tool" << std::endl;
+    std::cout << "  -format [fmt]: specify 'native' for native coverage format or 'cobertura' for cobertura XML" << std::endl;
+    std::cout << "  -o [name]:     write output information to the given filename" << std::endl;
+    std::cout << "  -p [name]:     assume source code can be found in the given path name" << std::endl;
     std::cout << "  -w [name]:     Working directory where we execute the given executable filename" << std::endl;
     std::cout << "  -m [name]:     Merge current output to given path name or copy output if not existing" << std::endl;
-	std::cout << "  -- [name]:     run coverage on the given executable filename" << std::endl;
+    std::cout << "  -pkg [name]:   Name of package under test (executable or dll)" << std::endl;
+    std::cout << "  -- [name]:     run coverage on the given executable filename" << std::endl;
     std::cout << "Return code:" << std::endl;
     std::cout << "  0:             Success run" << std::endl;
     std::cout << "  1:             Executable missing" << std::endl;
     std::cout << "  2:             Coverage failure" << std::endl;
     std::cout << "  3:             Merge failure" << std::endl;
-	std::cout << std::endl;
+    std::cout << std::endl;
 }
 
 void ParseCommandLine(int argc, const char **argv)
 {
-	RuntimeOptions& opts = RuntimeOptions::Instance();
+    RuntimeOptions& opts = RuntimeOptions::Instance();
 
     LPTSTR cmd = GetCommandLine();
     std::string cmdLine = cmd;
-	
-	// Parse arguments
-	for (int i = 1; i < argc; ++i)
-	{
-		std::string s(argv[i]);
+    
+    // Parse arguments
+    for (int i = 1; i < argc; ++i)
+    {
+        std::string s(argv[i]);
 
-		if (s == "-quiet" || s == "--quiet")
-		{
-			opts.Quiet = true;
-		}
-		else if (s == "-codeanalysis")
-		{
-			opts.UseStaticCodeAnalysis = true;
-		}
-		else if (s == "-format")
-		{
-			++i;
-			if (i == argc)
-			{
-				throw std::exception("Unexpected end of parameters. Export type should be cobertura or native.");
-			}
+        if (s == "-quiet" || s == "--quiet")
+        {
+            opts.Quiet = true;
+        }
+        else if (s == "-codeanalysis")
+        {
+            opts.UseStaticCodeAnalysis = true;
+        }
+        else if (s == "-format")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Export type should be cobertura or native.");
+            }
 
-			std::string t(argv[i]);
-			if (t == "native")
-			{
-				opts.ExportFormat = RuntimeOptions::Native;
-			}
-			else if (t == "cobertura")
-			{
-				opts.ExportFormat = RuntimeOptions::Cobertura;
-			}
-			else if (t == "clover")
-			{
-				opts.ExportFormat = RuntimeOptions::Clover;
-			}
-			else
-			{
-				throw std::exception("Unsupported export type. Export type should be cobertura or native.");
-			}
-		}
-		else if (s == "-o")
-		{
-			++i;
-			if (i == argc)
-			{
-				throw std::exception("Unexpected end of parameters. Expected output file name.");
-			}
+            std::string t(argv[i]);
+            if (t == "native")
+            {
+                opts.ExportFormat = RuntimeOptions::Native;
+            }
+            else if (t == "cobertura")
+            {
+                opts.ExportFormat = RuntimeOptions::Cobertura;
+            }
+            else if (t == "clover")
+            {
+                opts.ExportFormat = RuntimeOptions::Clover;
+            }
+            else
+            {
+                throw std::exception("Unsupported export type. Export type should be cobertura or native.");
+            }
+        }
+        else if (s == "-o")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected output file name.");
+            }
 
-			std::string t(argv[i]);
-			opts.OutputFile = t;
-		}
-		else if (s == "-p")
-		{
-			++i;
-			if (i == argc)
-			{
-				throw std::exception("Unexpected end of parameters. Expected code path name.");
-			}
+            std::string t(argv[i]);
+            opts.OutputFile = t;
+        }
+        else if (s == "-p")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected code path name.");
+            }
 
-			std::string t(argv[i]);
-			opts.CodePath = t;
-		}
+            std::string t(argv[i]);
+            opts.CodePath = t;
+        }
         else if (s == "-w")
         {
             ++i;
@@ -117,29 +118,40 @@ void ParseCommandLine(int argc, const char **argv)
             std::string t(argv[i]);
             opts.MergedOutput = t;
         }
-		else if (s == "--")
-		{
-			++i;
-			if (i == argc)
-			{
-				throw std::exception("Unexpected end of parameters. Expected executable file name.");
-			}
+        else if (s == "-pkg")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected package name.");
+            }
 
-			std::string t(argv[i]);
-			opts.Executable = t;
-			break;
-		}
-		else if (s == "-help")
-		{
-			ShowHelp();
-		}
-		else
-		{
+            std::string t(argv[i]);
+            opts.PackageName = t;
+        }
+        else if (s == "--")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected executable file name.");
+            }
+
+            std::string t(argv[i]);
+            opts.Executable = t;
+            break;
+        }
+        else if (s == "-help")
+        {
+            ShowHelp();
+        }
+        else
+        {
             std::string message("Incorrect parameter: ");
             message += s;
-			throw std::exception(message.c_str());
-		}
-	}
+            throw std::exception(message.c_str());
+        }
+    }
 
     // Check we can merge
     if (opts.ExportFormat != RuntimeOptions::Native && !opts.MergedOutput.empty())
@@ -189,41 +201,41 @@ int main(int argc, const char** argv)
     }
 #endif
 
-	RuntimeOptions& opts = RuntimeOptions::Instance();
+    RuntimeOptions& opts = RuntimeOptions::Instance();
 
-	try
-	{
-		ParseCommandLine(argc, argv);
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << "Error: " << e.what() << std::endl;
-		
-		// When you miss --, exception is throw SO your need syntax help !
+    try
+    {
+        ParseCommandLine(argc, argv);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        
+        // When you miss --, exception is throw SO your need syntax help !
         ShowHelp();
         return 1; // Command error
-	}
-	
-	try
-	{
-		if(opts.Executable.empty())
-		{
+    }
+    
+    try
+    {
+        if(opts.Executable.empty())
+        {
             std::cerr << "Error: Missing executable file" << std::endl;
-			ShowHelp();
+            ShowHelp();
             return 1; // Command error
-		}
-		else
-		{
-			// Run
-			CoverageRunner debug(opts);
-			debug.Start();
-		}
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << "Error: " << e.what() << std::endl;
+        }
+        else
+        {
+            // Run
+            CoverageRunner debug(opts);
+            debug.Start();
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
         return 2; // Coverage error
-	}
+    }
 
     // Merge
     try
@@ -240,5 +252,5 @@ int main(int argc, const char** argv)
         std::cerr << "Error: " << e.what() << std::endl;
         return 3; // Coverage error
     }
-	return 0;
+    return 0;
 }
