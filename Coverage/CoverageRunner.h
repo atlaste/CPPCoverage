@@ -556,17 +556,22 @@ struct CoverageRunner
 					case LOAD_DLL_DEBUG_EVENT:
 					{
 						auto name = GetFileNameFromHandle(debugEvent.u.LoadDll.hFile);
-						if (!quiet)
-						{
-							std::cout << "Loading: " << name << "... " << std::endl;
+						auto idx = dllNameMap.find(name);
+						
+						if (idx == dllNameMap.end()) {
+
+							if (!quiet)
+							{
+								std::cout << "Loading: " << name << "... " << std::endl;
+							}
+
+							dllNameMap[debugEvent.u.LoadDll.lpBaseOfDll] = name;
+
+							auto process = processMap[debugEvent.dwProcessId].get();
+
+							ProcessDebugInfo(process, &(debugEvent.u.LoadDll.hFile), debugEvent.u.LoadDll.lpBaseOfDll, name);
+							TryPatchDebuggerPresent(process->Handle, &(debugEvent.u.LoadDll.hFile), debugEvent.u.LoadDll.lpBaseOfDll, name);
 						}
-
-						dllNameMap[debugEvent.u.LoadDll.lpBaseOfDll] = name;
-
-						auto process = processMap[debugEvent.dwProcessId].get();
-
-						ProcessDebugInfo(process, &(debugEvent.u.LoadDll.hFile), debugEvent.u.LoadDll.lpBaseOfDll, name);
-						TryPatchDebuggerPresent(process->Handle, &(debugEvent.u.LoadDll.hFile), debugEvent.u.LoadDll.lpBaseOfDll, name);
 					}
 					break;
 
