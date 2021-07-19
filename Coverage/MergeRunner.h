@@ -59,7 +59,7 @@ private:
 
     void merge(const DictCoverage& dictOutput, DictCoverage& dictMerge)
     {
-        DictCoverage::const_iterator itOutput;
+        auto itOutput = dictOutput.cbegin();
         while(itOutput != dictOutput.cend())
         {
             auto itMerge = dictMerge.find(itOutput->first);
