@@ -3,7 +3,7 @@
 #include "RuntimeOptions.h"
 
 #include <assert.h>
-#include <experimental/filesystem> // C++ 17  feature
+#include <filesystem>
 #include <fstream>
 #include <map>
 
@@ -59,7 +59,7 @@ private:
 
     void merge(const DictCoverage& dictOutput, DictCoverage& dictMerge)
     {
-        auto& itOutput = dictOutput.cbegin();
+        auto itOutput = dictOutput.cbegin();
         while(itOutput != dictOutput.cend())
         {
             auto itMerge = dictMerge.find(itOutput->first);
@@ -106,20 +106,20 @@ public:
     /// Run merge
     void execute()
     {
-        std::experimental::filesystem::path outputPath(_options.OutputFile);
-        std::experimental::filesystem::path mergedPath(_options.MergedOutput);
+        std::filesystem::path outputPath(_options.OutputFile);
+        std::filesystem::path mergedPath(_options.MergedOutput);
         
         // Check we have data
-        if(!std::experimental::filesystem::exists(outputPath))
+        if(!std::filesystem::exists(outputPath))
         {
             const std::string msg = "Merge failure: Impossible to find output file: " + _options.OutputFile;
             throw std::exception(msg.c_str());
         }
 
         // Nothing to merge = Copy and quit
-        if (!std::experimental::filesystem::exists(mergedPath))
+        if (!std::filesystem::exists(mergedPath))
         {
-            std::experimental::filesystem::copy(outputPath, mergedPath);
+            std::filesystem::copy(outputPath, mergedPath);
             return;
         }
 
