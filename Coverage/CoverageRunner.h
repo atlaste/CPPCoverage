@@ -792,7 +792,7 @@ struct CoverageRunner
 												symbol->MaxNameLen = 255;
 												symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-												BOOL status = S_OK;
+												BOOL status = TRUE;
 
 												std::vector<std::tuple<std::string, DWORD64, std::string>> callStack;
 
