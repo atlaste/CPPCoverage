@@ -1,7 +1,9 @@
 ﻿name: CI Build
+on:
+    pull_request:
+        branches: [ $default-branch ]
 
-on: [push]
-
+    workflow_dispatch:
 jobs:
   build:
     runs-on: windows-latest

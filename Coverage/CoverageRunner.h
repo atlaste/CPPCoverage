@@ -556,7 +556,7 @@ struct CoverageRunner
 					case LOAD_DLL_DEBUG_EVENT:
 					{
 						auto name = GetFileNameFromHandle(debugEvent.u.LoadDll.hFile);
-						auto idx = dllNameMap.find(name);
+						auto idx = dllNameMap.find(&name[0]);
 						
 						if (idx == dllNameMap.end()) {
 
