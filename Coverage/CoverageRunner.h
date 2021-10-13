@@ -19,14 +19,13 @@
 #include <Windows.h>
 #include <psapi.h>
 
-#pragma warning(disable: 4091)
+#pragma warning(disable : 4091)
 #include <DbgHelp.h>
-#pragma warning(default: 4091)
+#pragma warning(default : 4091)
 
 struct CoverageRunner
 {
-	CoverageRunner(RuntimeOptions& opts) :
-		options(opts),
+	CoverageRunner(RuntimeOptions& opts) : options(opts),
 		debugInfoAvailable(false),
 		debuggerPresentPatched(false),
 		coverageContext(opts.Executable),
@@ -89,7 +88,7 @@ struct CoverageRunner
 
 	std::vector<std::tuple<PVOID, BYTE, PVOID, BYTE>> passToCoverageMethods;
 
-	std::unordered_map<std::string, std::unique_ptr<ProfileFrame> > profileInfo;
+	std::unordered_map<std::string, std::unique_ptr<ProfileFrame>> profileInfo;
 
 	std::string GetFileNameFromHandle(HANDLE hFile)
 	{
@@ -154,9 +153,9 @@ struct CoverageRunner
 							}
 
 							// Go to the next NULL character.
-							while (*p++);
-						}
-						while (!bFound && *p); // end of string
+							while (*p++)
+								;
+						} while (!bFound && *p); // end of string
 					}
 				}
 				bSuccess = TRUE;
@@ -208,13 +207,13 @@ struct CoverageRunner
 					(reinterpret_cast<DWORD64>(fcnAddr) - reinterpret_cast<DWORD64>(modAddr))); // Yuck!
 
 			// Patch the data:
-			// 
-			// Signature of method: 
+			//
+			// Signature of method:
 			// BOOL __stdcall IsDebuggerPresent() { return false; }
 			BYTE bytes[3] = // return false;
 			{
 				0x33, 0xC0, // xor eax, eax
-				0xC3        // ret
+				0xC3		// ret
 			};
 
 			// Write back the original data:
@@ -284,7 +283,7 @@ struct CoverageRunner
 						{
 							passToCoverageMethods.push_back(
 								std::make_tuple(reinterpret_cast<PVOID>(img.Address), buffer[0],
-												reinterpret_cast<PVOID>(img.Address + size), buffer[1]));
+									reinterpret_cast<PVOID>(img.Address + size), buffer[1]));
 						}
 					}
 
@@ -323,7 +322,7 @@ struct CoverageRunner
 							{
 								auto ptr = reinterpret_cast<size_t>(it);
 								while (index < ci.reachableCode.size() &&
-									   ptr > size_t(ci.reachableCode[index].methodStart + ci.reachableCode[index].numberBytes))
+									ptr > size_t(ci.reachableCode[index].methodStart + ci.reachableCode[index].numberBytes))
 								{
 									++index;
 								}
@@ -403,17 +402,17 @@ struct CoverageRunner
 		ZeroMemory(&pi, sizeof(pi));
 
 		LPSTR args = NULL;
-		if( !options.ExecutableArguments.empty() )
+		if (!options.ExecutableArguments.empty())
 		{
 			args = &*options.ExecutableArguments.begin();
 		}
 
-        // Read working directory (if empty need to set NULL)
-        const char* workingDirectory = NULL;
-        if( !options.WorkingDirectory.empty() )
-        {
-            workingDirectory = options.WorkingDirectory.c_str();
-        }
+		// Read working directory (if empty need to set NULL)
+		const char* workingDirectory = NULL;
+		if (!options.WorkingDirectory.empty())
+		{
+			workingDirectory = options.WorkingDirectory.c_str();
+		}
 
 		auto result = CreateProcess(NULL, args, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, workingDirectory, &si, &pi);
 		if (result == 0)
@@ -422,15 +421,15 @@ struct CoverageRunner
 			{
 				if (!quiet)
 				{
-                    const std::string msg = "Error running process; the most likely cause of this is a x86/x64 mix-up. Message " + Util::GetLastErrorAsString();
-                    throw std::exception(msg.c_str());
+					const std::string msg = "Error running process; the most likely cause of this is a x86/x64 mix-up. Message " + Util::GetLastErrorAsString();
+					throw std::exception(msg.c_str());
 				}
 			}
 			else
 			{
 				if (!quiet)
 				{
-                    const std::string msg = "Error running process: " + Util::GetLastErrorAsString();
+					const std::string msg = "Error running process: " + Util::GetLastErrorAsString();
 					throw std::exception(msg.c_str());
 				}
 			}
@@ -495,374 +494,373 @@ struct CoverageRunner
 			{
 				switch (debugEvent.dwDebugEventCode)
 				{
-					case CREATE_PROCESS_DEBUG_EVENT:
-					{
-						auto process = debugEvent.u.CreateProcessInfo.hProcess;
-						auto thread = debugEvent.u.CreateProcessInfo.hThread;
-						auto pinfo = new ProcessInfo(debugEvent.dwProcessId, process);
-						pinfo->Threads[debugEvent.dwThreadId] = thread;
-						processMap[debugEvent.dwProcessId] = std::unique_ptr<ProcessInfo>(pinfo);
+				case CREATE_PROCESS_DEBUG_EVENT:
+				{
+					auto process = debugEvent.u.CreateProcessInfo.hProcess;
+					auto thread = debugEvent.u.CreateProcessInfo.hThread;
+					auto pinfo = new ProcessInfo(debugEvent.dwProcessId, process);
+					pinfo->Threads[debugEvent.dwThreadId] = thread;
+					processMap[debugEvent.dwProcessId] = std::unique_ptr<ProcessInfo>(pinfo);
 
-						auto filename = GetFileNameFromHandle(debugEvent.u.CreateProcessInfo.hFile);
+					auto filename = GetFileNameFromHandle(debugEvent.u.CreateProcessInfo.hFile);
+					if (!quiet)
+					{
+						std::cout << "Loading process: " << filename << "... ";
+					}
+
+					InitializeDebugInfo(process);
+					initializedDbgInfo = true;
+
+					ProcessDebugInfo(pinfo, &(debugEvent.u.CreateProcessInfo.hFile), debugEvent.u.CreateProcessInfo.lpBaseOfImage, filename);
+				}
+				break;
+
+				case CREATE_THREAD_DEBUG_EVENT:
+				{
+					//if (!quiet)
+					//{
+					//	std::cout << "Thread 0x" << std::hex << debugEvent.u.CreateThread.hThread << std::dec << " (Id: " << debugEvent.dwThreadId << ") created." << std::endl;
+					//}
+
+					auto thread = debugEvent.u.CreateThread.hThread;
+					auto proc = processMap[debugEvent.dwProcessId].get();
+					proc->Threads[debugEvent.dwThreadId] = thread;
+				}
+				break;
+
+				case EXIT_THREAD_DEBUG_EVENT:
+				{
+					//if (!quiet)
+					//{
+					//	std::cout << "Thread Id: " << debugEvent.dwThreadId << " exited with code: " << debugEvent.u.ExitThread.dwExitCode << "." << std::endl;
+					//}
+
+					auto proc = processMap[debugEvent.dwProcessId].get();
+					proc->Threads.erase(proc->Threads.find(debugEvent.dwThreadId));
+				}
+				break;
+
+				case EXIT_PROCESS_DEBUG_EVENT:
+				{
+					if (!quiet)
+					{
+						std::cout << "Process exited with code: " << debugEvent.u.ExitProcess.dwExitCode << "." << std::endl;
+					}
+
+					processMap.erase(debugEvent.dwProcessId);
+					continueDebugging = processMap.empty() ? false : true;
+				}
+				break;
+
+				case LOAD_DLL_DEBUG_EVENT:
+				{
+					auto name = GetFileNameFromHandle(debugEvent.u.LoadDll.hFile);
+					if (!quiet)
+					{
+						std::cout << "Loading: " << name << "... " << std::endl;
+					}
+
+					dllNameMap[debugEvent.u.LoadDll.lpBaseOfDll] = name;
+
+					auto process = processMap[debugEvent.dwProcessId].get();
+
+					ProcessDebugInfo(process, &(debugEvent.u.LoadDll.hFile), debugEvent.u.LoadDll.lpBaseOfDll, name);
+					TryPatchDebuggerPresent(process->Handle, &(debugEvent.u.LoadDll.hFile), debugEvent.u.LoadDll.lpBaseOfDll, name);
+				}
+				break;
+
+				case UNLOAD_DLL_DEBUG_EVENT:
+				{
+					auto basePtr = debugEvent.u.UnloadDll.lpBaseOfDll;
+					auto idx = dllNameMap.find(basePtr);
+					if (idx != dllNameMap.end())
+					{
 						if (!quiet)
 						{
-							std::cout << "Loading process: " << filename << "... ";
+							std::cout << "Unloading: " << idx->second << std::endl;
 						}
 
-						InitializeDebugInfo(process);
-						initializedDbgInfo = true;
-
-						ProcessDebugInfo(pinfo, &(debugEvent.u.CreateProcessInfo.hFile), debugEvent.u.CreateProcessInfo.lpBaseOfImage, filename);
-					}
-					break;
-
-					case CREATE_THREAD_DEBUG_EVENT:
-					{
-						//if (!quiet)
-						//{
-						//	std::cout << "Thread 0x" << std::hex << debugEvent.u.CreateThread.hThread << std::dec << " (Id: " << debugEvent.dwThreadId << ") created." << std::endl;
-						//}
-
-						auto thread = debugEvent.u.CreateThread.hThread;
-						auto proc = processMap[debugEvent.dwProcessId].get();
-						proc->Threads[debugEvent.dwThreadId] = thread;
-					}
-					break;
-
-					case EXIT_THREAD_DEBUG_EVENT:
-					{
-						//if (!quiet)
-						//{
-						//	std::cout << "Thread Id: " << debugEvent.dwThreadId << " exited with code: " << debugEvent.u.ExitThread.dwExitCode << "." << std::endl;
-						//}
-
-						auto proc = processMap[debugEvent.dwProcessId].get();
-						proc->Threads.erase(proc->Threads.find(debugEvent.dwThreadId));
-					}
-					break;
-
-					case EXIT_PROCESS_DEBUG_EVENT:
-					{
-						if (!quiet)
-						{
-							std::cout << "Process exited with code: " << debugEvent.u.ExitProcess.dwExitCode << "." << std::endl;
-						}
-
-						processMap.erase(debugEvent.dwProcessId);
-						continueDebugging = processMap.empty() ? false : true;
-					}
-					break;
-
-					case LOAD_DLL_DEBUG_EVENT:
-					{
-						auto name = GetFileNameFromHandle(debugEvent.u.LoadDll.hFile);
-						if (!quiet)
-						{
-							std::cout << "Loading: " << name << "... " << std::endl;
-						}
-
-						dllNameMap[debugEvent.u.LoadDll.lpBaseOfDll] = name;
-
+						// Unload symbols module:
 						auto process = processMap[debugEvent.dwProcessId].get();
-
-						ProcessDebugInfo(process, &(debugEvent.u.LoadDll.hFile), debugEvent.u.LoadDll.lpBaseOfDll, name);
-						TryPatchDebuggerPresent(process->Handle, &(debugEvent.u.LoadDll.hFile), debugEvent.u.LoadDll.lpBaseOfDll, name);
-					}
-					break;
-
-					case UNLOAD_DLL_DEBUG_EVENT:
-					{
-						auto basePtr = debugEvent.u.UnloadDll.lpBaseOfDll;
-						auto idx = dllNameMap.find(basePtr);
-						if (idx != dllNameMap.end())
+						auto mod = process->LoadedModules.find(basePtr);
+						if (mod != process->LoadedModules.end())
 						{
-							if (!quiet)
+							BOOL result = SymUnloadModule64(process->Handle, mod->second);
+							if (!result)
 							{
-								std::cout << "Unloading: " << idx->second << std::endl;
-							}
-
-							// Unload symbols module:
-							auto process = processMap[debugEvent.dwProcessId].get();
-							auto mod = process->LoadedModules.find(basePtr);
-							if (mod != process->LoadedModules.end())
-							{
-								BOOL result = SymUnloadModule64(process->Handle, mod->second);
-								if (!result)
+								if (!quiet)
 								{
-									if (!quiet)
-									{
-										std::cout << "Unloading module failed: " << Util::GetLastErrorAsString() << std::endl;
-									}
+									std::cout << "Unloading module failed: " << Util::GetLastErrorAsString() << std::endl;
 								}
-
-								process->LoadedModules.erase(mod);
 							}
 
-							// Remove from DLL map.
-							dllNameMap.erase(idx);
+							process->LoadedModules.erase(mod);
+						}
+
+						// Remove from DLL map.
+						dllNameMap.erase(idx);
+					}
+					else
+					{
+						if (!quiet)
+						{
+							std::cout << "Unloading: ???." << std::endl;
+						}
+					}
+				}
+				break;
+
+				case OUTPUT_DEBUG_STRING_EVENT:
+				{
+					// ignore
+				}
+				break;
+
+				case EXCEPTION_DEBUG_EVENT:
+				{
+					EXCEPTION_DEBUG_INFO& exception = debugEvent.u.Exception;
+					switch (exception.ExceptionRecord.ExceptionCode)
+					{
+					case STATUS_BREAKPOINT:
+
+						if (entryBreakpoint)
+						{
+							// std::cout << "Entry breakpoint; ignoring." << std::endl;
+							entryBreakpoint = false;
 						}
 						else
 						{
-							if (!quiet)
+							auto process = processMap[debugEvent.dwProcessId].get();
+							auto thread = process->Threads[debugEvent.dwThreadId];
+
+							// std::cout << "Breakpoint hit!" << std::endl;
+
+							// Undo our breakpoint:
+							CONTEXT threadContextInfo;
+							threadContextInfo.ContextFlags = CONTEXT_ALL;
+							GetThreadContext(thread, &threadContextInfo);
+
+#if _WIN64
+							threadContextInfo.Rip--;
+#else
+							threadContextInfo.Eip--;
+#endif
+							auto addr = exception.ExceptionRecord.ExceptionAddress;
+
+							bool found = false;
+
+							// Is this a breakpoint in one of the 'pass' functions?
+							for (auto& it : passToCoverageMethods)
 							{
-								std::cout << "Unloading: ???." << std::endl;
-							}
-						}
-					}
-					break;
-
-					case OUTPUT_DEBUG_STRING_EVENT:
-					{
-						// ignore 
-					}
-					break;
-
-					case EXCEPTION_DEBUG_EVENT:
-					{
-						EXCEPTION_DEBUG_INFO& exception = debugEvent.u.Exception;
-						switch (exception.ExceptionRecord.ExceptionCode)
-						{
-							case STATUS_BREAKPOINT:
-
-								if (entryBreakpoint)
+								if (addr == std::get<0>(it))
 								{
-									// std::cout << "Entry breakpoint; ignoring." << std::endl;
-									entryBreakpoint = false;
+#if _WIN64
+									auto numberBytes = threadContextInfo.Rcx;
+									auto pointer = threadContextInfo.Rdx;
+#else
+									auto numberBytes = threadContextInfo.Eax;
+									auto pointer = threadContextInfo.Ecx;
+#endif
+
+									auto data = new char[numberBytes + 1];
+									SIZE_T numberBytesRead;
+									ReadProcessMemory(process->Handle, reinterpret_cast<LPVOID>(pointer), data, numberBytes, &numberBytesRead);
+									data[numberBytesRead] = 0;
+
+									if (!quiet)
+									{
+										std::cout << "Child process notification: " << data << std::endl;
+
+										notifications.Handle(data, numberBytesRead);
+									}
+
+									// Reset the first breakpoint, set the second breakpoint
+									SIZE_T written;
+									BYTE orig = std::get<1>(it);
+									BYTE buffer = 0xCC;
+
+									WriteProcessMemory(process->Handle, std::get<0>(it), &orig, 1, &written);
+									FlushInstructionCache(process->Handle, std::get<0>(it), 1);
+
+									WriteProcessMemory(process->Handle, std::get<2>(it), &buffer, 1, &written);
+									FlushInstructionCache(process->Handle, std::get<2>(it), 1);
+
+									found = true;
+
+									// Make sure to 'hit' this breakpoint if necessary:
+									auto bp = process->breakPoints.find(std::get<0>(it));
+									if (bp != process->breakPoints.end())
+									{
+										// Set the fact that it's a hit:
+										bp->second.lineInfo->HitCount++;
+									}
+								}
+								else if (addr == std::get<2>(it))
+								{
+									// Reset the second breakpoint, set the firstbreakpoint
+									SIZE_T written;
+									BYTE buffer = 0xCC;
+									BYTE orig = std::get<3>(it);
+
+									WriteProcessMemory(process->Handle, std::get<0>(it), &buffer, 1, &written);
+									FlushInstructionCache(process->Handle, std::get<0>(it), 1);
+
+									WriteProcessMemory(process->Handle, std::get<2>(it), &orig, 1, &written);
+									FlushInstructionCache(process->Handle, std::get<2>(it), 1);
+
+									found = true;
+
+									// Make sure to 'hit' this breakpoint if necessary:
+									auto bp = process->breakPoints.find(std::get<2>(it));
+									if (bp != process->breakPoints.end())
+									{
+										// Set the fact that it's a hit:
+										bp->second.lineInfo->HitCount++;
+									}
+								}
+							}
+
+							if (found)
+							{
+								// Restore context
+								SetThreadContext(thread, &threadContextInfo);
+							}
+							else
+							{
+								auto bp = process->breakPoints.find(addr);
+								if (bp != process->breakPoints.end())
+								{
+									// Write back the original data:
+									SIZE_T written;
+									WriteProcessMemory(process->Handle, addr, &bp->second.originalData, 1, &written);
+									FlushInstructionCache(process->Handle, addr, 1);
+
+									// Set the fact that it's a hit:
+									bp->second.lineInfo->HitCount++;
+
+									// Restore context
+									SetThreadContext(thread, &threadContextInfo);
 								}
 								else
 								{
-									auto process = processMap[debugEvent.dwProcessId].get();
-									auto thread = process->Threads[debugEvent.dwThreadId];
-
-									// std::cout << "Breakpoint hit!" << std::endl;
-
-									// Undo our breakpoint:
-									CONTEXT threadContextInfo;
-									threadContextInfo.ContextFlags = CONTEXT_ALL;
-									GetThreadContext(thread, &threadContextInfo);
-
+									// We don't need to restore the 0xCC; best to fix the RIP/EIP.
 #if _WIN64
-									threadContextInfo.Rip--;
+									threadContextInfo.Rip++;
 #else
-									threadContextInfo.Eip--;
+									threadContextInfo.Eip++;
 #endif
-									auto addr = exception.ExceptionRecord.ExceptionAddress;
-
-									bool found = false;
-
-									// Is this a breakpoint in one of the 'pass' functions?
-									for (auto& it : passToCoverageMethods)
+									// Usually, a breakpoint is *not* a DebugBreak but rather one of our suspend calls.
+									// Iterate all threads, get stack traces:
+									for (auto& threadPair : process->Threads)
 									{
-										if (addr == std::get<0>(it))
+										// If the thread is the breaking thread - then we're not interested.
+										if (threadPair.first == debugEvent.dwThreadId)
 										{
-#if _WIN64
-											auto numberBytes = threadContextInfo.Rcx;
-											auto pointer = threadContextInfo.Rdx;
-#else
-											auto numberBytes = threadContextInfo.Eax;
-											auto pointer = threadContextInfo.Ecx;
-#endif
-
-											auto data = new char[numberBytes+1];
-											SIZE_T numberBytesRead;
-											ReadProcessMemory(process->Handle, reinterpret_cast<LPVOID>(pointer), data, numberBytes, &numberBytesRead);
-											data[numberBytesRead] = 0;
-
-											if (!quiet)
-											{
-												std::cout << "Child process notification: " << data << std::endl;
-
-												notifications.Handle(data, numberBytesRead);
-											}
-
-											// Reset the first breakpoint, set the second breakpoint
-											SIZE_T written;
-											BYTE orig = std::get<1>(it);
-											BYTE buffer = 0xCC;
-
-											WriteProcessMemory(process->Handle, std::get<0>(it), &orig, 1, &written);
-											FlushInstructionCache(process->Handle, std::get<0>(it), 1);
-
-											WriteProcessMemory(process->Handle, std::get<2>(it), &buffer, 1, &written);
-											FlushInstructionCache(process->Handle, std::get<2>(it), 1);
-
-											found = true;
-
-											// Make sure to 'hit' this breakpoint if necessary:
-											auto bp = process->breakPoints.find(std::get<0>(it));
-											if (bp != process->breakPoints.end())
-											{
-												// Set the fact that it's a hit:
-												bp->second.lineInfo->HitCount++;
-											}
+											continue;
 										}
-										else if (addr == std::get<2>(it))
-										{
-											// Reset the second breakpoint, set the firstbreakpoint
-											SIZE_T written;
-											BYTE buffer = 0xCC;
-											BYTE orig = std::get<3>(it);
 
-											WriteProcessMemory(process->Handle, std::get<0>(it), &buffer, 1, &written);
-											FlushInstructionCache(process->Handle, std::get<0>(it), 1);
-
-											WriteProcessMemory(process->Handle, std::get<2>(it), &orig, 1, &written);
-											FlushInstructionCache(process->Handle, std::get<2>(it), 1);
-
-											found = true;
-
-											// Make sure to 'hit' this breakpoint if necessary:
-											auto bp = process->breakPoints.find(std::get<2>(it));
-											if (bp != process->breakPoints.end())
-											{
-												// Set the fact that it's a hit:
-												bp->second.lineInfo->HitCount++;
-											}
-										}
-									}
-
-									if (found)
-									{
-										// Restore context
-										SetThreadContext(thread, &threadContextInfo);
-									}
-									else
-									{
-										auto bp = process->breakPoints.find(addr);
-										if (bp != process->breakPoints.end())
-										{
-											// Write back the original data:
-											SIZE_T written;
-											WriteProcessMemory(process->Handle, addr, &bp->second.originalData, 1, &written);
-											FlushInstructionCache(process->Handle, addr, 1);
-
-											// Set the fact that it's a hit:
-											bp->second.lineInfo->HitCount++;
-
-											// Restore context
-											SetThreadContext(thread, &threadContextInfo);
-										}
-										else
-										{
-											// We don't need to restore the 0xCC; best to fix the RIP/EIP.
-#if _WIN64
-											threadContextInfo.Rip++;
-#else
-											threadContextInfo.Eip++;
-#endif
-											// Usually, a breakpoint is *not* a DebugBreak but rather one of our suspend calls.
-											// Iterate all threads, get stack traces:
-											for (auto& threadPair : process->Threads)
-											{
-												// If the thread is the breaking thread - then we're not interested.
-												if (threadPair.first == debugEvent.dwThreadId)
-												{
-													continue;
-												}
-
-												CONTEXT threadContextInfo;
-												threadContextInfo.ContextFlags = CONTEXT_ALL;
-												GetThreadContext(threadPair.second, &threadContextInfo);
+										CONTEXT threadContextInfo;
+										threadContextInfo.ContextFlags = CONTEXT_ALL;
+										GetThreadContext(threadPair.second, &threadContextInfo);
 
 #if _WIN64
-												STACKFRAME64 stack = { 0 };
-												stack.AddrPC.Offset = threadContextInfo.Rip;    // EIP - Instruction Pointer
-												stack.AddrPC.Mode = AddrModeFlat;
-												stack.AddrFrame.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer
-												stack.AddrFrame.Mode = AddrModeFlat;
-												stack.AddrStack.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer (again!)
-												stack.AddrStack.Mode = AddrModeFlat;
+										STACKFRAME64 stack = { 0 };
+										stack.AddrPC.Offset = threadContextInfo.Rip; // EIP - Instruction Pointer
+										stack.AddrPC.Mode = AddrModeFlat;
+										stack.AddrFrame.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer
+										stack.AddrFrame.Mode = AddrModeFlat;
+										stack.AddrStack.Offset = threadContextInfo.Rsp; // ESP - Stack Pointer (again!)
+										stack.AddrStack.Mode = AddrModeFlat;
 #else
-												STACKFRAME64 stack = { 0 };
-												stack.AddrPC.Offset = threadContextInfo.Eip;    // EIP - Instruction Pointer
-												stack.AddrPC.Mode = AddrModeFlat;
-												stack.AddrFrame.Offset = threadContextInfo.Ebp; // EBP
-												stack.AddrFrame.Mode = AddrModeFlat;
-												stack.AddrStack.Offset = threadContextInfo.Esp; // ESP - Stack Pointer
-												stack.AddrStack.Mode = AddrModeFlat;
+										STACKFRAME64 stack = { 0 };
+										stack.AddrPC.Offset = threadContextInfo.Eip; // EIP - Instruction Pointer
+										stack.AddrPC.Mode = AddrModeFlat;
+										stack.AddrFrame.Offset = threadContextInfo.Ebp; // EBP
+										stack.AddrFrame.Mode = AddrModeFlat;
+										stack.AddrStack.Offset = threadContextInfo.Esp; // ESP - Stack Pointer
+										stack.AddrStack.Mode = AddrModeFlat;
 #endif
 
-												// Let's initialize this once for our process.
-												static SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO *>(calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1));
-												symbol->MaxNameLen = 255;
-												symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+										// Let's initialize this once for our process.
+										static SYMBOL_INFO* symbol = reinterpret_cast<SYMBOL_INFO*>(calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1));
+										symbol->MaxNameLen = 255;
+										symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-												BOOL status = TRUE;
+										BOOL status = TRUE;
 
-												std::vector<std::tuple<std::string, DWORD64, std::string>> callStack;
+										std::vector<std::tuple<std::string, DWORD64, std::string>> callStack;
 
-												do
+										do
+										{
+											// Process stack item:
+											std::ostringstream oss;
+
+											if (!SymFromAddr(process->Handle, stack.AddrPC.Offset, 0, symbol))
+											{
+												// Ignore; no source
+											}
+											else
+											{
+												DWORD dwDisplacement;
+												IMAGEHLP_LINE64 line;
+
+												line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+
+												// Get information from PC
+												if (SymGetLineFromAddr64(process->Handle, stack.AddrPC.Offset, &dwDisplacement, &line))
 												{
-													// Process stack item:
-													std::ostringstream oss;
-
-													if (!SymFromAddr(process->Handle, stack.AddrPC.Offset, 0, symbol))
+													if (coverageContext.PathMatches(line.FileName))
 													{
-														// Ignore; no source
-													}
-													else
-													{
-														DWORD  dwDisplacement;
-														IMAGEHLP_LINE64 line;
+														std::string filename(line.FileName);
 
-														line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
-
-														// Get information from PC
-														if (SymGetLineFromAddr64(process->Handle, stack.AddrPC.Offset, &dwDisplacement, &line))
-														{
-															if (coverageContext.PathMatches(line.FileName))
-															{
-																std::string filename(line.FileName);
-
-																callStack.push_back(std::make_tuple(filename, line.LineNumber, symbol->Name));
-															}
-														}
-													}
-
-													// Get next item from stack trace:
-													status = StackWalk64(IMAGE_FILE_MACHINE_AMD64, process->Handle, thread, &stack,
-																		 &threadContextInfo, ReadProcessMemoryInt, SymFunctionTableAccess64,
-																		 SymGetModuleBase64, 0);
-												}
-												while (status);
-
-												// Update the profile graph:
-												for (size_t i = callStack.size(); i > 0; --i)
-												{
-													auto& item = callStack[i - 1];
-													auto line = std::get<1>(item);
-													auto frame = std::get<2>(item);
-
-													auto it = profileInfo.find(frame);
-													if (it == profileInfo.end())
-													{
-														ProfileFrame* frameInfo = new ProfileFrame(std::get<0>(item), line, i == 1);
-														profileInfo[frame] = std::unique_ptr<ProfileFrame>(frameInfo);
-													}
-													else
-													{
-														it->second->Update(line, i == 1);
+														callStack.push_back(std::make_tuple(filename, line.LineNumber, symbol->Name));
 													}
 												}
+											}
+
+											// Get next item from stack trace:
+											status = StackWalk64(IMAGE_FILE_MACHINE_AMD64, process->Handle, thread, &stack,
+												&threadContextInfo, ReadProcessMemoryInt, SymFunctionTableAccess64,
+												SymGetModuleBase64, 0);
+										} while (status);
+
+										// Update the profile graph:
+										for (size_t i = callStack.size(); i > 0; --i)
+										{
+											auto& item = callStack[i - 1];
+											auto line = std::get<1>(item);
+											auto frame = std::get<2>(item);
+
+											auto it = profileInfo.find(frame);
+											if (it == profileInfo.end())
+											{
+												ProfileFrame* frameInfo = new ProfileFrame(std::get<0>(item), line, i == 1);
+												profileInfo[frame] = std::unique_ptr<ProfileFrame>(frameInfo);
+											}
+											else
+											{
+												it->second->Update(line, i == 1);
 											}
 										}
 									}
 								}
-
-								break;
-
-							default:
-								//if (exception.dwFirstChance == 1)
-								//{
-								//   // ignore first chance (SEH) exception.
-								//}
-								// ...otherwise we *definitely* want to let the OS to handle it.
-
-								continueStatus = DBG_EXCEPTION_NOT_HANDLED;
+							}
 						}
 
 						break;
+
+					default:
+						//if (exception.dwFirstChance == 1)
+						//{
+						//   // ignore first chance (SEH) exception.
+						//}
+						// ...otherwise we *definitely* want to let the OS to handle it.
+
+						continueStatus = DBG_EXCEPTION_NOT_HANDLED;
 					}
+
+					break;
+				}
 				}
 
 				ContinueDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, continueStatus);
@@ -892,7 +890,10 @@ struct CoverageRunner
 			}
 		}
 
-		if (totalDeep == 0) { totalDeep = 1; }
+		if (totalDeep == 0)
+		{
+			totalDeep = 1;
+		}
 
 		for (auto& it : profileInfo)
 		{
@@ -908,7 +909,10 @@ struct CoverageRunner
 				totalShallow += jt.second.Shallow;
 			}
 
-			if (totalShallow == 0) { totalShallow = 1; }
+			if (totalShallow == 0)
+			{
+				totalShallow = 1;
+			}
 
 			auto m = mergedInfo.find(it.second->filename);
 			std::vector<ProfileInfo>* merged;
@@ -958,7 +962,7 @@ struct CoverageRunner
 			outputFile = options.Executable + ".cov";
 		}
 
-        // Write report of current execution
+		// Write report of current execution
 		coverageContext.WriteReport(options.ExportFormat, mergedInfo, outputFile);
 
 		if (!quiet)
