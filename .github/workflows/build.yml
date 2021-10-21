@@ -1,0 +1,23 @@
+﻿name: CI Build
+on:
+    pull_request:
+        branches: [ $default-branch ]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Add MSBuild to Path
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore OpenCPPCoverage.sln
+
+    - name: Build solution (32 bit)
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild OpenCPPCoverage.sln -m -p:Configuration=Release -p:Platform=x86
+
+    - name: Build solution (64 bit)
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild OpenCPPCoverage.sln -m -p:Configuration=Release -p:Platform=x64
