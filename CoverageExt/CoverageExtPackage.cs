@@ -1,11 +1,11 @@
-﻿using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.VCProjectEngine;
-using System;
+﻿using System;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.VCProjectEngine;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -28,7 +28,7 @@ namespace NubiloSoft.CoverageExt
     [Guid(GuidList.guidCoverageExtPkgString)]
     [ProvideOptionPage(typeof(GeneralOptionPageGrid), "CPPCoverage", "General", 0, 0, true)]
     [ProvideProfileAttribute(typeof(GeneralOptionPageGrid), "CPPCoverage", "CPPCoverage Settings", 1002, 1003, isToolsOptionPage: true, DescriptionResourceID = 1004)]
-    public sealed class CoverageExtPackage : Package
+    public sealed class CoverageExtPackage : Microsoft.VisualStudio.Shell.Package
     {
         /// <summary>
         /// Default constructor of the package.
@@ -42,7 +42,7 @@ namespace NubiloSoft.CoverageExt
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
         }
 
-        private EnvDTE80.DTE2 dte;
+        private EnvDTE.DTE dte;
         private DteInitializer dteInitializer;
 
         /// <summary>
@@ -91,9 +91,9 @@ namespace NubiloSoft.CoverageExt
         // See http://www.mztools.com/articles/2013/MZ2013029.aspx
         private void InitializeDTE()
         {
-            IVsShell shellService;
+            Microsoft.VisualStudio.Shell.Interop.IVsShell shellService;
 
-            this.dte = this.GetService(typeof(Microsoft.VisualStudio.Shell.Interop.SDTE)) as EnvDTE80.DTE2;
+            this.dte = this.GetService(typeof(SDTE)) as EnvDTE80.DTE2;
 
             if (this.dte == null) // The IDE is not yet fully initialized
             {
