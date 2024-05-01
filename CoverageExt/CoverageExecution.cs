@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+using DTE = EnvDTE.DTE;
+//using Process = EnvDTE.Process;
 
 namespace NubiloSoft.CoverageExt
 {
     public class CoverageExecution
     {
-        public CoverageExecution(EnvDTE.DTE dte, OutputWindow output)
+        public CoverageExecution(DTE dte, OutputWindow output)
         {
             this.dte = dte;
             this.output = output;
@@ -22,7 +20,7 @@ namespace NubiloSoft.CoverageExt
         private StringBuilder tb = new StringBuilder();
         private DateTime lastEvent = DateTime.UtcNow;
 
-        private EnvDTE.DTE dte;
+        private DTE dte;
         private OutputWindow output;
 
         private int running = 0;

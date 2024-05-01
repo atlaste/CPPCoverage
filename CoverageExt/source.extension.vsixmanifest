@@ -14,9 +14,15 @@ CPPCoverage is 100% open source and free under the BSD license. It doesn't get m
         <Tags>code coverage, visual studio</Tags>
     </Metadata>
     <Installation InstalledByMsi="false">
-        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[12.0,20.0)" />
-        <InstallationTarget Version="[12.0,20.0)" Id="Microsoft.VisualStudio.Pro" />
-        <InstallationTarget Version="[12.0,20.0)" Id="Microsoft.VisualStudio.Enterprise" />
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[12.0,22.0)">
+            <ProductArchitecture>x86</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Version="[12.0,22.0)" Id="Microsoft.VisualStudio.Pro">
+            <ProductArchitecture>x86</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Version="[12.0,22.0)" Id="Microsoft.VisualStudio.Enterprise">
+            <ProductArchitecture>x86</ProductArchitecture>
+        </InstallationTarget>
     </Installation>
     <Dependencies>
         <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.7,)" />
@@ -26,6 +32,6 @@ CPPCoverage is 100% open source and free under the BSD license. It doesn't get m
         <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%|" />
     </Assets>
     <Prerequisites>
-        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.8.27729.1,20.0)" DisplayName="Visual Studio core editor" />
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.8.27729.1,22.0)" DisplayName="Visual Studio core editor" />
     </Prerequisites>
 </PackageManifest>

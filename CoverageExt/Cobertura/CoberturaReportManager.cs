@@ -1,13 +1,13 @@
-﻿using System;
+﻿extern alias EnvDTE;
+using System;
 using System.IO;
-using EnvDTE;
 using NubiloSoft.CoverageExt.Data;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
     public class CoberturaReportManager : Data.IReportManager
     {
-        public CoberturaReportManager(DTE dte)
+        public CoberturaReportManager(EnvDTE.DTE dte)
         {
             this.dte = dte;
             this.output = new OutputWindow(dte);
@@ -16,7 +16,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             this.activeCoverageFilename = null;
         }
 
-        private DTE dte;
+        private EnvDTE.DTE dte;
         private OutputWindow output;
 
         private Data.ICoverageData activeCoverageReport;

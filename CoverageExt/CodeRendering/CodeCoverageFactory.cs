@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.IO;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
-using NubiloSoft.CoverageExt;
+using DTE = EnvDTE.DTE;
+
 
 namespace NubiloSoft.CoverageExt.CodeRendering
 {
