@@ -75,17 +75,59 @@ struct FileCallbackInfo
 		std::swap(lineData, newLineData);
 	}
 
+	bool FileTopLevelMatches(const char* filename)
+	{
+		const char* ptr = filename;
+		const char* gt = sourcePath.data();
+		const char* gte = gt + sourcePath.size();
+
+		int index = 0;
+
+		// check top level directory (ex C:\source, c:\work, c:\projects) and make sure source at least is same top level
+		for (; *ptr && gt != gte && index < 7; ++ptr, ++gt)
+		{
+			char lhs = tolower(*gt);
+			char rhs = tolower(*ptr);
+			// if not equal and first character (drive) is different then path is different
+			// but allow paths to be different for source code
+			if (lhs != rhs)
+			{
+				return false;
+			}
+
+			index++;
+		}
+
+		return true;
+	}
+
 	bool PathMatches(const char* filename)
 	{
 		const char* ptr = filename;
 		const char* gt = sourcePath.data();
 		const char* gte = gt + sourcePath.size();
 
+		int index = 0;
+
 		for (; *ptr && gt != gte; ++ptr, ++gt)
 		{
 			char lhs = tolower(*gt);
 			char rhs = tolower(*ptr);
-			if (lhs != rhs) { return false; }
+			// if not equal and first character (drive) is different then path is different
+			// but allow paths to be different for source code
+			if (lhs != rhs)
+			{
+				if (index == 0)
+				{
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			}
+
+			index++;
 		}
 
 		return true;

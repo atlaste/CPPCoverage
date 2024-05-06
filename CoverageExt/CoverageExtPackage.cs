@@ -249,7 +249,10 @@ namespace NubiloSoft.CoverageExt
                 }
             }
 
-            Settings.Instance.TriggerRedraw();
+            if (Settings.Instance != null)
+            {
+                Settings.Instance.TriggerRedraw();
+            }
         }
 
         private void FileContextMenuItem_BeforeQueryStatus(object sender, EventArgs e)
@@ -261,7 +264,7 @@ namespace NubiloSoft.CoverageExt
                 var activeDocument = dte.ActiveDocument;
                 var fullName = activeDocument.FullName;
 
-                if (fullName.EndsWith(".h") || fullName.EndsWith(".cpp"))
+                if (fullName.EndsWith(".h") || fullName.EndsWith(".cpp") || fullName.EndsWith(".c"))
                 {
                     menuCommand.Visible = true;
                 }

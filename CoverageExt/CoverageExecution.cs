@@ -56,7 +56,7 @@ namespace NubiloSoft.CoverageExt
                     {
                         File.Delete(resultFile);
                     }
-
+                    
                     // Find the executables for Coverage.exe
                     string location = typeof(CoverageExecution).Assembly.Location;
                     string folder = Path.GetDirectoryName(location);

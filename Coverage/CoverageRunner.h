@@ -38,9 +38,12 @@ struct CoverageRunner
 	{
 		CallbackInfo* info = reinterpret_cast<CallbackInfo*>(userContext);
 
-		if (info->fileInfo->PathMatches(lineInfo->FileName))
+		if (info->fileInfo->PathMatches(lineInfo->FileName) || info->fileInfo->FileTopLevelMatches(lineInfo->FileName))
 		{
 			auto file = lineInfo->FileName;
+#ifdef _DEBUG
+			std::cout << "file name to process: " << lineInfo->FileName << std::endl;
+#endif
 
 			PVOID addr = reinterpret_cast<PVOID>(lineInfo->Address);
 			auto it = info->breakpointsToSet.find(addr);

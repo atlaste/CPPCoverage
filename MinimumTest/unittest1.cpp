@@ -9,12 +9,91 @@
 #include <DbgHelp.h>
 #pragma warning(default: 4091)
 
+#include "TestCFile.h"
+#include "TestCHighFile.h"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 typedef int(__cdecl *InvokeMethodSignature)();
 
 namespace MinimumTest
 {
+	TEST_CLASS(UnitTestCHighFile)
+	{
+	public:
+
+		TEST_METHOD(TestMethodC1HighNoElse)
+		{
+			testCFunctionHigh1(0);
+		}
+
+		TEST_METHOD(testCFunction2ExecuteExceptionThrown)
+		{
+			bool caught = false;
+			try
+			{
+				char* data = '\0';
+				testCFunctionHigh2(data);
+			}
+			catch (...)
+			{
+				caught = true;
+			}
+			if (!caught)
+			{
+				Assert::Fail(L"No exception thrown while one was expected!");
+			}
+		}
+
+		TEST_METHOD(doWhileHighTest1)
+		{
+			doWhileHighTest(0);
+		}
+
+		TEST_METHOD(whileTestHIgh1)
+		{
+			whileHighTest(0);
+		}
+	};
+
+	TEST_CLASS(UnitTestCFile)
+	{
+	public:
+
+		TEST_METHOD(TestMethodC1NoElse)
+		{
+			testCFunction1(0);
+		}
+
+		TEST_METHOD(testCFunction2ExecuteExceptionThrown)
+		{
+			bool caught = false;
+			try
+			{
+				char* data = '\0';
+				testCFunction2(data);
+			}
+			catch (...)
+			{
+				caught = true;
+			}
+			if (!caught)
+			{
+				Assert::Fail(L"No exception thrown while one was expected!");
+			}
+		}
+
+		TEST_METHOD(doWhileTest1)
+		{
+			doWhileTest(0);
+		}
+
+		TEST_METHOD(whileTest1)
+		{
+			whileTest(0);
+		}	
+	};
+
 	TEST_CLASS(UnitTest1)
 	{
 	public:
