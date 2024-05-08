@@ -38,7 +38,7 @@ struct CoverageRunner
 	{
 		CallbackInfo* info = reinterpret_cast<CallbackInfo*>(userContext);
 
-		if (info->fileInfo->PathMatches(lineInfo->FileName) || info->fileInfo->FileTopLevelMatches(lineInfo->FileName))
+		if ((info->fileInfo->PathMatches(lineInfo->FileName) || info->fileInfo->FileTopLevelMatches(lineInfo->FileName)) && info->fileInfo->FileTypeMatches(lineInfo->FileName))
 		{
 			auto file = lineInfo->FileName;
 #ifdef _DEBUG

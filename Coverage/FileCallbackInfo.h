@@ -133,6 +133,26 @@ struct FileCallbackInfo
 		return true;
 	}
 
+	bool FileTypeMatches(const char* filename)
+	{
+		bool isCorrect = false;
+		std::string filenameStr(filename);
+
+		int pos = filenameStr.find_last_of('.');
+
+		if (pos != std::string::npos)
+		{
+			std::string filetype = filenameStr.substr(pos);
+
+			if (filetype.compare("C") == 0 || filetype.compare("c") == 0 || filetype.compare("cpp") == 0 || filetype.compare("CPP"))
+			{
+				isCorrect = true;
+			}
+		}
+
+		return isCorrect;
+	}
+
 	FileLineInfo *LineInfo(const std::string& filename, DWORD64 lineNumber)
 	{
 		auto it = lineData.find(filename);
