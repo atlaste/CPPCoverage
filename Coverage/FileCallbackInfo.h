@@ -107,8 +107,6 @@ struct FileCallbackInfo
 		const char* gt = sourcePath.data();
 		const char* gte = gt + sourcePath.size();
 
-		int index = 0;
-
 		for (; *ptr && gt != gte; ++ptr, ++gt)
 		{
 			char lhs = tolower(*gt);
@@ -117,17 +115,8 @@ struct FileCallbackInfo
 			// but allow paths to be different for source code
 			if (lhs != rhs)
 			{
-				if (index == 0)
-				{
-					return false;
-				}
-				else
-				{
-					return true;
-				}
+				return false;
 			}
-
-			index++;
 		}
 
 		return true;

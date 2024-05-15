@@ -812,7 +812,7 @@ struct CoverageRunner
 												// Get information from PC
 												if (SymGetLineFromAddr64(process->Handle, stack.AddrPC.Offset, &dwDisplacement, &line))
 												{
-													if (coverageContext.PathMatches(line.FileName))
+													if ((coverageContext.PathMatches(line.FileName) || coverageContext.FileTopLevelMatches(line.FileName)) && coverageContext.FileTypeMatches(line.FileName))
 													{
 														std::string filename(line.FileName);
 

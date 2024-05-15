@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="9A15C37B-BC55-41A6-8B2C-CD50D43BED43" Version="2.45" Language="en-US" Publisher="NubiloSoft" />
+        <Identity Id="9A15C37B-BC55-41A6-8B2C-CD50D43BED43" Version="2.46" Language="en-US" Publisher="NubiloSoft" />
         <DisplayName>CPP Code Coverage Extension</DisplayName>
         <Description xml:space="preserve">CPP Code Coverage is a Visual Studio extension that measures code coverage and profiling data. 
 
