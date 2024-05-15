@@ -88,8 +88,6 @@ struct FileCallbackInfo
 		{
 			char lhs = tolower(*gt);
 			char rhs = tolower(*ptr);
-			// if not equal and first character (drive) is different then path is different
-			// but allow paths to be different for source code
 			if (lhs != rhs)
 			{
 				return false;
@@ -111,8 +109,6 @@ struct FileCallbackInfo
 		{
 			char lhs = tolower(*gt);
 			char rhs = tolower(*ptr);
-			// if not equal and first character (drive) is different then path is different
-			// but allow paths to be different for source code
 			if (lhs != rhs)
 			{
 				return false;
