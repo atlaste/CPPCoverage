@@ -108,11 +108,6 @@ namespace NubiloSoft.CoverageExt.Report
                 return;
             }
 
-            if (report == null)
-            {
-                return;
-            }
-
             string lcs = null;
             Dictionary<string, FileCoverage> dict = new Dictionary<string, FileCoverage>();
             foreach (var item in report.Overview().OrderBy((a) => a.Item1))
