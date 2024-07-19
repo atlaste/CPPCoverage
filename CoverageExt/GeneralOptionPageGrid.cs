@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Globalization;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -9,7 +10,17 @@ namespace NubiloSoft.CoverageExt
     /// Dumbfounded why we need this, since it effectievely shouldn't do anything else but even 
     /// using [TypeConverter(typeof(ColorConverter))] doesn't work.
     /// </summary>
-    class CustomColorConverter : ColorConverter { }
+    class CustomColorConverter : ColorConverter {
+        public override object ConvertFrom( ITypeDescriptorContext context, CultureInfo culture, object value )
+        {
+            return base.ConvertFrom(context, CultureInfo.InvariantCulture, value);
+        }
+
+        public override object ConvertTo( ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType )
+        {
+            return base.ConvertTo( context, CultureInfo.InvariantCulture, value, destinationType );
+        }
+    }
 
     [System.ComponentModel.DesignerCategory("")]
     public class GeneralOptionPageGrid : DialogPage
