@@ -108,11 +108,6 @@ namespace NubiloSoft.CoverageExt.Report
                 return;
             }
 
-            if (report == null)
-            {
-                return;
-            }
-
             string lcs = null;
             Dictionary<string, FileCoverage> dict = new Dictionary<string, FileCoverage>();
             foreach (var item in report.Overview().OrderBy((a) => a.Item1))
@@ -182,7 +177,6 @@ namespace NubiloSoft.CoverageExt.Report
                     this.loaded.Add(new FileCoverage() { Count = count, Total = total, Name = "Grand total", Filename = null });
                 }
 
-                this.loaded.Clear();
                 foreach (var item in dict.
                     OrderBy((a)=>a.Key).
                     Where((a) => a.Value.Filename.IndexOf(".test", StringComparison.InvariantCultureIgnoreCase) < 0 && a.Value.Total > 0).
