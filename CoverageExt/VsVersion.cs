@@ -17,12 +17,10 @@ namespace NubiloSoft.CoverageExt
                 {
                     if (mVsVersion == null)
                     {
-                        string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "msenv.dll");
-
-                        if (File.Exists(path))
+                        try
                         {
+                            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "msenv.dll");
                             FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(path);
-
                             string verName = fvi.ProductVersion;
 
                             for (int i = 0; i < verName.Length; i++)
@@ -34,8 +32,11 @@ namespace NubiloSoft.CoverageExt
                                 }
                             }
                             mVsVersion = new Version(verName);
-                        } else
+                        }
+                        catch (FileNotFoundException e)
+                        {
                             mVsVersion = new Version(0, 0); // Not running inside Visual Studio!
+                        }
                     }
                 }
 
