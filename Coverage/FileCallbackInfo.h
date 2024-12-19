@@ -11,6 +11,7 @@
 #include <string>
 #include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <Windows.h>
 #include <ctime>
@@ -188,10 +189,13 @@ struct FileCallbackInfo
 		std::string reportFilename = filename;
 		std::ofstream ofs(reportFilename);
 
+		std::unordered_set<char> sourceList;
+
 		double total = 0;
 		double covered = 0;
 		for (auto& it : lineData)
 		{
+			sourceList.insert(it.first.front());
 			auto ptr = it.second.get();
 			for (size_t i = 0; i < ptr->numberLines; ++i)
 			{
@@ -266,7 +270,11 @@ struct FileCallbackInfo
 		ofs << "\t\t\t" << "</classes>" << std::endl;
 		ofs << "\t\t" << "</package>" << std::endl;
 		ofs << "\t" << "</packages>" << std::endl;
-		ofs << "<sources><source>c:</source></sources>" << std::endl;
+		ofs << "\t<sources>" << std::endl;
+		for (const auto& source : sourceList) {
+			ofs << "\t\t<source>" << source << ":</source>" << std::endl;
+		}
+		ofs << "\t</sources>" << std::endl;
 		ofs << "</coverage>" << std::endl;
 	}
 
