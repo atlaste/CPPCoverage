@@ -38,7 +38,7 @@ namespace NubiloSoft.CoverageExt
         }
 
         public event PropertyChangedEventHandler OnShowCodeCoveragePropertyChanged;
-        private bool showCodeCoverage = true;
+        private bool showCodeCoverage = false;
         public bool ShowCodeCoverage
         {
             get => this.showCodeCoverage;

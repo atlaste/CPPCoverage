@@ -3,6 +3,8 @@ using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.VCProjectEngine;
@@ -20,15 +22,15 @@ namespace NubiloSoft.CoverageExt
     /// register itself and its components with the shell.
     /// </summary>
 
-    [PackageRegistration(UseManagedResourcesOnly = true)]
+    [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#115", "1.0", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject)]
+    [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideToolWindow(typeof(Report.CoverageReportToolWindow))]
     [Guid(GuidList.guidCoverageExtPkgString)]
     [ProvideOptionPage(typeof(GeneralOptionPageGrid), "CPPCoverage", "General", 0, 0, true)]
     [ProvideProfileAttribute(typeof(GeneralOptionPageGrid), "CPPCoverage", "CPPCoverage Settings", 1002, 1003, isToolsOptionPage: true, DescriptionResourceID = 1004)]
-    public sealed class CoverageExtPackage : Microsoft.VisualStudio.Shell.Package
+    public sealed class CoverageExtPackage : AsyncPackage
     {
         /// <summary>
         /// Default constructor of the package.
@@ -49,19 +51,18 @@ namespace NubiloSoft.CoverageExt
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initialization code that rely on services provided by VisualStudio.
         /// </summary>
-        protected override void Initialize()
+        protected override async Task InitializeAsync( CancellationToken cancellationToken, IProgress<ServiceProgressData> progress )
         {
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
 
-            base.Initialize();
+            await base.InitializeAsync(cancellationToken, progress);
             InitializeDTE();
 
             // this forces the options to be loaded, since it call the Load function on the OptionPageGrid
             GeneralOptionPageGrid page = (GeneralOptionPageGrid)GetDialogPage(typeof(GeneralOptionPageGrid));
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
-            OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-            if (null != mcs)
+            if (await GetServiceAsync(typeof(IMenuCommandService)) is OleMenuCommandService mcs)
             {
                 // Create the command for the tool window
                 {
