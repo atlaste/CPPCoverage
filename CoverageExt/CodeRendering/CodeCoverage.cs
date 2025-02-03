@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using NubiloSoft.CoverageExt.Data;
@@ -156,19 +157,21 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void Redraw()
         {
-            if (Settings.Instance.ShowCodeCoverage)
-            {
-                InitCurrent();
-
-                foreach (ITextViewLine line in view.TextViewLines)
+            ThreadHelper.JoinableTaskFactory.Run(async delegate {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                if (Settings.Instance.ShowCodeCoverage)
                 {
-                    HighlightCoverage(currentCoverage, currentProfile, line);
+                    InitCurrent();
+
+                    foreach (ITextViewLine line in view.TextViewLines)
+                    {
+                        HighlightCoverage(currentCoverage, currentProfile, line);
+                    }
+                } else
+                {
+                    layer.RemoveAllAdornments();
                 }
-            }
-            else
-            {
-                layer.RemoveAllAdornments();
-            }
+            });
         }
 
         /// <summary>
