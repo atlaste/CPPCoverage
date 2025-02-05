@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using DTE = EnvDTE.DTE;
-//using Process = EnvDTE.Process;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -15,6 +14,9 @@ namespace NubiloSoft.CoverageExt
             this.dte = dte;
             this.output = output;
         }
+
+        private static string ProgramFilesX86Path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        private static string ProgramFilesX64Path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
         private StringBuilder tb = new StringBuilder();
         private DateTime lastEvent = DateTime.UtcNow;
@@ -42,6 +44,33 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
+        private string CoverageExePath( string platform )
+        {
+            if (Settings.Instance.UseNativeCoverageSupport)
+            {
+                // Find the executables for Coverage.exe
+                string location = typeof(CoverageExecution).Assembly.Location;
+                string folder = Path.GetDirectoryName(location);
+                return (platform == "x86") ?
+                    Path.Combine(folder, "Resources\\Coverage-x86.exe") :
+                    Path.Combine(folder, "Resources\\Coverage-x64.exe");
+            }
+            else
+            {
+                if (platform == "x86")
+                {
+                    string path1 = Path.Combine(ProgramFilesX64Path, "OpenCppCoverage\\x86\\OpenCppCoverage.exe");
+                    string path2 = Path.Combine(ProgramFilesX86Path, "OpenCppCoverage\\OpenCppCoverage.exe");
+
+                    return File.Exists(path1) ? path1 : path2;
+                }
+                else
+                {
+                    return Path.Combine(ProgramFilesX64Path, "OpenCppCoverage\\OpenCppCoverage.exe");
+                }
+            }
+        }
+
         private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
         {
             try
@@ -56,20 +85,9 @@ namespace NubiloSoft.CoverageExt
                         File.Delete(resultFile);
                     }
 
-                    // Find the executables for Coverage.exe
-                    string location = typeof(CoverageExecution).Assembly.Location;
-                    string folder = Path.GetDirectoryName(location);
-
                     // Create your Process
                     Process process = new Process();
-                    if (platform == "x86")
-                    {
-                        process.StartInfo.FileName = Path.Combine(folder, "Resources\\Coverage-x86.exe");
-                    }
-                    else
-                    {
-                        process.StartInfo.FileName = Path.Combine(folder, "Resources\\Coverage-x64.exe");
-                    }
+                    process.StartInfo.FileName = CoverageExePath(platform);
 
                     if (!File.Exists(process.StartInfo.FileName))
                     {
@@ -263,19 +281,7 @@ namespace NubiloSoft.CoverageExt
 
                     // Create your Process
                     Process process = new Process();
-                    if (platform == "x86")
-                    {
-                        process.StartInfo.FileName = @"c:\Program Files\OpenCppCoverage\x86\OpenCppCoverage.exe";
-
-                        if (!File.Exists(process.StartInfo.FileName))
-                        {
-                            process.StartInfo.FileName = @"c:\Program Files (x86)\OpenCppCoverage\OpenCppCoverage.exe";
-                        }
-                    }
-                    else
-                    {
-                        process.StartInfo.FileName = @"c:\Program Files\OpenCppCoverage\OpenCppCoverage.exe";
-                    }
+                    process.StartInfo.FileName = CoverageExePath(platform);
 
                     if (!File.Exists(process.StartInfo.FileName))
                     {
