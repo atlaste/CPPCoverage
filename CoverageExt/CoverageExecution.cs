@@ -101,7 +101,7 @@ namespace NubiloSoft.CoverageExt
             throw new Exception("Cannot find vstest.console.exe.");
         }
 
-        private string PrepareArgument( string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline, string resultFile )
+        private string PrepareArgument( string solutionFolder, string platform, string dllPath, string workingDirectory, string commandline, string resultFile )
         {
             string PathWithQuotes( string path )
             {
@@ -127,14 +127,14 @@ namespace NubiloSoft.CoverageExt
 
                 argumentBuilder.Append(" -- ");
 
-                if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+                if (!dllPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                 {
                     string vsTestExe = CreateVsTestExePath();
                     argumentBuilder.Append(PathWithQuotes(vsTestExe));
                     argumentBuilder.Append(" /Platform:" + platform + " ");
                 }
 
-                argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
+                argumentBuilder.Append(PathWithQuotes(dllPath));
                 if (commandline != null && commandline.Length > 0)
                 {
                     argumentBuilder.Append(" ");
@@ -162,13 +162,13 @@ namespace NubiloSoft.CoverageExt
                 argumentBuilder.Append(sourcesFilter);
                 argumentBuilder.Append(" -- ");
 
-                if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+                if (!dllPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                 {
                     string vsTestExe = CreateVsTestExePath();
                     argumentBuilder.Append(PathWithQuotes(vsTestExe));
                     argumentBuilder.Append(" /Platform:" + platform + " ");
                 }
-                argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
+                argumentBuilder.Append(PathWithQuotes(dllPath));
             }
             return argumentBuilder.ToString();
         }
@@ -194,7 +194,7 @@ namespace NubiloSoft.CoverageExt
                     throw new NotSupportedException(fielname + " was not found. Expected: " + process.StartInfo.FileName);
                 }
 
-                string argument = PrepareArgument(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline, tempFile);
+                string argument = PrepareArgument(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile);
 
 #if DEBUG
                 this.output.WriteLine("Execute coverage: {0}", argument);
