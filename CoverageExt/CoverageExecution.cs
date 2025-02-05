@@ -117,15 +117,11 @@ namespace NubiloSoft.CoverageExt
                     argumentBuilder.Append(PathWithQuotes(workingDirectory));
                 }
 
-                if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    argumentBuilder.Append(" -- ");
-                }
-                else
+                argumentBuilder.Append(" -- ");
+
+                if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                 {
                     string vsTestExe = CreateVsTestExePath();
-
-                    argumentBuilder.Append(" -- ");
                     argumentBuilder.Append(PathWithQuotes(vsTestExe));
                     argumentBuilder.Append(" /Platform:" + platform + " ");
                 }
