@@ -177,166 +177,82 @@ namespace NubiloSoft.CoverageExt
         {
             try
             {
-                if (Settings.Instance.UseNativeCoverageSupport)
+                // Delete old coverage file
+                (string resultFile, string tempFile) = CoverageFile(solutionFolder);
+                if (File.Exists(tempFile))
                 {
-                    // Delete old coverage file
-                    (string resultFile, string tempFile) = CoverageFile(solutionFolder);
-                    if (File.Exists(tempFile))
-                    {
-                        File.Delete(tempFile);
-                    }
+                    File.Delete(tempFile);
+                }
 
-                    // Create your Process
-                    Process process = new Process();
-                    process.StartInfo.FileName = CoverageExePath(platform);
+                // Create your Process
+                Process process = new Process();
+                process.StartInfo.FileName = CoverageExePath(platform);
 
-                    if (!File.Exists(process.StartInfo.FileName))
-                    {
-                        string fielname = Path.GetFileName(process.StartInfo.FileName);
-                        throw new NotSupportedException(fielname + " was not found. Expected: " + process.StartInfo.FileName);
-                    }
+                if (!File.Exists(process.StartInfo.FileName))
+                {
+                    string fielname = Path.GetFileName(process.StartInfo.FileName);
+                    throw new NotSupportedException(fielname + " was not found. Expected: " + process.StartInfo.FileName);
+                }
 
-                    string argument = PrepareArgument(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline, tempFile);
+                string argument = PrepareArgument(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline, tempFile);
 
 #if DEBUG
-                    this.output.WriteLine("Execute coverage: {0}", argument);
+                this.output.WriteLine("Execute coverage: {0}", argument);
 #endif
 
-                    process.StartInfo.WorkingDirectory = dllFolder;
-                    process.StartInfo.Arguments = argument;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.WorkingDirectory = Settings.Instance.UseNativeCoverageSupport ? dllFolder : Path.GetDirectoryName(tempFile);
+                process.StartInfo.Arguments = argument;
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
 
-                    process.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
-                    process.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
+                process.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
+                process.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
 
-                    process.Start();
+                process.Start();
 
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
 
-                    bool exited = false;
-                    while (!exited && lastEvent.AddMinutes(15) > DateTime.UtcNow)
+                bool exited = false;
+                while (!exited && lastEvent.AddMinutes(15) > DateTime.UtcNow)
+                {
+                    exited = process.WaitForExit(1000 * 60);
+                }
+
+                if (!exited)
+                {
+                    // Kill process.
+                    process.Kill();
+                    throw new Exception("Creating code coverage timed out (more than 15min).");
+                }
+
+                string output = tb.ToString();
+
+                if (output.Contains("Usage:"))
+                {
+                    throw new Exception("Incorrect command line argument passed to coverage tool");
+                }
+
+                if (output.Contains("Error: the test source file"))
+                {
+                    throw new Exception("Cannot find test source file " + dllFilename);
+                }
+
+                if (File.Exists(tempFile))
+                {
+                    // All fine, update file:
+                    if (File.Exists(resultFile))
                     {
-                        exited = process.WaitForExit(1000 * 60);
+                        File.Delete(resultFile);
                     }
-
-                    if (!exited)
-                    {
-                        // Kill process.
-                        process.Kill();
-                        throw new Exception("Creating code coverage timed out (more than 15min).");
-                    }
-
-                    string output = tb.ToString();
-
-                    if (output.Contains("Usage:"))
-                    {
-                        throw new Exception("Incorrect command line argument passed to coverage tool");
-                    }
-
-                    if (output.Contains("Error: the test source file"))
-                    {
-                        throw new Exception("Cannot find test source file " + dllFilename);
-                    }
-
-                    if (File.Exists(tempFile))
-                    {
-                        // All fine, update file:
-                        if (File.Exists(resultFile))
-                        {
-                            File.Delete(resultFile);
-                        }
-                        File.Move(tempFile, resultFile);
-                    }
-                    else
-                    {
-                        this.output.WriteLine("No coverage report generated. Cannot continue.");
-                    }
+                    File.Move(tempFile, resultFile);
                 }
                 else
                 {
-                    // Delete old coverage file
-                    (string resultFile, string tempFile) = CoverageFile(solutionFolder);
-                    if (File.Exists(tempFile))
-                    {
-                        File.Delete(tempFile);
-                    }
-
-                    // Create your Process
-                    Process process = new Process();
-                    process.StartInfo.FileName = CoverageExePath(platform);
-
-                    if (!File.Exists(process.StartInfo.FileName))
-                    {
-                        string fielname = Path.GetFileName(process.StartInfo.FileName);
-                        throw new NotSupportedException(fielname + " was not found. Expected: " + process.StartInfo.FileName);
-                    }
-
-                    string argument = PrepareArgument(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline, tempFile);
-
-#if DEBUG
-                    this.output.WriteLine("Execute coverage: {0}", argument);
-#endif
-
-                    process.StartInfo.WorkingDirectory = Path.GetDirectoryName(tempFile);
-                    process.StartInfo.Arguments = argument;
-                    process.StartInfo.CreateNoWindow = true;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.StartInfo.RedirectStandardError = true;
-
-                    process.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
-                    process.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
-
-                    process.Start();
-
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-
-                    bool exited = false;
-                    while (!exited && lastEvent.AddMinutes(15) > DateTime.UtcNow)
-                    {
-                        exited = process.WaitForExit(1000 * 60);
-                    }
-
-                    if (!exited)
-                    {
-                        // Kill process.
-                        process.Kill();
-                        throw new Exception("Creating code coverage timed out.");
-                    }
-
-                    string output = tb.ToString();
-
-                    if (output.Contains("Usage:"))
-                    {
-                        throw new Exception("Incorrect command line argument passed to coverage tool");
-                    }
-
-                    if (output.Contains("Error: the test source file"))
-                    {
-                        throw new Exception("Cannot find test source file " + dllFilename);
-                    }
-
-                    if (File.Exists(tempFile))
-                    {
-                        // All fine, update file:
-                        if (File.Exists(resultFile))
-                        {
-                            File.Delete(resultFile);
-                        }
-                        File.Move(tempFile, resultFile);
-                    }
-                    else
-                    {
-                        this.output.WriteLine("No coverage report generated. Cannot continue.");
-                    }
-
+                    this.output.WriteLine("No coverage report generated. Cannot continue.");
                 }
-
             }
             catch (Exception ex)
             {
