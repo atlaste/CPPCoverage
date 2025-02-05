@@ -124,22 +124,6 @@ namespace NubiloSoft.CoverageExt
                     argumentBuilder.Append(" -w ");
                     argumentBuilder.Append(PathWithQuotes(workingDirectory));
                 }
-
-                argumentBuilder.Append(" -- ");
-
-                if (!dllPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    string vsTestExe = CreateVsTestExePath();
-                    argumentBuilder.Append(PathWithQuotes(vsTestExe));
-                    argumentBuilder.Append(" /Platform:" + platform + " ");
-                }
-
-                argumentBuilder.Append(PathWithQuotes(dllPath));
-                if (!String.IsNullOrEmpty(commandline))
-                {
-                    argumentBuilder.Append(" ");
-                    argumentBuilder.Append(commandline);
-                }
             }
             else
             {
@@ -160,16 +144,24 @@ namespace NubiloSoft.CoverageExt
                 argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
                 argumentBuilder.Append("--sources ");
                 argumentBuilder.Append(sourcesFilter);
-                argumentBuilder.Append(" -- ");
-
-                if (!dllPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    string vsTestExe = CreateVsTestExePath();
-                    argumentBuilder.Append(PathWithQuotes(vsTestExe));
-                    argumentBuilder.Append(" /Platform:" + platform + " ");
-                }
-                argumentBuilder.Append(PathWithQuotes(dllPath));
             }
+
+            argumentBuilder.Append(" -- ");
+
+            if (!dllPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+            {
+                string vsTestExe = CreateVsTestExePath();
+                argumentBuilder.Append(PathWithQuotes(vsTestExe));
+                argumentBuilder.Append(" /Platform:" + platform + " ");
+            }
+
+            argumentBuilder.Append(PathWithQuotes(dllPath));
+            if (!String.IsNullOrEmpty(commandline))
+            {
+                argumentBuilder.Append(" ");
+                argumentBuilder.Append(commandline);
+            }
+
             return argumentBuilder.ToString();
         }
 
