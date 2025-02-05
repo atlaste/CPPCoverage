@@ -16,7 +16,6 @@ namespace NubiloSoft.CoverageExt
             this.output = output;
         }
 
-        private StringBuilder sb = new StringBuilder();
         private StringBuilder tb = new StringBuilder();
         private DateTime lastEvent = DateTime.UtcNow;
 
