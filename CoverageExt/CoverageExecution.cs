@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using DTE = EnvDTE.DTE;
-//using Process = EnvDTE.Process;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -16,7 +15,6 @@ namespace NubiloSoft.CoverageExt
             this.output = output;
         }
 
-        private StringBuilder sb = new StringBuilder();
         private StringBuilder tb = new StringBuilder();
         private DateTime lastEvent = DateTime.UtcNow;
 
