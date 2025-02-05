@@ -147,30 +147,20 @@ namespace NubiloSoft.CoverageExt
                     }
                 }
 
-                if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    argumentBuilder.Append("--quiet --export_type cobertura:");
-                    argumentBuilder.Append(PathWithQuotes(resultFile));
-                    argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
-                    argumentBuilder.Append("--sources ");
-                    argumentBuilder.Append(sourcesFilter);
-                    argumentBuilder.Append(" -- ");
-                    argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
-                }
-                else
-                {
-                    argumentBuilder.Append("--quiet --export_type cobertura:");
-                    argumentBuilder.Append(PathWithQuotes(resultFile));
-                    argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
-                    argumentBuilder.Append("--sources ");
-                    argumentBuilder.Append(sourcesFilter);
-                    argumentBuilder.Append(" -- ");
+                argumentBuilder.Append("--quiet --export_type cobertura:");
+                argumentBuilder.Append(PathWithQuotes(resultFile));
+                argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
+                argumentBuilder.Append("--sources ");
+                argumentBuilder.Append(sourcesFilter);
+                argumentBuilder.Append(" -- ");
 
+                if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+                {
                     string vsTestExe = CreateVsTestExePath();
                     argumentBuilder.Append(PathWithQuotes(vsTestExe));
                     argumentBuilder.Append(" /Platform:" + platform + " ");
-                    argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
                 }
+                argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
             }
             return argumentBuilder.ToString();
         }
