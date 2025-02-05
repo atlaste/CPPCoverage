@@ -76,46 +76,16 @@ namespace NubiloSoft.CoverageExt
             // TODO: We can do much better here by using the registry...
             var folders = new[]
             {
-                @"\Microsoft Visual Studio\2022\Professional\Common7\IDE\Extensions\TestPlatform\",
-                @"\Microsoft Visual Studio\2022\Community\Common7\IDE\Extensions\TestPlatform\",
-                @"\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\Extensions\TestPlatform\",
-                @"\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio\2019\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio\2017\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio 19.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio 16.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio 15.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                @"\Microsoft Visual Studio 13.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\"
+                @"Extensions\TestPlatform\vstest.console.exe",
+                @"CommonExtensions\Microsoft\TestWindow\vstest.console.exe"
             };
-            var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86).TrimEnd('\\');
 
             foreach (var fold in folders)
             {
-                string file = pf + fold + "vstest.console.exe";
+                string file = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fold);
                 if (File.Exists(file))
                 {
-                    this.output.WriteLine("Found vstest console app.");
-                    return file;
-                }
-            }
-
-            pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles).TrimEnd('\\');
-            this.output.WriteLine(pf);
-
-            foreach (var fold in folders)
-            {
-                string file = pf + fold + "vstest.console.exe";
-                this.output.WriteLine(file);
-                if (File.Exists(file))
-                {
-                    this.output.WriteLine("Found vstest console app.");
+                    this.output.WriteLine("Found vstest console app: " + file);
                     return file;
                 }
             }
