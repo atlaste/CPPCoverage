@@ -116,7 +116,7 @@ namespace NubiloSoft.CoverageExt
                 argumentBuilder.Append(" -p ");
                 argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
 
-                if (workingDirectory != null && workingDirectory.Length > 0)
+                if (!String.IsNullOrEmpty(workingDirectory))
                 {
                     // When directory finish by \ : c++ read \" and arguments is badly computed !
                     workingDirectory = workingDirectory.TrimEnd('\\', '/');
@@ -135,7 +135,7 @@ namespace NubiloSoft.CoverageExt
                 }
 
                 argumentBuilder.Append(PathWithQuotes(dllPath));
-                if (commandline != null && commandline.Length > 0)
+                if (!String.IsNullOrEmpty(commandline))
                 {
                     argumentBuilder.Append(" ");
                     argumentBuilder.Append(commandline);
