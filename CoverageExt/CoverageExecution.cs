@@ -156,7 +156,6 @@ namespace NubiloSoft.CoverageExt
                     string vsTestExe = CreateVsTestExePath();
 
                     argumentBuilder.Append("\" -- ");
-                    // C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe
                     argumentBuilder.Append(@"""" + vsTestExe + @"""");
                     argumentBuilder.Append(" /Platform:" + platform + " \"");
                 }
@@ -205,7 +204,9 @@ namespace NubiloSoft.CoverageExt
                     argumentBuilder.Append("--sources ");
                     argumentBuilder.Append(sourcesFilter);
                     argumentBuilder.Append(" -- ");
-                    argumentBuilder.Append(@"""C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe""");
+
+                    string vsTestExe = CreateVsTestExePath();
+                    argumentBuilder.Append(@"""" + vsTestExe + @"""");
                     argumentBuilder.Append(" /Platform:" + platform + " \"");
                     argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
                     argumentBuilder.Append("\"");
