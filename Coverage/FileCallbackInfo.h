@@ -254,11 +254,11 @@ struct FileCallbackInfo
 				{
 					if (ptr->lines[i].HitCount == ptr->lines[i].DebugCount)
 					{
-						ofs << "\t\t\t\t\t\t" << "<line number=\"" << i << "\" hits=\"1\"/>" << std::endl;
+						ofs << "\t\t\t\t\t\t" << "<line number=\"" << i + 1 << "\" hits=\"1\"/>" << std::endl;
 					}
 					else
 					{
-						ofs << "\t\t\t\t\t\t" << "<line number=\"" << i << "\" hits=\"0\"/>" << std::endl;
+						ofs << "\t\t\t\t\t\t" << "<line number=\"" << i + 1 << "\" hits=\"0\"/>" << std::endl;
 					}
 				}
 			}
