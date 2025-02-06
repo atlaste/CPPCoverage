@@ -12,7 +12,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
     {
         private static string DISABLE_COVERAGE = "DisableCodeCoverage";
         private static string ENABLE_COVERAGE = "EnableCodeCoverage";
-        private static string PRAGMA_LINE = "#pragma";
+        private static string[] prefixCoverage = new string[] { "#pragma" };
 
         private enum LineType
         {
@@ -33,23 +33,25 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
         private static LineType GetLineType( string line )
         {
-            int idx = line.IndexOf(PRAGMA_LINE);
-            if (idx >= 0)
-            {
-                idx += PRAGMA_LINE.Length;
-                while (idx < line.Length && char.IsWhiteSpace(line[idx])) idx++;
-                int jdx = idx;
-                while (jdx < line.Length && !char.IsWhiteSpace(line[jdx])) jdx++;
-
-                ReadOnlySpan<char> lineSpan = line.AsSpan().Slice(idx, jdx - idx);
-
-                if (IsCoverageFlag(lineSpan, ENABLE_COVERAGE))
+            foreach (var prefix in prefixCoverage) {
+                int idx = line.IndexOf(prefix);
+                if (idx >= 0)
                 {
-                    return LineType.ENABLE_COVERAGE;
-                }
-                if (IsCoverageFlag(lineSpan, DISABLE_COVERAGE))
-                {
-                    return LineType.DISABLE_COVERAGE;
+                    idx += prefix.Length;
+                    while (idx < line.Length && char.IsWhiteSpace(line[idx])) idx++;
+                    int jdx = idx;
+                    while (jdx < line.Length && !char.IsWhiteSpace(line[jdx])) jdx++;
+
+                    ReadOnlySpan<char> lineSpan = line.AsSpan().Slice(idx, jdx - idx);
+
+                    if (IsCoverageFlag(lineSpan, ENABLE_COVERAGE))
+                    {
+                        return LineType.ENABLE_COVERAGE;
+                    }
+                    if (IsCoverageFlag(lineSpan, DISABLE_COVERAGE))
+                    {
+                        return LineType.DISABLE_COVERAGE;
+                    }
                 }
             }
             return LineType.CODE;

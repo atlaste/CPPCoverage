@@ -40,21 +40,25 @@ private:
 
 	LineType GetLineType(const std::string& line)
 	{
-		size_t idx = line.find(PRAGMA_LINE);
-		if (idx != std::string::npos)
+		static const std::vector<std::string_view> prefixCoverage{ PRAGMA_LINE };
+		for (const std::string_view& prefix : prefixCoverage)
 		{
-			std::string::const_iterator jdx = std::find_if_not(line.begin() + idx + PRAGMA_LINE.length(), line.end(), std::isspace);
-			if (jdx != line.end())
+			const size_t idx = line.find(prefix);
+			if (idx != std::string::npos)
 			{
-				std::string::const_iterator kdx = std::find_if(jdx, line.end(), std::isspace);
-				const ptrdiff_t size = kdx - jdx;
-				if (IsCoverageFlag(jdx, size, DISABLE_COVERAGE))
+				std::string::const_iterator jdx = std::find_if_not(line.begin() + idx + prefix.length(), line.end(), std::isspace);
+				if (jdx != line.end())
 				{
-					return LineType::DISABLE_COVERAGE;
-				}
-				if (IsCoverageFlag(jdx, size, ENABLE_COVERAGE))
-				{
-					return LineType::ENABLE_COVERAGE;
+					std::string::const_iterator kdx = std::find_if(jdx, line.end(), std::isspace);
+					const ptrdiff_t size = kdx - jdx;
+					if (IsCoverageFlag(jdx, size, DISABLE_COVERAGE))
+					{
+						return LineType::DISABLE_COVERAGE;
+					}
+					if (IsCoverageFlag(jdx, size, ENABLE_COVERAGE))
+					{
+						return LineType::ENABLE_COVERAGE;
+					}
 				}
 			}
 		}
