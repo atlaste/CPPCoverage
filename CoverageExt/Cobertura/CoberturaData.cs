@@ -140,11 +140,11 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
                                             if (hits == "0")
                                             {
-                                                current.Set(int.Parse(num), false);
+                                                current.Set(int.Parse(num) - 1, false);
                                             }
                                             else
                                             {
-                                                current.Set(int.Parse(num), true);
+                                                current.Set(int.Parse(num) - 1, true);
                                             }
                                         }
                                         break;
