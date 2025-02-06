@@ -22,6 +22,7 @@ private:
 	static constexpr std::string_view DISABLE_COVERAGE = "DisableCodeCoverage";
 	static constexpr std::string_view ENABLE_COVERAGE = "EnableCodeCoverage";
 	static constexpr std::string_view PRAGMA_LINE = "#pragma";
+	static constexpr std::string_view DOUBLE_FORWARD_SLASH_LINE = "//";
 
 	bool IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize,
 											const std::string_view& coverageFlag)
@@ -40,7 +41,7 @@ private:
 
 	LineType GetLineType(const std::string& line)
 	{
-		static const std::vector<std::string_view> prefixCoverage{ PRAGMA_LINE };
+		static const std::vector<std::string_view> prefixCoverage{ PRAGMA_LINE, DOUBLE_FORWARD_SLASH_LINE };
 		for (const std::string_view& prefix : prefixCoverage)
 		{
 			const size_t idx = line.find(prefix);

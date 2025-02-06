@@ -7,12 +7,15 @@ namespace NubiloSoft.CoverageExt.Cobertura
     /// <summary>
     /// This class post-processes the coverage results. We basically scan each file for "#pragma EnableCodeCoverage" 
     /// and "#pragma DisableCodeCoverage" and if we encounter this, we'll update the bit vector.
+    /// WARNING: If you use high level of warning (level 4), you need to disable the following code 4068 or the "#pragma warning (disable:4068)".
+    ///
+    /// To avoid it, this system works using following SINGLE-LINE comment too: "// EnableCodeCoverage" and "// DisableCodeCoverage".
     /// </summary>
     public class HandlePragmas
     {
         private static string DISABLE_COVERAGE = "DisableCodeCoverage";
         private static string ENABLE_COVERAGE = "EnableCodeCoverage";
-        private static string[] prefixCoverage = new string[] { "#pragma" };
+        private static string[] prefixCoverage = new string[] { "#pragma", "//" };
 
         private enum LineType
         {
