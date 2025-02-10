@@ -10,6 +10,43 @@
 
 struct FileInfo
 {
+private:
+	enum class LineType
+	{
+		CODE,
+		ENABLE_COVERAGE,
+		DISABLE_COVERAGE
+	};
+
+	LineType GetLineType(const std::string& line)
+	{
+		size_t idx = line.find("#pragma");
+		if (idx != std::string::npos)
+		{
+			size_t jdx = line.find_first_not_of(' ', idx + 7);
+			if (jdx != std::string::npos)
+			{
+				std::string prag = line.substr(jdx);
+				size_t kdx = prag.find(' ');
+				if (kdx != std::string::npos)
+				{
+					prag = prag.substr(0, kdx);
+				}
+
+				if (prag == "DisableCodeCoverage")
+				{
+					return LineType::DISABLE_COVERAGE;
+				}
+				else if (prag == "EnableCodeCoverage")
+				{
+					return LineType::ENABLE_COVERAGE;
+				}
+			}
+		}
+		return LineType::CODE;
+	}
+
+public:
 	FileInfo(const std::string& filename)
 	{
 		std::ifstream ifs(filename);
@@ -20,30 +57,16 @@ struct FileInfo
 		while (std::getline(ifs, line))
 		{
 			// Process str
-			size_t idx = line.find("#pragma");
-			if (idx != std::string::npos)
+			LineType lineType = GetLineType(line);
+			if (lineType == LineType::DISABLE_COVERAGE)
 			{
-				size_t jdx = line.find_first_not_of(' ', idx + 7);
-				if (jdx != std::string::npos)
-				{
-					std::string prag = line.substr(jdx);
-					size_t kdx = prag.find(' ');
-					if (kdx != std::string::npos)
-					{
-						prag = prag.substr(0, kdx);
-					}
-
-					if (prag == "DisableCodeCoverage")
-					{
-						current = false;
-					}
-					else if (prag == "EnableCodeCoverage")
-					{
-						relevant.push_back(current);
-						current = true;
-						continue;
-					}
-				}
+				current = false;
+			}
+			else if (lineType == LineType::ENABLE_COVERAGE)
+			{
+				relevant.push_back(current);
+				current = true;
+				continue;
 			}
 
 			relevant.push_back(current);

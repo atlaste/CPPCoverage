@@ -1,10 +1,5 @@
 ﻿using NubiloSoft.CoverageExt.Data;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
@@ -14,6 +9,32 @@ namespace NubiloSoft.CoverageExt.Cobertura
     /// </summary>
     public class HandlePragmas
     {
+        private enum LineType
+        {
+            CODE,
+            ENABLE_COVERAGE,
+            DISABLE_COVERAGE
+        }
+
+        private static LineType GetLineType( string line )
+        {
+            int idx = line.IndexOf("#pragma");
+            if (idx >= 0)
+            {
+                idx += "#pragma ".Length;
+                string t = line.Substring(idx).TrimStart();
+                if (t == "EnableCodeCoverage")
+                {
+                    return LineType.ENABLE_COVERAGE;
+                }
+                else if (t == "DisableCodeCoverage")
+                {
+                    return LineType.DISABLE_COVERAGE;
+                }
+            }
+            return LineType.CODE;
+        }
+
         public static void Update(string filename, BitVector data)
         {
             bool enabled = true;
@@ -24,20 +45,15 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 for (int i = 0; i < lines.Length; ++i)
                 {
                     string line = lines[i];
-                    int idx = line.IndexOf("#pragma");
-                    if (idx >= 0)
+                    var flag = GetLineType(line);
+                    if (flag == LineType.ENABLE_COVERAGE)
                     {
-                        idx += "#pragma ".Length;
-                        string t = line.Substring(idx).TrimStart();
-                        if (t == "EnableCodeCoverage")
-                        {
-                            data.Remove(i);
-                            enabled = true;
-                        }
-                        else if (t == "DisableCodeCoverage")
-                        {
-                            enabled = false;
-                        }
+                        data.Remove(i);
+                        enabled = true;
+                    }
+                    else if (flag == LineType.DISABLE_COVERAGE)
+                    {
+                        enabled = false;
                     }
 
                     // Update data accordingly:
