@@ -14,11 +14,47 @@ struct FileInfo
 private:
 	static constexpr std::string_view PRAGMA_LINE = "#pragma";
 
+	enum class LineType
+	{
+		CODE,
+		ENABLE_COVERAGE,
+		DISABLE_COVERAGE
+	};
+
 	bool StringStartsWith(const std::string& line, const std::string_view& prefix)
 	{
 		if (line.length() < prefix.length())
 			return false;
 		return std::mismatch(prefix.begin(), prefix.end(), line.begin()).first == prefix.end();
+	}
+
+	LineType GetLineType(std::string& line)
+	{
+		line.erase(line.begin(), std::find_if_not(line.begin(), line.end(), std::isspace));
+		if (StringStartsWith(line, PRAGMA_LINE))
+		{
+			size_t jdx = line.find_first_not_of(' ', PRAGMA_LINE.length());
+			if (jdx != std::string::npos)
+			{
+				std::string prag = line.substr(jdx);
+				size_t kdx = prag.find(' ');
+				if (kdx != std::string::npos)
+				{
+					prag = prag.substr(0, kdx);
+				}
+
+				if (prag == "DisableCodeCoverage")
+				{
+					return LineType::DISABLE_COVERAGE;
+				}
+				else if (prag == "EnableCodeCoverage")
+				{
+					return LineType::ENABLE_COVERAGE;
+				}
+			}
+		}
+
+		return LineType::CODE;
 	}
 public:
 	FileInfo(const std::string& filename)
@@ -31,30 +67,16 @@ public:
 		while (std::getline(ifs, line))
 		{
 			// Process str
-			line.erase(line.begin(), std::find_if_not(line.begin(), line.end(), std::isspace));
-			if (StringStartsWith(line, PRAGMA_LINE))
+			LineType lineType = GetLineType(line);
+			if (lineType == LineType::DISABLE_COVERAGE)
 			{
-				size_t jdx = line.find_first_not_of(' ', PRAGMA_LINE.length());
-				if (jdx != std::string::npos)
-				{
-					std::string prag = line.substr(jdx);
-					size_t kdx = prag.find(' ');
-					if (kdx != std::string::npos)
-					{
-						prag = prag.substr(0, kdx);
-					}
-
-					if (prag == "DisableCodeCoverage")
-					{
-						current = false;
-					}
-					else if (prag == "EnableCodeCoverage")
-					{
-						relevant.push_back(current);
-						current = true;
-						continue;
-					}
-				}
+				current = false;
+			}
+			else if (lineType == LineType::ENABLE_COVERAGE)
+			{
+				relevant.push_back(current);
+				current = true;
+				continue;
 			}
 
 			relevant.push_back(current);
