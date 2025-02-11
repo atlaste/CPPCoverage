@@ -12,6 +12,8 @@
 struct FileInfo
 {
 private:
+	static constexpr std::string_view DISABLE_COVERAGE = "DisableCodeCoverage";
+	static constexpr std::string_view ENABLE_COVERAGE = "EnableCodeCoverage";
 	static constexpr std::string_view PRAGMA_LINE = "#pragma";
 
 	enum class LineType
@@ -21,33 +23,39 @@ private:
 		DISABLE_COVERAGE
 	};
 
-	bool StringStartsWith(const std::string& line, const std::string_view& prefix)
+	bool IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize,
+											const std::string_view& coverageFlag)
 	{
-		if (line.length() < prefix.length())
+		if (iterSize != coverageFlag.size())
+		{
 			return false;
-		return std::mismatch(prefix.begin(), prefix.end(), line.begin()).first == prefix.end();
+		}
+
+		return std::equal(coverageFlag.begin(), coverageFlag.end(), iter);
 	}
 
-	LineType GetLineType(std::string& line)
+	bool StringStartsWith(const std::string::const_iterator& start, const std::string::const_iterator& end, const std::string_view& prefix)
 	{
-		line.erase(line.begin(), std::find_if_not(line.begin(), line.end(), std::isspace));
-		if (StringStartsWith(line, PRAGMA_LINE))
-		{
-			size_t jdx = line.find_first_not_of(' ', PRAGMA_LINE.length());
-			if (jdx != std::string::npos)
-			{
-				std::string prag = line.substr(jdx);
-				size_t kdx = prag.find(' ');
-				if (kdx != std::string::npos)
-				{
-					prag = prag.substr(0, kdx);
-				}
+		if (end - start < prefix.length())
+			return false;
+		return std::mismatch(prefix.begin(), prefix.end(), start).first == prefix.end();
+	}
 
-				if (prag == "DisableCodeCoverage")
+	LineType GetLineType(const std::string& line)
+	{
+		std::string::const_iterator idx = std::find_if_not(line.begin(), line.end(), std::isspace);
+		if (StringStartsWith(idx, line.end(), PRAGMA_LINE))
+		{
+			std::string::const_iterator jdx = std::find_if_not(idx + PRAGMA_LINE.length(), line.end(), std::isspace);
+			if (jdx != line.end())
+			{
+				std::string::const_iterator kdx = std::find_if(jdx, line.end(), std::isspace);
+				const ptrdiff_t size = kdx - jdx;
+				if (IsCoverageFlag(jdx, size, DISABLE_COVERAGE))
 				{
 					return LineType::DISABLE_COVERAGE;
 				}
-				else if (prag == "EnableCodeCoverage")
+				if (IsCoverageFlag(jdx, size, ENABLE_COVERAGE))
 				{
 					return LineType::ENABLE_COVERAGE;
 				}

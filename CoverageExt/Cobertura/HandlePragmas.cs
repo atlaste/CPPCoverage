@@ -1,4 +1,5 @@
 ﻿using NubiloSoft.CoverageExt.Data;
+using System;
 using System.IO;
 
 namespace NubiloSoft.CoverageExt.Cobertura
@@ -9,6 +10,8 @@ namespace NubiloSoft.CoverageExt.Cobertura
     /// </summary>
     public class HandlePragmas
     {
+        private static readonly string DISABLE_COVERAGE = "DisableCodeCoverage";
+        private static readonly string ENABLE_COVERAGE = "EnableCodeCoverage";
         private static readonly string PRAGMA_LINE = "#pragma";
 
         private enum LineType
@@ -18,18 +21,44 @@ namespace NubiloSoft.CoverageExt.Cobertura
             DISABLE_COVERAGE
         }
 
+        private static bool IsCoverageFlag( ReadOnlySpan<char> lineSpan, string coverageFlag )
+        {
+            if (lineSpan.Length != coverageFlag.Length)
+            {
+                return false;
+            }
+
+            return lineSpan.StartsWith(coverageFlag.AsSpan());
+        }
+
+        private static int FindNotWhitespaceIndex( ReadOnlySpan<char> lineSpan, int offset )
+        {
+            int idx = offset;
+            while (idx < lineSpan.Length && char.IsWhiteSpace(lineSpan[idx])) idx++;
+            return idx;
+        }
+
+        private static int FindWhitespaceIndex( ReadOnlySpan<char> lineSpan, int offset )
+        {
+            int idx = offset;
+            while (idx < lineSpan.Length && !char.IsWhiteSpace(lineSpan[idx])) idx++;
+            return idx;
+        }
+
         private static LineType GetLineType( string line )
         {
-            string lineTrim = line.TrimStart();
-            if (lineTrim.StartsWith(PRAGMA_LINE))
+            ReadOnlySpan<char> lineSpan = line.AsSpan().TrimStart();
+            if (lineSpan.StartsWith(PRAGMA_LINE.AsSpan()))
             {
-                int idx = PRAGMA_LINE.Length;
-                string t = lineTrim.Substring(idx).TrimStart();
-                if (t == "EnableCodeCoverage")
+                int idx = FindNotWhitespaceIndex(lineSpan, PRAGMA_LINE.Length);
+                int jdx = FindWhitespaceIndex(lineSpan, idx);
+                ReadOnlySpan<char> value = lineSpan.Slice(idx, jdx - idx);
+
+                if (IsCoverageFlag(value, ENABLE_COVERAGE))
                 {
                     return LineType.ENABLE_COVERAGE;
                 }
-                else if (t == "DisableCodeCoverage")
+                if (IsCoverageFlag(value, DISABLE_COVERAGE))
                 {
                     return LineType.DISABLE_COVERAGE;
                 }
