@@ -1,4 +1,5 @@
 ﻿using NubiloSoft.CoverageExt.Data;
+using System;
 using System.IO;
 
 namespace NubiloSoft.CoverageExt.Cobertura
@@ -9,6 +10,10 @@ namespace NubiloSoft.CoverageExt.Cobertura
     /// </summary>
     public class HandlePragmas
     {
+        private static string DISABLE_COVERAGE = "DisableCodeCoverage";
+        private static string ENABLE_COVERAGE = "EnableCodeCoverage";
+        private static string PRAGMA_LINE = "#pragma";
+
         private enum LineType
         {
             CODE,
@@ -16,18 +21,33 @@ namespace NubiloSoft.CoverageExt.Cobertura
             DISABLE_COVERAGE
         }
 
+        private static bool IsCoverageFlag( ReadOnlySpan<char> lineSpan, string coverageFlag )
+        {
+            if (lineSpan.Length != coverageFlag.Length)
+            {
+                return false;
+            }
+
+            return lineSpan.StartsWith(coverageFlag.AsSpan());
+        }
+
         private static LineType GetLineType( string line )
         {
-            int idx = line.IndexOf("#pragma");
+            int idx = line.IndexOf(PRAGMA_LINE);
             if (idx >= 0)
             {
-                idx += "#pragma ".Length;
-                string t = line.Substring(idx).TrimStart();
-                if (t == "EnableCodeCoverage")
+                idx += PRAGMA_LINE.Length;
+                while (idx < line.Length && char.IsWhiteSpace(line[idx])) idx++;
+                int jdx = idx;
+                while (jdx < line.Length && !char.IsWhiteSpace(line[jdx])) jdx++;
+
+                ReadOnlySpan<char> lineSpan = line.AsSpan().Slice(idx, jdx - idx);
+
+                if (IsCoverageFlag(lineSpan, ENABLE_COVERAGE))
                 {
                     return LineType.ENABLE_COVERAGE;
                 }
-                else if (t == "DisableCodeCoverage")
+                if (IsCoverageFlag(lineSpan, DISABLE_COVERAGE))
                 {
                     return LineType.DISABLE_COVERAGE;
                 }
