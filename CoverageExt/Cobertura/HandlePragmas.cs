@@ -31,7 +31,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                         string t = line.Substring(idx).TrimStart();
                         if (t == "EnableCodeCoverage")
                         {
-                            data.Remove(i + 1);
+                            data.Remove(i);
                             enabled = true;
                         }
                         else if (t == "DisableCodeCoverage")
@@ -43,7 +43,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                     // Update data accordingly:
                     if (!enabled)
                     {
-                        data.Remove(i + 1);
+                        data.Remove(i);
                     }
                 }
 
@@ -52,7 +52,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                     var count = data.Count;
                     for (int i = lines.Length; i < count; ++i)
                     {
-                        data.Remove(i + 1);
+                        data.Remove(i);
                     }
                 }
             }
