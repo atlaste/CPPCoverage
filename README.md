@@ -38,9 +38,14 @@ Working with CPPCoverage is a breeze. Basically install and use, there's nothing
 
 ![alt tag](Screenshots/Pragmas.png)
 
-Alternative system is to use single comment: // DisableCodeCoverage and // EnableCodeCoverage
+Alternative system is to use single-line comment: // DisableCodeCoverage and // EnableCodeCoverage
 
 ![alt tag](Screenshots/comment_forward_slash.png)
+
+It is also possible to use multi-line comment: /\* DisableCodeCoverage \*/ and /\* EnableCodeCoverage \*/
+The condition is to put the flag on the same line as the start of the MULTI_LINE comment:
+
+![alt tag](Screenshots/comment_slash_asterisk.png)
 
 - Sampling-based profiling data is gathered as a by-product
 

@@ -23,25 +23,44 @@ private:
 	static constexpr std::string_view ENABLE_COVERAGE = "EnableCodeCoverage";
 	static constexpr std::string_view PRAGMA_LINE = "#pragma";
 	static constexpr std::string_view DOUBLE_FORWARD_SLASH_LINE = "//";
+	static constexpr std::string_view FORWARD_SLASH_ASTERISK_LINE = "/*";
+	static constexpr std::string_view FORWARD_SLASH_ASTERISK_LINE_END = "*/";
 
 	bool IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize,
-											const std::string_view& coverageFlag)
+											const std::string_view& coverageFlag, const bool multilineComment)
 	{
 		if (iterSize < coverageFlag.size())
 		{
 			return false;
 		}
-		if (iterSize != coverageFlag.size())
+		if (iterSize == coverageFlag.size())
+		{
+			return std::equal(coverageFlag.begin(), coverageFlag.end(), iter);
+		}
+
+		if (!multilineComment)
 		{
 			return false;
 		}
 
-		return std::equal(coverageFlag.begin(), coverageFlag.end(), iter);
+		if (!std::equal(coverageFlag.begin(), coverageFlag.end(), iter))
+		{
+			return false;
+		}
+
+		const ptrdiff_t restSize = iterSize - coverageFlag.size();
+		if (restSize < FORWARD_SLASH_ASTERISK_LINE_END.size()) {
+			return false;
+		}
+
+		return std::equal(FORWARD_SLASH_ASTERISK_LINE_END.begin(),
+											FORWARD_SLASH_ASTERISK_LINE_END.end(),
+											iter + coverageFlag.size());
 	}
 
 	LineType GetLineType(const std::string& line)
 	{
-		static const std::vector<std::string_view> prefixCoverage{ PRAGMA_LINE, DOUBLE_FORWARD_SLASH_LINE };
+		static const std::vector<std::string_view> prefixCoverage{ PRAGMA_LINE, DOUBLE_FORWARD_SLASH_LINE, FORWARD_SLASH_ASTERISK_LINE };
 		for (const std::string_view& prefix : prefixCoverage)
 		{
 			const size_t idx = line.find(prefix);
@@ -52,11 +71,13 @@ private:
 				{
 					std::string::const_iterator kdx = std::find_if(jdx, line.end(), std::isspace);
 					const ptrdiff_t size = kdx - jdx;
-					if (IsCoverageFlag(jdx, size, DISABLE_COVERAGE))
+					const bool multiLineComment = prefix == FORWARD_SLASH_ASTERISK_LINE;
+
+					if (IsCoverageFlag(jdx, size, DISABLE_COVERAGE, multiLineComment))
 					{
 						return LineType::DISABLE_COVERAGE;
 					}
-					if (IsCoverageFlag(jdx, size, ENABLE_COVERAGE))
+					if (IsCoverageFlag(jdx, size, ENABLE_COVERAGE, multiLineComment))
 					{
 						return LineType::ENABLE_COVERAGE;
 					}

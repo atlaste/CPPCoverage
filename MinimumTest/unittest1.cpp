@@ -79,6 +79,46 @@ namespace MinimumTest
 			// EnableCodeCoverage necessary comment
 		}
 
+		TEST_METHOD(TestDisableCoverageMultiLineComment)
+		{
+			/* DisableCodeCoverage */
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			/* EnableCodeCoverage */
+		}
+
+		TEST_METHOD(TestDisableCoverageMultiLineCommentWithoutWhitespace)
+		{
+			/*DisableCodeCoverage*/
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			/*EnableCodeCoverage*/
+		}
+
+		TEST_METHOD(TestDisableCoverageMultiLineCommentWithAdditional)
+		{
+			/* DisableCodeCoverage necessary comment */
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			/* EnableCodeCoverage necessary comment */
+		}
+
+		TEST_METHOD(TestDisableCoverageMultiLineCommentWithAdditionalOtherLine)
+		{
+			/* DisableCodeCoverage
+			   necessary comment
+			*/
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			/* EnableCodeCoverage
+			   necessary comment
+			*/
+		}
+
 		static void TestDLL()
 		{
 			HINSTANCE hinstLib;
