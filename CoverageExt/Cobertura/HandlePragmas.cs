@@ -1,10 +1,6 @@
 ﻿using NubiloSoft.CoverageExt.Data;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
@@ -14,6 +10,51 @@ namespace NubiloSoft.CoverageExt.Cobertura
     /// </summary>
     public class HandlePragmas
     {
+        private static string DISABLE_COVERAGE = "DisableCodeCoverage";
+        private static string ENABLE_COVERAGE = "EnableCodeCoverage";
+        private static string PRAGMA_LINE = "#pragma";
+
+        private enum LineType
+        {
+            CODE,
+            ENABLE_COVERAGE,
+            DISABLE_COVERAGE
+        }
+
+        private static bool IsCoverageFlag( ReadOnlySpan<char> lineSpan, string coverageFlag )
+        {
+            if (lineSpan.Length != coverageFlag.Length)
+            {
+                return false;
+            }
+
+            return lineSpan.StartsWith(coverageFlag.AsSpan());
+        }
+
+        private static LineType GetLineType( string line )
+        {
+            int idx = line.IndexOf(PRAGMA_LINE);
+            if (idx >= 0)
+            {
+                idx += PRAGMA_LINE.Length;
+                while (idx < line.Length && char.IsWhiteSpace(line[idx])) idx++;
+                int jdx = idx;
+                while (jdx < line.Length && !char.IsWhiteSpace(line[jdx])) jdx++;
+
+                ReadOnlySpan<char> lineSpan = line.AsSpan().Slice(idx, jdx - idx);
+
+                if (IsCoverageFlag(lineSpan, ENABLE_COVERAGE))
+                {
+                    return LineType.ENABLE_COVERAGE;
+                }
+                if (IsCoverageFlag(lineSpan, DISABLE_COVERAGE))
+                {
+                    return LineType.DISABLE_COVERAGE;
+                }
+            }
+            return LineType.CODE;
+        }
+
         public static void Update(string filename, BitVector data)
         {
             bool enabled = true;
@@ -24,20 +65,15 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 for (int i = 0; i < lines.Length; ++i)
                 {
                     string line = lines[i];
-                    int idx = line.IndexOf("#pragma");
-                    if (idx >= 0)
+                    var flag = GetLineType(line);
+                    if (flag == LineType.ENABLE_COVERAGE)
                     {
-                        idx += "#pragma ".Length;
-                        string t = line.Substring(idx).TrimStart();
-                        if (t.StartsWith("EnableCodeCoverage"))
-                        {
-                            data.Remove(i);
-                            enabled = true;
-                        }
-                        else if (t.StartsWith("DisableCodeCoverage"))
-                        {
-                            enabled = false;
-                        }
+                        data.Remove(i);
+                        enabled = true;
+                    }
+                    else if (flag == LineType.DISABLE_COVERAGE)
+                    {
+                        enabled = false;
                     }
 
                     // Update data accordingly:
