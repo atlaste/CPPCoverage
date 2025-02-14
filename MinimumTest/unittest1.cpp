@@ -34,7 +34,7 @@ namespace MinimumTest
 			symbol->MaxNameLen = 255;
 			symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-			SymFromAddr(process, reinterpret_cast<DWORD64>(callers[0]), 0, symbol);
+			SymFromAddr(process, reinterpret_cast<DWORD64>(callers[0]), NULL, symbol);
 
 
 			if (false)
@@ -43,13 +43,80 @@ namespace MinimumTest
 			}
 		}
 
-		TEST_METHOD(TestMethod2)
+		TEST_METHOD(TestDisableCoveragePragma)
 		{
 #pragma DisableCodeCoverage
 
 			std::cout << "This won't show up in code coverage." << std::endl;
 
 #pragma EnableCodeCoverage
+		}
+
+		TEST_METHOD(TestDisableCoverageSingleLineComment)
+		{
+			// DisableCodeCoverage
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			// EnableCodeCoverage
+		}
+
+		TEST_METHOD(TestDisableCoverageSingleLineCommentWithoutWhitespace)
+		{
+			//DisableCodeCoverage
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			//EnableCodeCoverage
+		}
+
+		TEST_METHOD(TestDisableCoverageSingleLineCommentWithAdditional)
+		{
+			// DisableCodeCoverage necessary comment
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			// EnableCodeCoverage necessary comment
+		}
+
+		TEST_METHOD(TestDisableCoverageMultiLineComment)
+		{
+			/* DisableCodeCoverage */
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			/* EnableCodeCoverage */
+		}
+
+		TEST_METHOD(TestDisableCoverageMultiLineCommentWithoutWhitespace)
+		{
+			/*DisableCodeCoverage*/
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			/*EnableCodeCoverage*/
+		}
+
+		TEST_METHOD(TestDisableCoverageMultiLineCommentWithAdditional)
+		{
+			/* DisableCodeCoverage necessary comment */
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			/* EnableCodeCoverage necessary comment */
+		}
+
+		TEST_METHOD(TestDisableCoverageMultiLineCommentWithAdditionalOtherLine)
+		{
+			/* DisableCodeCoverage
+			   necessary comment
+			*/
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			/* EnableCodeCoverage
+			   necessary comment
+			*/
 		}
 
 		static void TestDLL()
