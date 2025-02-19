@@ -25,9 +25,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal IAdornmentLayer layer;
         internal IWpfTextView view;
 
-        internal Brush uncoveredBrush;
+        internal SolidColorBrush uncoveredBrush;
+        internal SolidColorBrush uncoveredPenBrush;
         internal Pen uncoveredPen;
-        internal Brush coveredBrush;
+        internal SolidColorBrush coveredBrush;
+        internal SolidColorBrush coveredPenBrush;
         internal Pen coveredPen;
 
         private EnvDTE.DTE dte;
@@ -118,22 +120,34 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private void InitializeColors()
         {
             // Color for uncovered code:
-            uncoveredBrush = new SolidColorBrush(Settings.Instance.UncoveredBrushColor);
-            uncoveredBrush.Freeze();
+            if (uncoveredBrush?.Color != Settings.Instance.UncoveredBrushColor)
+            {
+                uncoveredBrush = new SolidColorBrush(Settings.Instance.UncoveredBrushColor);
+                uncoveredBrush.Freeze();
+            }
 
-            Brush penBrush = new SolidColorBrush(Settings.Instance.UncoveredPenColor);
-            penBrush.Freeze();
-            uncoveredPen = new Pen(penBrush, 0.5);
-            uncoveredPen.Freeze();
+            if (uncoveredPenBrush?.Color != Settings.Instance.UncoveredPenColor)
+            {
+                uncoveredPenBrush = new SolidColorBrush(Settings.Instance.UncoveredPenColor);
+                uncoveredPenBrush.Freeze();
+                uncoveredPen = new Pen(uncoveredPenBrush, 0.5);
+                uncoveredPen.Freeze();
+            }
 
             // Color for covered code:
-            coveredBrush = new SolidColorBrush(Settings.Instance.CoveredBrushColor);
-            coveredBrush.Freeze();
+            if (coveredBrush?.Color != Settings.Instance.CoveredBrushColor)
+            {
+                coveredBrush = new SolidColorBrush(Settings.Instance.CoveredBrushColor);
+                coveredBrush.Freeze();
+            }
 
-            penBrush = new SolidColorBrush(Settings.Instance.CoveredPenColor);
-            penBrush.Freeze();
-            coveredPen = new Pen(penBrush, 0.5);
-            coveredPen.Freeze();
+            if (coveredPenBrush?.Color != Settings.Instance.CoveredPenColor)
+            {
+                coveredPenBrush = new SolidColorBrush(Settings.Instance.CoveredPenColor);
+                coveredPenBrush.Freeze();
+                coveredPen = new Pen(coveredPenBrush, 0.5);
+                coveredPen.Freeze();
+            }
         }
 
         /// <summary>
