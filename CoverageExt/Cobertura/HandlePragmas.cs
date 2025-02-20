@@ -29,12 +29,12 @@ namespace NubiloSoft.CoverageExt.Cobertura
                     {
                         idx += "#pragma ".Length;
                         string t = line.Substring(idx).TrimStart();
-                        if (t.StartsWith("EnableCodeCoverage"))
+                        if (t == "EnableCodeCoverage")
                         {
                             data.Remove(i);
                             enabled = true;
                         }
-                        else if (t.StartsWith("DisableCodeCoverage"))
+                        else if (t == "DisableCodeCoverage")
                         {
                             enabled = false;
                         }
