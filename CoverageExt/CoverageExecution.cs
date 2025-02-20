@@ -387,6 +387,7 @@ namespace NubiloSoft.CoverageExt
                 output.WriteLine("Uncaught error during coverage execution: {0}", ex.Message);
             }
             Data.ReportManagerSingleton.Instance(dte).ResetData();
+            Settings.Instance.TriggerRedraw();
             Interlocked.Exchange(ref running, 0);
         }
 
