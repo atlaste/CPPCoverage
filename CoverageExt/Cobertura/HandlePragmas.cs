@@ -14,6 +14,8 @@ namespace NubiloSoft.CoverageExt.Cobertura
     /// </summary>
     public class HandlePragmas
     {
+        private static readonly string PRAGMA_LINE = "#pragma";
+
         public static void Update(string filename, BitVector data)
         {
             bool enabled = true;
@@ -23,11 +25,10 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 string[] lines = File.ReadAllLines(filename);
                 for (int i = 0; i < lines.Length; ++i)
                 {
-                    string line = lines[i];
-                    int idx = line.IndexOf("#pragma");
-                    if (idx >= 0)
+                    string line = lines[i].TrimStart();
+                    if (line.StartsWith(PRAGMA_LINE))
                     {
-                        idx += "#pragma ".Length;
+                        int idx = PRAGMA_LINE.Length;
                         string t = line.Substring(idx).TrimStart();
                         if (t == "EnableCodeCoverage")
                         {

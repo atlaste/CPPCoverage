@@ -3,6 +3,7 @@
 #include "FileLineInfo.h"
 #include "RuntimeOptions.h"
 
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -10,6 +11,16 @@
 
 struct FileInfo
 {
+private:
+	static constexpr std::string_view PRAGMA_LINE = "#pragma";
+
+	bool StringStartsWith(const std::string& line, const std::string_view& prefix)
+	{
+		if (line.length() < prefix.length())
+			return false;
+		return std::mismatch(prefix.begin(), prefix.end(), line.begin()).first == prefix.end();
+	}
+public:
 	FileInfo(const std::string& filename)
 	{
 		std::ifstream ifs(filename);
@@ -20,10 +31,10 @@ struct FileInfo
 		while (std::getline(ifs, line))
 		{
 			// Process str
-			size_t idx = line.find("#pragma");
-			if (idx != std::string::npos)
+			line.erase(line.begin(), std::find_if_not(line.begin(), line.end(), std::isspace));
+			if (StringStartsWith(line, PRAGMA_LINE))
 			{
-				size_t jdx = line.find_first_not_of(' ', idx + 7);
+				size_t jdx = line.find_first_not_of(' ', PRAGMA_LINE.length());
 				if (jdx != std::string::npos)
 				{
 					std::string prag = line.substr(jdx);
