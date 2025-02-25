@@ -71,15 +71,17 @@ public:
 			if (lineType == LineType::DISABLE_COVERAGE)
 			{
 				current = false;
+				relevant.push_back(current);
 			}
 			else if (lineType == LineType::ENABLE_COVERAGE)
 			{
 				relevant.push_back(current);
 				current = true;
-				continue;
 			}
-
-			relevant.push_back(current);
+			else
+			{
+				relevant.push_back(current);
+			}
 		}
 
 		numberLines = relevant.size();

@@ -55,12 +55,15 @@ namespace NubiloSoft.CoverageExt.Cobertura
                     else if (flag == LineType.DISABLE_COVERAGE)
                     {
                         enabled = false;
-                    }
-
-                    // Update data accordingly:
-                    if (!enabled)
-                    {
                         data.Remove(i);
+                    }
+                    else
+                    {
+                        // Update data accordingly:
+                        if (!enabled)
+                        {
+                            data.Remove(i);
+                        }
                     }
                 }
 
