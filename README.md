@@ -38,6 +38,10 @@ Working with CPPCoverage is a breeze. Basically install and use, there's nothing
 
 ![alt tag](Screenshots/Pragmas.png)
 
+Alternative system is to use single comment: // DisableCodeCoverage and // EnableCodeCoverage
+
+![alt tag](Screenshots/comment_forward_slash.png)
+
 - Sampling-based profiling data is gathered as a by-product
 
 ![alt tag](Screenshots/ProfileData.png)

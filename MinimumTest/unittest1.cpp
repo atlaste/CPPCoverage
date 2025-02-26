@@ -34,7 +34,7 @@ namespace MinimumTest
 			symbol->MaxNameLen = 255;
 			symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
-			SymFromAddr(process, reinterpret_cast<DWORD64>(callers[0]), 0, symbol);
+			SymFromAddr(process, reinterpret_cast<DWORD64>(callers[0]), NULL, symbol);
 
 
 			if (false)
@@ -43,13 +43,52 @@ namespace MinimumTest
 			}
 		}
 
-		TEST_METHOD(TestMethod2)
+		TEST_METHOD(TestDisableCoveragePragma)
 		{
 #pragma DisableCodeCoverage
 
 			std::cout << "This won't show up in code coverage." << std::endl;
 
 #pragma EnableCodeCoverage
+		}
+
+		TEST_METHOD(TestDisableCoverageSingleLineComment)
+		{
+			// DisableCodeCoverage
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			// EnableCodeCoverage
+		}
+
+		TEST_METHOD(TestDisableCoverageSingleLineCommentWithoutWhitespace)
+		{
+			//DisableCodeCoverage
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			//EnableCodeCoverage
+		}
+
+		TEST_METHOD(TestDisableCoverageSingleLineCommentWithAdditional)
+		{
+			// DisableCodeCoverage necessary comment
+
+			std::cout << "This won't show up in code coverage." << std::endl;
+
+			// EnableCodeCoverage necessary comment
+		}
+
+		TEST_METHOD(TestDisableCoverageSingleLineCommentEndCodeLine)
+		{
+			std::cout << "This won't show up in code coverage." << std::endl; // DisableCodeCoverage
+			// EnableCodeCoverage
+		}
+
+		TEST_METHOD(TestDisableCoverageSingleLineCommentEndCodeLineWithoutWhitespace)
+		{
+			std::cout << "This won't show up in code coverage." << std::endl;//DisableCodeCoverage
+			// EnableCodeCoverage
 		}
 
 		static void TestDLL()
