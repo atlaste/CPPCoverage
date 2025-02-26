@@ -41,24 +41,31 @@ private:
 		return std::mismatch(prefix.begin(), prefix.end(), start).first == prefix.end();
 	}
 
+	std::string::const_iterator GetBeginCoverageFlag(const std::string& line)
+	{
+		// try to find #pragma (before pragma may be only whitespace)
+		std::string::const_iterator idx = std::find_if_not(line.begin(), line.end(), std::isspace);
+		if (StringStartsWith(idx, line.end(), PRAGMA_LINE)) {
+			std::string::const_iterator jdx = std::find_if_not(idx + PRAGMA_LINE.length(), line.end(), std::isspace);
+			return jdx;
+		}
+
+		// prefix not found
+		return line.end();
+	}
+
 	LineType GetLineType(const std::string& line)
 	{
-		std::string::const_iterator idx = std::find_if_not(line.begin(), line.end(), std::isspace);
-		if (StringStartsWith(idx, line.end(), PRAGMA_LINE))
+		std::string::const_iterator coverageBeginValue = GetBeginCoverageFlag(line);
+		if (coverageBeginValue != line.end())
 		{
-			std::string::const_iterator jdx = std::find_if_not(idx + PRAGMA_LINE.length(), line.end(), std::isspace);
-			if (jdx != line.end())
-			{
-				std::string::const_iterator kdx = std::find_if(jdx, line.end(), std::isspace);
-				const ptrdiff_t size = kdx - jdx;
-				if (IsCoverageFlag(jdx, size, DISABLE_COVERAGE))
-				{
-					return LineType::DISABLE_COVERAGE;
-				}
-				if (IsCoverageFlag(jdx, size, ENABLE_COVERAGE))
-				{
-					return LineType::ENABLE_COVERAGE;
-				}
+			std::string::const_iterator coverageEndValue = std::find_if(coverageBeginValue, line.end(), std::isspace);
+			const ptrdiff_t size = coverageEndValue - coverageBeginValue;
+			if (IsCoverageFlag(coverageBeginValue, size, DISABLE_COVERAGE)) {
+				return LineType::DISABLE_COVERAGE;
+			}
+			if (IsCoverageFlag(coverageBeginValue, size, ENABLE_COVERAGE)) {
+				return LineType::ENABLE_COVERAGE;
 			}
 		}
 

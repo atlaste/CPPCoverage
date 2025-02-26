@@ -38,21 +38,34 @@ namespace NubiloSoft.CoverageExt.Cobertura
             return idx;
         }
 
-        private static int FindWhitespaceIndex( ReadOnlySpan<char> lineSpan, int offset )
+        private static int FindWhitespaceIndex( ReadOnlySpan<char> lineSpan )
         {
-            int idx = offset;
+            int idx = 0;
             while (idx < lineSpan.Length && !char.IsWhiteSpace(lineSpan[idx])) idx++;
             return idx;
         }
 
-        private static LineType GetLineType( string line )
+        private static ReadOnlySpan<char> GetBeginCoverageFlag( string line )
         {
+            // try to find #pragma (before pragma may be only whitespace)
             ReadOnlySpan<char> lineSpan = line.AsSpan().TrimStart();
             if (lineSpan.StartsWith(PRAGMA_LINE.AsSpan()))
             {
                 int idx = FindNotWhitespaceIndex(lineSpan, PRAGMA_LINE.Length);
-                int jdx = FindWhitespaceIndex(lineSpan, idx);
-                ReadOnlySpan<char> value = lineSpan.Slice(idx, jdx - idx);
+                return lineSpan.Slice(idx);
+            }
+
+            // prefix not found
+            return ReadOnlySpan<char>.Empty;
+        }
+
+        private static LineType GetLineType( string line )
+        {
+            ReadOnlySpan<char> coverageBeginValue = GetBeginCoverageFlag(line);
+            if (!coverageBeginValue.IsEmpty)
+            {
+                int coverageValueEndIdx = FindWhitespaceIndex(coverageBeginValue);
+                ReadOnlySpan<char> value = coverageBeginValue.Slice(0, coverageValueEndIdx);
 
                 if (IsCoverageFlag(value, ENABLE_COVERAGE))
                 {
