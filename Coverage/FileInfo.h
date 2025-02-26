@@ -3,6 +3,7 @@
 #include "FileLineInfo.h"
 #include "RuntimeOptions.h"
 
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -10,6 +11,60 @@
 
 struct FileInfo
 {
+private:
+	static constexpr std::string_view DISABLE_COVERAGE = "DisableCodeCoverage";
+	static constexpr std::string_view ENABLE_COVERAGE = "EnableCodeCoverage";
+	static constexpr std::string_view PRAGMA_LINE = "#pragma";
+
+	enum class LineType
+	{
+		CODE,
+		ENABLE_COVERAGE,
+		DISABLE_COVERAGE
+	};
+
+	bool IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize,
+											const std::string_view& coverageFlag)
+	{
+		if (iterSize != coverageFlag.size())
+		{
+			return false;
+		}
+
+		return std::equal(coverageFlag.begin(), coverageFlag.end(), iter);
+	}
+
+	bool StringStartsWith(const std::string::const_iterator& start, const std::string::const_iterator& end, const std::string_view& prefix)
+	{
+		if (end - start < prefix.length())
+			return false;
+		return std::mismatch(prefix.begin(), prefix.end(), start).first == prefix.end();
+	}
+
+	LineType GetLineType(const std::string& line)
+	{
+		std::string::const_iterator idx = std::find_if_not(line.begin(), line.end(), std::isspace);
+		if (StringStartsWith(idx, line.end(), PRAGMA_LINE))
+		{
+			std::string::const_iterator jdx = std::find_if_not(idx + PRAGMA_LINE.length(), line.end(), std::isspace);
+			if (jdx != line.end())
+			{
+				std::string::const_iterator kdx = std::find_if(jdx, line.end(), std::isspace);
+				const ptrdiff_t size = kdx - jdx;
+				if (IsCoverageFlag(jdx, size, DISABLE_COVERAGE))
+				{
+					return LineType::DISABLE_COVERAGE;
+				}
+				if (IsCoverageFlag(jdx, size, ENABLE_COVERAGE))
+				{
+					return LineType::ENABLE_COVERAGE;
+				}
+			}
+		}
+
+		return LineType::CODE;
+	}
+public:
 	FileInfo(const std::string& filename)
 	{
 		std::ifstream ifs(filename);
@@ -20,33 +75,21 @@ struct FileInfo
 		while (std::getline(ifs, line))
 		{
 			// Process str
-			size_t idx = line.find("#pragma");
-			if (idx != std::string::npos)
+			LineType lineType = GetLineType(line);
+			if (lineType == LineType::DISABLE_COVERAGE)
 			{
-				size_t jdx = line.find_first_not_of(' ', idx + 7);
-				if (jdx != std::string::npos)
-				{
-					std::string prag = line.substr(jdx);
-					size_t kdx = prag.find(' ');
-					if (kdx != std::string::npos)
-					{
-						prag = prag.substr(0, kdx);
-					}
-
-					if (prag == "DisableCodeCoverage")
-					{
-						current = false;
-					}
-					else if (prag == "EnableCodeCoverage")
-					{
-						relevant.push_back(current);
-						current = true;
-						continue;
-					}
-				}
+				current = false;
+				relevant.push_back(current);
 			}
-
-			relevant.push_back(current);
+			else if (lineType == LineType::ENABLE_COVERAGE)
+			{
+				relevant.push_back(current);
+				current = true;
+			}
+			else
+			{
+				relevant.push_back(current);
+			}
 		}
 
 		numberLines = relevant.size();
