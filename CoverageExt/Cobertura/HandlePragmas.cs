@@ -7,12 +7,16 @@ namespace NubiloSoft.CoverageExt.Cobertura
     /// <summary>
     /// This class post-processes the coverage results. We basically scan each file for "#pragma EnableCodeCoverage" 
     /// and "#pragma DisableCodeCoverage" and if we encounter this, we'll update the bit vector.
+    /// WARNING: If you use high level of warning (level 4), you need to disable the following code 4068 or the "#pragma warning (disable:4068)".
+    ///
+    /// To avoid it, this system works using following SINGLE-LINE comment too: "// EnableCodeCoverage" and "// DisableCodeCoverage".
     /// </summary>
     public class HandlePragmas
     {
         private static readonly string DISABLE_COVERAGE = "DisableCodeCoverage";
         private static readonly string ENABLE_COVERAGE = "EnableCodeCoverage";
         private static readonly string PRAGMA_LINE = "#pragma";
+        private static readonly string DOUBLE_FORWARD_SLASH_LINE = "//";
 
         private enum LineType
         {
@@ -52,6 +56,15 @@ namespace NubiloSoft.CoverageExt.Cobertura
             if (lineSpan.StartsWith(PRAGMA_LINE.AsSpan()))
             {
                 int idx = FindNotWhitespaceIndex(lineSpan, PRAGMA_LINE.Length);
+                return lineSpan.Slice(idx);
+            }
+
+            // try to find single-line comment (before single-line comment may be everything)
+            int commentIdx = line.IndexOf(DOUBLE_FORWARD_SLASH_LINE);
+            if (commentIdx >= 0)
+            {
+                lineSpan = line.AsSpan().Slice(commentIdx);
+                int idx = FindNotWhitespaceIndex(lineSpan, DOUBLE_FORWARD_SLASH_LINE.Length);
                 return lineSpan.Slice(idx);
             }
 

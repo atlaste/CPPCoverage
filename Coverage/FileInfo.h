@@ -15,6 +15,7 @@ private:
 	static constexpr std::string_view DISABLE_COVERAGE = "DisableCodeCoverage";
 	static constexpr std::string_view ENABLE_COVERAGE = "EnableCodeCoverage";
 	static constexpr std::string_view PRAGMA_LINE = "#pragma";
+	static constexpr std::string_view DOUBLE_FORWARD_SLASH_LINE = "//";
 
 	enum class LineType
 	{
@@ -47,6 +48,13 @@ private:
 		std::string::const_iterator idx = std::find_if_not(line.begin(), line.end(), std::isspace);
 		if (StringStartsWith(idx, line.end(), PRAGMA_LINE)) {
 			std::string::const_iterator jdx = std::find_if_not(idx + PRAGMA_LINE.length(), line.end(), std::isspace);
+			return jdx;
+		}
+
+		// try to find single-line comment (before single-line comment may be everything)
+		size_t commentIdx = line.find(DOUBLE_FORWARD_SLASH_LINE);
+		if (commentIdx != std::string::npos) {
+			std::string::const_iterator jdx = std::find_if_not(line.begin() + commentIdx + DOUBLE_FORWARD_SLASH_LINE.length(), line.end(), std::isspace);
 			return jdx;
 		}
 
