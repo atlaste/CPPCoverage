@@ -163,6 +163,7 @@ namespace NubiloSoft.CoverageExt
                 OleMenuCommand menuCommand = sender as OleMenuCommand;
                 if (menuCommand != null && dte != null)
                 {
+                    outputWindow.Clear();
                     Array selectedProjects = (Array)dte.ActiveSolutionProjects;
                     //only support 1 selected project
                     if (selectedProjects.Length == 1)
