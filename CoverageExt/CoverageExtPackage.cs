@@ -171,7 +171,16 @@ namespace NubiloSoft.CoverageExt
                         var vcproj = project.Object as VCProject;
                         if (vcproj != null)
                         {
-                            RunCoverage(dte, outputWindow, vcproj);
+                            if (Settings.Instance.CompileBeforeRunning)
+                            {
+                                var projectBuilder = new ProjectBuilder(dte, outputWindow, project.UniqueName, vcproj.ActiveConfiguration.Name,
+                                    () => RunCoverage(dte, outputWindow, vcproj));
+                                projectBuilder.Build();
+                            }
+                            else
+                            {
+                                RunCoverage(dte, outputWindow, vcproj);
+                            }
                         }
                     }
                 }

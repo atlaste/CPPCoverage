@@ -44,6 +44,13 @@ namespace NubiloSoft.CoverageExt
             get => this.showCodeCoverage;
             set => SetField(ref showCodeCoverage, value, OnShowCodeCoveragePropertyChanged);
         }
+
+        private bool compileBeforeRunning = false;
+        public bool CompileBeforeRunning
+        {
+            get => this.compileBeforeRunning;
+            set => SetField(ref compileBeforeRunning, value);
+        }
         #endregion
 
         #region color definitions
