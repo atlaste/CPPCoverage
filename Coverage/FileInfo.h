@@ -12,13 +12,72 @@
 struct FileInfo
 {
 private:
+	static constexpr std::string_view DISABLE_COVERAGE = "DisableCodeCoverage";
+	static constexpr std::string_view ENABLE_COVERAGE = "EnableCodeCoverage";
 	static constexpr std::string_view PRAGMA_LINE = "#pragma";
+	static constexpr std::string_view DOUBLE_FORWARD_SLASH_LINE = "//";
 
-	bool StringStartsWith(const std::string& line, const std::string_view& prefix)
+	enum class LineType
 	{
-		if (line.length() < prefix.length())
+		CODE,
+		ENABLE_COVERAGE,
+		DISABLE_COVERAGE
+	};
+
+	bool IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize,
+											const std::string_view& coverageFlag)
+	{
+		if (iterSize != coverageFlag.size())
+		{
 			return false;
-		return std::mismatch(prefix.begin(), prefix.end(), line.begin()).first == prefix.end();
+		}
+
+		return std::equal(coverageFlag.begin(), coverageFlag.end(), iter);
+	}
+
+	bool StringStartsWith(const std::string::const_iterator& start, const std::string::const_iterator& end, const std::string_view& prefix)
+	{
+		if (end - start < prefix.length())
+			return false;
+		return std::mismatch(prefix.begin(), prefix.end(), start).first == prefix.end();
+	}
+
+	std::string::const_iterator GetBeginCoverageFlag(const std::string& line)
+	{
+		// try to find #pragma (before pragma may be only whitespace)
+		std::string::const_iterator idx = std::find_if_not(line.begin(), line.end(), std::isspace);
+		if (StringStartsWith(idx, line.end(), PRAGMA_LINE)) {
+			std::string::const_iterator jdx = std::find_if_not(idx + PRAGMA_LINE.length(), line.end(), std::isspace);
+			return jdx;
+		}
+
+		// try to find single-line comment (before single-line comment may be everything)
+		size_t commentIdx = line.find(DOUBLE_FORWARD_SLASH_LINE);
+		if (commentIdx != std::string::npos) {
+			std::string::const_iterator jdx = std::find_if_not(line.begin() + commentIdx + DOUBLE_FORWARD_SLASH_LINE.length(), line.end(), std::isspace);
+			return jdx;
+		}
+
+		// prefix not found
+		return line.end();
+	}
+
+	LineType GetLineType(const std::string& line)
+	{
+		std::string::const_iterator coverageBeginValue = GetBeginCoverageFlag(line);
+		if (coverageBeginValue != line.end())
+		{
+			std::string::const_iterator coverageEndValue = std::find_if(coverageBeginValue, line.end(), std::isspace);
+			const ptrdiff_t size = coverageEndValue - coverageBeginValue;
+			if (IsCoverageFlag(coverageBeginValue, size, DISABLE_COVERAGE)) {
+				return LineType::DISABLE_COVERAGE;
+			}
+			if (IsCoverageFlag(coverageBeginValue, size, ENABLE_COVERAGE)) {
+				return LineType::ENABLE_COVERAGE;
+			}
+		}
+
+		return LineType::CODE;
 	}
 public:
 	FileInfo(const std::string& filename)
@@ -31,33 +90,21 @@ public:
 		while (std::getline(ifs, line))
 		{
 			// Process str
-			line.erase(line.begin(), std::find_if_not(line.begin(), line.end(), std::isspace));
-			if (StringStartsWith(line, PRAGMA_LINE))
+			LineType lineType = GetLineType(line);
+			if (lineType == LineType::DISABLE_COVERAGE)
 			{
-				size_t jdx = line.find_first_not_of(' ', PRAGMA_LINE.length());
-				if (jdx != std::string::npos)
-				{
-					std::string prag = line.substr(jdx);
-					size_t kdx = prag.find(' ');
-					if (kdx != std::string::npos)
-					{
-						prag = prag.substr(0, kdx);
-					}
-
-					if (prag == "DisableCodeCoverage")
-					{
-						current = false;
-					}
-					else if (prag == "EnableCodeCoverage")
-					{
-						relevant.push_back(current);
-						current = true;
-						continue;
-					}
-				}
+				current = false;
+				relevant.push_back(current);
 			}
-
-			relevant.push_back(current);
+			else if (lineType == LineType::ENABLE_COVERAGE)
+			{
+				relevant.push_back(current);
+				current = true;
+			}
+			else
+			{
+				relevant.push_back(current);
+			}
 		}
 
 		numberLines = relevant.size();
