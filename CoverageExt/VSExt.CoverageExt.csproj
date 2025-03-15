@@ -323,6 +323,7 @@
     <Compile Include="GeneralOptionPageGrid.cs" />
     <Compile Include="Native\NativeData.cs" />
     <Compile Include="Native\NativeReportManager.cs" />
+    <Compile Include="ProjectBuilder.cs" />
     <Compile Include="Report\CoverageReport.xaml.cs">
       <DependentUpon>CoverageReport.xaml</DependentUpon>
     </Compile>

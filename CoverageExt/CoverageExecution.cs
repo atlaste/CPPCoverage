@@ -36,7 +36,6 @@ namespace NubiloSoft.CoverageExt
                     Name = "Code coverage generator thread"
                 };
 
-                this.output.Clear();
                 this.output.WriteLine("Calculating code coverage...");
 
                 t.Start();
