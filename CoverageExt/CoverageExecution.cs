@@ -4,7 +4,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using DTE = EnvDTE.DTE;
-//using Process = EnvDTE.Process;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -16,7 +15,6 @@ namespace NubiloSoft.CoverageExt
             this.output = output;
         }
 
-        private StringBuilder sb = new StringBuilder();
         private StringBuilder tb = new StringBuilder();
         private DateTime lastEvent = DateTime.UtcNow;
 
@@ -24,6 +22,11 @@ namespace NubiloSoft.CoverageExt
         private OutputWindow output;
 
         private int running = 0;
+
+        private static string PathWithQuotes( string path )
+        {
+            return @"""" + path + @"""";
+        }
 
         public void Start(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
         {
@@ -40,6 +43,58 @@ namespace NubiloSoft.CoverageExt
 
                 t.Start();
             }
+        }
+
+        private string CreateVsTestExePath()
+        {
+            // TODO: We can do much better here by using the registry...
+            var folders = new[]
+            {
+                @"\Microsoft Visual Studio\2022\Professional\Common7\IDE\Extensions\TestPlatform\",
+                @"\Microsoft Visual Studio\2022\Community\Common7\IDE\Extensions\TestPlatform\",
+                @"\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\Extensions\TestPlatform\",
+                @"\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio\2019\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio\2017\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio 19.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio 16.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio 15.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
+                @"\Microsoft Visual Studio 13.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\"
+            };
+            var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86).TrimEnd('\\');
+
+            foreach (var fold in folders)
+            {
+                string file = pf + fold + "vstest.console.exe";
+                if (File.Exists(file))
+                {
+                    this.output.WriteLine("Found vstest console app.");
+                    return file;
+                }
+            }
+
+            pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles).TrimEnd('\\');
+            this.output.WriteLine(pf);
+
+            foreach (var fold in folders)
+            {
+                string file = pf + fold + "vstest.console.exe";
+                this.output.WriteLine(file);
+                if (File.Exists(file))
+                {
+                    this.output.WriteLine("Found vstest console app.");
+                    return file;
+                }
+            }
+
+            throw new Exception("Cannot find vstest.console.exe.");
         }
 
         private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
@@ -90,107 +145,34 @@ namespace NubiloSoft.CoverageExt
 
                     StringBuilder argumentBuilder = new StringBuilder();
 
-                    argumentBuilder.Append("-o \"");
-                    argumentBuilder.Append(resultFile);
-                    argumentBuilder.Append("\" -p \"");
-                    argumentBuilder.Append(solutionFolder.TrimEnd('\\', '/'));
+                    argumentBuilder.Append("-o ");
+                    argumentBuilder.Append(PathWithQuotes(resultFile));
+                    argumentBuilder.Append(" -p ");
+                    argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
 
-                    if (workingDirectory != null && workingDirectory.Length > 0)
+                    if (!String.IsNullOrEmpty(workingDirectory))
                     {
                         // When directory finish by \ : c++ read \" and arguments is badly computed !
                         workingDirectory = workingDirectory.TrimEnd('\\', '/');
 
-                        argumentBuilder.Append("\" -w \"");
-                        argumentBuilder.Append(workingDirectory);
-
-                    }
-                    else
-                    {
-                        argumentBuilder.Append("\"");
+                        argumentBuilder.Append(" -w ");
+                        argumentBuilder.Append(PathWithQuotes(workingDirectory));
                     }
 
-                    if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+                    argumentBuilder.Append(" -- ");
+
+                    if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        argumentBuilder.Append("\" -- \"");
-                    }
-                    else
-                    {
-                        // TODO: We can do much better here by using the registry...
-                        var folders = new[]
-                        {
-                            @"\Microsoft Visual Studio\2022\Professional\Common7\IDE\Extensions\TestPlatform\",
-                            @"\Microsoft Visual Studio\2022\Community\Common7\IDE\Extensions\TestPlatform\",
-                            @"\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\Extensions\TestPlatform\",
-                            @"\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio\2019\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio\2019\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio\2017\Professional\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio\2017\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio 19.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio 16.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio 15.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\",
-                            @"\Microsoft Visual Studio 13.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\"
-                        };
-                        var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86).TrimEnd('\\');
-
-                        var foundtestConsole = false;
-                        string filename = null;
-                        foreach (var fold in folders)
-                        {
-                            string file = pf + fold + "vstest.console.exe";
-                            if (File.Exists(file))
-                            {
-                                filename = file;
-                                this.output.WriteLine("Found vstest console app.");
-                                foundtestConsole = true;
-                                break;
-                            }
-                        }
-
-                        if (foundtestConsole == false)
-                        {
-                            pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles).TrimEnd('\\');
-                            this.output.WriteLine(pf);
-                            
-                            filename = null;
-                            foreach (var fold in folders)
-                            {
-                                string file = pf + fold + "vstest.console.exe";
-                                this.output.WriteLine(file);
-                                if (File.Exists(file))
-                                {
-                                    filename = file;
-                                    this.output.WriteLine("Found vstest console app.");
-                                    foundtestConsole = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    this.output.WriteLine("Cannot find vstest.console.exe.");
-                                }
-                            }
-                        }
-
-                        argumentBuilder.Append("\" -- ");
-                        // C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe
-                        argumentBuilder.Append(@"""" + filename + @"""");
-                        argumentBuilder.Append(" /Platform:" + platform + " \"");
+                        string vsTestExe = CreateVsTestExePath();
+                        argumentBuilder.Append(PathWithQuotes(vsTestExe));
+                        argumentBuilder.Append(" /Platform:" + platform + " ");
                     }
 
-                    argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
-                    if (commandline != null && commandline.Length > 0)
+                    argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
+                    if (!String.IsNullOrEmpty(commandline))
                     {
-                        argumentBuilder.Append("\" ");
+                        argumentBuilder.Append(" ");
                         argumentBuilder.Append(commandline);
-                    }
-                    else
-                    {
-                        argumentBuilder.Append("\"");
                     }
 
 #if DEBUG
@@ -295,29 +277,26 @@ namespace NubiloSoft.CoverageExt
                     }
 
                     StringBuilder argumentBuilder = new StringBuilder();
-                    if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+
+                    argumentBuilder.Append("--quiet --export_type cobertura:");
+                    argumentBuilder.Append(PathWithQuotes(resultFile));
+                    argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
+                    argumentBuilder.Append("--sources ");
+                    argumentBuilder.Append(sourcesFilter);
+                    argumentBuilder.Append(" -- ");
+
+                    if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        argumentBuilder.Append("--quiet --export_type cobertura:\"");
-                        argumentBuilder.Append(resultFile);
-                        argumentBuilder.Append("\" --continue_after_cpp_exception --cover_children ");
-                        argumentBuilder.Append("--sources ");
-                        argumentBuilder.Append(sourcesFilter);
-                        argumentBuilder.Append(" -- \"");
-                        argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
-                        argumentBuilder.Append("\"");
+                        string vsTestExe = CreateVsTestExePath();
+                        argumentBuilder.Append(PathWithQuotes(vsTestExe));
+                        argumentBuilder.Append(" /Platform:" + platform + " ");
                     }
-                    else
+
+                    argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
+                    if (!String.IsNullOrEmpty(commandline))
                     {
-                        argumentBuilder.Append("--quiet --export_type cobertura:\"");
-                        argumentBuilder.Append(resultFile);
-                        argumentBuilder.Append("\" --continue_after_cpp_exception --cover_children ");
-                        argumentBuilder.Append("--sources ");
-                        argumentBuilder.Append(sourcesFilter);
-                        argumentBuilder.Append(" -- ");
-                        argumentBuilder.Append(@"""C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe""");
-                        argumentBuilder.Append(" /Platform:" + platform + " \"");
-                        argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
-                        argumentBuilder.Append("\"");
+                        argumentBuilder.Append(" ");
+                        argumentBuilder.Append(commandline);
                     }
 
 #if DEBUG
