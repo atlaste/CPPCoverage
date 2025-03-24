@@ -23,6 +23,11 @@ namespace NubiloSoft.CoverageExt
 
         private int running = 0;
 
+        private static string PathWithQuotes( string path )
+        {
+            return @"""" + path + @"""";
+        }
+
         public void Start(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
         {
             // We want 1 thread to do this; never more.
@@ -140,47 +145,34 @@ namespace NubiloSoft.CoverageExt
 
                     StringBuilder argumentBuilder = new StringBuilder();
 
-                    argumentBuilder.Append("-o \"");
-                    argumentBuilder.Append(resultFile);
-                    argumentBuilder.Append("\" -p \"");
-                    argumentBuilder.Append(solutionFolder.TrimEnd('\\', '/'));
+                    argumentBuilder.Append("-o ");
+                    argumentBuilder.Append(PathWithQuotes(resultFile));
+                    argumentBuilder.Append(" -p ");
+                    argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
 
-                    if (workingDirectory != null && workingDirectory.Length > 0)
+                    if (!String.IsNullOrEmpty(workingDirectory))
                     {
                         // When directory finish by \ : c++ read \" and arguments is badly computed !
                         workingDirectory = workingDirectory.TrimEnd('\\', '/');
 
-                        argumentBuilder.Append("\" -w \"");
-                        argumentBuilder.Append(workingDirectory);
-
-                    }
-                    else
-                    {
-                        argumentBuilder.Append("\"");
+                        argumentBuilder.Append(" -w ");
+                        argumentBuilder.Append(PathWithQuotes(workingDirectory));
                     }
 
-                    if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        argumentBuilder.Append("\" -- \"");
-                    }
-                    else
+                    argumentBuilder.Append(" -- ");
+
+                    if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                     {
                         string vsTestExe = CreateVsTestExePath();
-
-                        argumentBuilder.Append("\" -- ");
-                        argumentBuilder.Append(@"""" + vsTestExe + @"""");
-                        argumentBuilder.Append(" /Platform:" + platform + " \"");
+                        argumentBuilder.Append(PathWithQuotes(vsTestExe));
+                        argumentBuilder.Append(" /Platform:" + platform + " ");
                     }
 
-                    argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
-                    if (commandline != null && commandline.Length > 0)
+                    argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
+                    if (!String.IsNullOrEmpty(commandline))
                     {
-                        argumentBuilder.Append("\" ");
+                        argumentBuilder.Append(" ");
                         argumentBuilder.Append(commandline);
-                    }
-                    else
-                    {
-                        argumentBuilder.Append("\"");
                     }
 
 #if DEBUG
@@ -285,32 +277,22 @@ namespace NubiloSoft.CoverageExt
                     }
 
                     StringBuilder argumentBuilder = new StringBuilder();
-                    if (dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        argumentBuilder.Append("--quiet --export_type cobertura:\"");
-                        argumentBuilder.Append(resultFile);
-                        argumentBuilder.Append("\" --continue_after_cpp_exception --cover_children ");
-                        argumentBuilder.Append("--sources ");
-                        argumentBuilder.Append(sourcesFilter);
-                        argumentBuilder.Append(" -- \"");
-                        argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
-                        argumentBuilder.Append("\"");
-                    }
-                    else
-                    {
-                        argumentBuilder.Append("--quiet --export_type cobertura:\"");
-                        argumentBuilder.Append(resultFile);
-                        argumentBuilder.Append("\" --continue_after_cpp_exception --cover_children ");
-                        argumentBuilder.Append("--sources ");
-                        argumentBuilder.Append(sourcesFilter);
-                        argumentBuilder.Append(" -- ");
 
+                    argumentBuilder.Append("--quiet --export_type cobertura:");
+                    argumentBuilder.Append(PathWithQuotes(resultFile));
+                    argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
+                    argumentBuilder.Append("--sources ");
+                    argumentBuilder.Append(sourcesFilter);
+                    argumentBuilder.Append(" -- ");
+
+                    if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+                    {
                         string vsTestExe = CreateVsTestExePath();
-                        argumentBuilder.Append(@"""" + vsTestExe + @"""");
-                        argumentBuilder.Append(" /Platform:" + platform + " \"");
-                        argumentBuilder.Append(Path.Combine(dllFolder, dllFilename));
-                        argumentBuilder.Append("\"");
+                        argumentBuilder.Append(PathWithQuotes(vsTestExe));
+                        argumentBuilder.Append(" /Platform:" + platform + " ");
                     }
+
+                    argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
 
 #if DEBUG
                     this.output.WriteLine("Execute coverage: {0}", argumentBuilder.ToString());
