@@ -293,6 +293,11 @@ namespace NubiloSoft.CoverageExt
                     }
 
                     argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
+                    if (!String.IsNullOrEmpty(commandline))
+                    {
+                        argumentBuilder.Append(" ");
+                        argumentBuilder.Append(commandline);
+                    }
 
 #if DEBUG
                     this.output.WriteLine("Execute coverage: {0}", argumentBuilder.ToString());
