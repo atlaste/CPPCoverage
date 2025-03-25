@@ -153,7 +153,8 @@ namespace NubiloSoft.CoverageExt
 
                     if (!File.Exists(process.StartInfo.FileName))
                     {
-                        throw new NotSupportedException("Coverage.exe instance for platform was not found. Expected: " + process.StartInfo.FileName);
+                        string filename = Path.GetFileName(process.StartInfo.FileName);
+                        throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                     }
 
                     string sourcesFilter = solutionFolder;
@@ -273,7 +274,8 @@ namespace NubiloSoft.CoverageExt
 
                     if (!File.Exists(process.StartInfo.FileName))
                     {
-                        throw new NotSupportedException("OpenCPPCoverage was not found. Expected: " + process.StartInfo.FileName);
+                        string filename = Path.GetFileName(process.StartInfo.FileName);
+                        throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                     }
 
                     string sourcesFilter = solutionFolder;
