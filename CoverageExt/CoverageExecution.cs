@@ -48,6 +48,14 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
+        private (string, string) CoverageReportPaths( string solutionFolder )
+        {
+            string ext = Settings.Instance.UseNativeCoverageSupport ? ".cov" : ".xml";
+            string resPathBase = Path.Combine(solutionFolder, "CodeCoverage" + ext);
+            string tmpPathBase = Path.Combine(solutionFolder, "CodeCoverage.tmp" + ext);
+            return (resPathBase, tmpPathBase);
+        }
+
         private string CoverageExePath( string platform )
         {
             if (Settings.Instance.UseNativeCoverageSupport)
@@ -133,11 +141,10 @@ namespace NubiloSoft.CoverageExt
                 if (Settings.Instance.UseNativeCoverageSupport)
                 {
                     // Delete old coverage file
-                    string resultFile = Path.Combine(solutionFolder, "CodeCoverage.tmp.cov");
-                    string defResultFile = Path.Combine(solutionFolder, "CodeCoverage.cov");
-                    if (File.Exists(resultFile))
+                    (string resultFile, string tempFile) = CoverageReportPaths(solutionFolder);
+                    if (File.Exists(tempFile))
                     {
-                        File.Delete(resultFile);
+                        File.Delete(tempFile);
                     }
 
                     // Create your Process
@@ -164,7 +171,7 @@ namespace NubiloSoft.CoverageExt
                     StringBuilder argumentBuilder = new StringBuilder();
 
                     argumentBuilder.Append("-o ");
-                    argumentBuilder.Append(PathWithQuotes(resultFile));
+                    argumentBuilder.Append(PathWithQuotes(tempFile));
                     argumentBuilder.Append(" -p ");
                     argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
 
@@ -237,14 +244,14 @@ namespace NubiloSoft.CoverageExt
                         throw new Exception("Cannot find test source file " + dllFilename);
                     }
 
-                    if (File.Exists(resultFile))
+                    if (File.Exists(tempFile))
                     {
                         // All fine, update file:
-                        if (File.Exists(defResultFile))
+                        if (File.Exists(resultFile))
                         {
-                            File.Delete(defResultFile);
+                            File.Delete(resultFile);
                         }
-                        File.Move(resultFile, defResultFile);
+                        File.Move(tempFile, resultFile);
                     }
                     else
                     {
@@ -254,11 +261,10 @@ namespace NubiloSoft.CoverageExt
                 else
                 {
                     // Delete old coverage file
-                    string resultFile = Path.Combine(solutionFolder, "CodeCoverage.tmp.xml");
-                    string defResultFile = Path.Combine(solutionFolder, "CodeCoverage.xml");
-                    if (File.Exists(resultFile))
+                    (string resultFile, string tempFile) = CoverageReportPaths(solutionFolder);
+                    if (File.Exists(tempFile))
                     {
-                        File.Delete(resultFile);
+                        File.Delete(tempFile);
                     }
 
                     // Create your Process
@@ -285,7 +291,7 @@ namespace NubiloSoft.CoverageExt
                     StringBuilder argumentBuilder = new StringBuilder();
 
                     argumentBuilder.Append("--quiet --export_type cobertura:");
-                    argumentBuilder.Append(PathWithQuotes(resultFile));
+                    argumentBuilder.Append(PathWithQuotes(tempFile));
                     argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
                     argumentBuilder.Append("--sources ");
                     argumentBuilder.Append(sourcesFilter);
@@ -309,7 +315,7 @@ namespace NubiloSoft.CoverageExt
                     this.output.WriteLine("Execute coverage: {0}", argumentBuilder.ToString());
 #endif
 
-                    process.StartInfo.WorkingDirectory = Path.GetDirectoryName(resultFile);
+                    process.StartInfo.WorkingDirectory = Path.GetDirectoryName(tempFile);
                     process.StartInfo.Arguments = argumentBuilder.ToString();
                     process.StartInfo.CreateNoWindow = true;
                     process.StartInfo.UseShellExecute = false;
@@ -349,14 +355,14 @@ namespace NubiloSoft.CoverageExt
                         throw new Exception("Cannot find test source file " + dllFilename);
                     }
 
-                    if (File.Exists(resultFile))
+                    if (File.Exists(tempFile))
                     {
                         // All fine, update file:
-                        if (File.Exists(defResultFile))
+                        if (File.Exists(resultFile))
                         {
-                            File.Delete(defResultFile);
+                            File.Delete(resultFile);
                         }
-                        File.Move(resultFile, defResultFile);
+                        File.Move(tempFile, resultFile);
                     }
                     else
                     {
