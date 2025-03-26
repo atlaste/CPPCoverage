@@ -134,6 +134,66 @@ namespace NubiloSoft.CoverageExt
             throw new Exception("Cannot find vstest.console.exe.");
         }
 
+        private string PrepareArguments( string solutionFolder, string platform, string dllPath, string workingDirectory, string commandline, string reportFile )
+        {
+            StringBuilder argumentBuilder = new StringBuilder();
+
+            if (Settings.Instance.UseNativeCoverageSupport)
+            {
+                argumentBuilder.Append("-o ");
+                argumentBuilder.Append(PathWithQuotes(reportFile));
+                argumentBuilder.Append(" -p ");
+                argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
+
+                if (!String.IsNullOrEmpty(workingDirectory))
+                {
+                    // When directory finish by \ : c++ read \" and arguments is badly computed !
+                    workingDirectory = workingDirectory.TrimEnd('\\', '/');
+
+                    argumentBuilder.Append(" -w ");
+                    argumentBuilder.Append(PathWithQuotes(workingDirectory));
+                }
+            }
+            else
+            {
+                string sourcesFilter = solutionFolder;
+                int smidx = sourcesFilter.IndexOf(' ');
+                if (smidx > 0)
+                {
+                    sourcesFilter = sourcesFilter.Substring(0, smidx);
+                    int lidx = sourcesFilter.LastIndexOf('\\');
+                    if (lidx >= 0)
+                    {
+                        sourcesFilter = sourcesFilter.Substring(0, lidx - 1);
+                    }
+                }
+
+                argumentBuilder.Append("--quiet --export_type cobertura:");
+                argumentBuilder.Append(PathWithQuotes(reportFile));
+                argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
+                argumentBuilder.Append("--sources ");
+                argumentBuilder.Append(sourcesFilter);
+            }
+
+            argumentBuilder.Append(" -- ");
+
+            if (!dllPath.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+            {
+                string vsTestExe = CreateVsTestExePath();
+                argumentBuilder.Append(PathWithQuotes(vsTestExe));
+                argumentBuilder.Append(" /Platform:" + platform + " ");
+            }
+
+            argumentBuilder.Append(PathWithQuotes(dllPath));
+            if (!String.IsNullOrEmpty(commandline))
+            {
+                argumentBuilder.Append(" ");
+                argumentBuilder.Append(commandline);
+            }
+
+            return argumentBuilder.ToString();
+        }
+
         private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
         {
             try
@@ -153,59 +213,17 @@ namespace NubiloSoft.CoverageExt
 
                     if (!File.Exists(process.StartInfo.FileName))
                     {
-                        throw new NotSupportedException("Coverage.exe instance for platform was not found. Expected: " + process.StartInfo.FileName);
+                        string filename = Path.GetFileName(process.StartInfo.FileName);
+                        throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                     }
 
-                    string sourcesFilter = solutionFolder;
-                    int smidx = sourcesFilter.IndexOf(' ');
-                    if (smidx > 0)
-                    {
-                        sourcesFilter = sourcesFilter.Substring(0, smidx);
-                        int lidx = sourcesFilter.LastIndexOf('\\');
-                        if (lidx >= 0)
-                        {
-                            sourcesFilter = sourcesFilter.Substring(0, lidx - 1);
-                        }
-                    }
-
-                    StringBuilder argumentBuilder = new StringBuilder();
-
-                    argumentBuilder.Append("-o ");
-                    argumentBuilder.Append(PathWithQuotes(tempFile));
-                    argumentBuilder.Append(" -p ");
-                    argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
-
-                    if (!String.IsNullOrEmpty(workingDirectory))
-                    {
-                        // When directory finish by \ : c++ read \" and arguments is badly computed !
-                        workingDirectory = workingDirectory.TrimEnd('\\', '/');
-
-                        argumentBuilder.Append(" -w ");
-                        argumentBuilder.Append(PathWithQuotes(workingDirectory));
-                    }
-
-                    argumentBuilder.Append(" -- ");
-
-                    if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        string vsTestExe = CreateVsTestExePath();
-                        argumentBuilder.Append(PathWithQuotes(vsTestExe));
-                        argumentBuilder.Append(" /Platform:" + platform + " ");
-                    }
-
-                    argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
-                    if (!String.IsNullOrEmpty(commandline))
-                    {
-                        argumentBuilder.Append(" ");
-                        argumentBuilder.Append(commandline);
-                    }
-
+                    string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile);
 #if DEBUG
-                    this.output.WriteLine("Execute coverage: {0}", argumentBuilder.ToString());
+                    this.output.WriteLine("Execute coverage: {0}", arguments);
 #endif
 
                     process.StartInfo.WorkingDirectory = dllFolder;
-                    process.StartInfo.Arguments = argumentBuilder.ToString();
+                    process.StartInfo.Arguments = arguments;
                     process.StartInfo.CreateNoWindow = true;
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
@@ -273,50 +291,17 @@ namespace NubiloSoft.CoverageExt
 
                     if (!File.Exists(process.StartInfo.FileName))
                     {
-                        throw new NotSupportedException("OpenCPPCoverage was not found. Expected: " + process.StartInfo.FileName);
+                        string filename = Path.GetFileName(process.StartInfo.FileName);
+                        throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                     }
 
-                    string sourcesFilter = solutionFolder;
-                    int smidx = sourcesFilter.IndexOf(' ');
-                    if (smidx > 0)
-                    {
-                        sourcesFilter = sourcesFilter.Substring(0, smidx);
-                        int lidx = sourcesFilter.LastIndexOf('\\');
-                        if (lidx >= 0)
-                        {
-                            sourcesFilter = sourcesFilter.Substring(0, lidx - 1);
-                        }
-                    }
-
-                    StringBuilder argumentBuilder = new StringBuilder();
-
-                    argumentBuilder.Append("--quiet --export_type cobertura:");
-                    argumentBuilder.Append(PathWithQuotes(tempFile));
-                    argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
-                    argumentBuilder.Append("--sources ");
-                    argumentBuilder.Append(sourcesFilter);
-                    argumentBuilder.Append(" -- ");
-
-                    if (!dllFilename.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        string vsTestExe = CreateVsTestExePath();
-                        argumentBuilder.Append(PathWithQuotes(vsTestExe));
-                        argumentBuilder.Append(" /Platform:" + platform + " ");
-                    }
-
-                    argumentBuilder.Append(PathWithQuotes(Path.Combine(dllFolder, dllFilename)));
-                    if (!String.IsNullOrEmpty(commandline))
-                    {
-                        argumentBuilder.Append(" ");
-                        argumentBuilder.Append(commandline);
-                    }
-
+                    string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile);
 #if DEBUG
-                    this.output.WriteLine("Execute coverage: {0}", argumentBuilder.ToString());
+                    this.output.WriteLine("Execute coverage: {0}", arguments);
 #endif
 
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(tempFile);
-                    process.StartInfo.Arguments = argumentBuilder.ToString();
+                    process.StartInfo.Arguments = arguments;
                     process.StartInfo.CreateNoWindow = true;
                     process.StartInfo.UseShellExecute = false;
                     process.StartInfo.RedirectStandardOutput = true;
