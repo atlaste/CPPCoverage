@@ -59,15 +59,9 @@ namespace NubiloSoft.CoverageExt
         [TypeConverter(typeof(CustomColorConverter))]
         public Color CoveredPen { get; set; } = Color.FromArgb(0xD0, 0xBD, 0xFC, 0xBF);
 
-        public override void LoadSettingsFromStorage()
+        protected override void OnApply( PageApplyEventArgs e )
         {
-            base.LoadSettingsFromStorage();
-            UpdateSettings();
-        }
-
-        public override void SaveSettingsToStorage()
-        {
-            base.SaveSettingsToStorage();
+            base.OnApply(e);
             UpdateSettings();
         }
 
