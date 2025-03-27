@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows.Media;
 
 namespace NubiloSoft.CoverageExt
@@ -13,11 +12,13 @@ namespace NubiloSoft.CoverageExt
 
         public static Settings Instance { get => instance; }
 
-        protected bool SetField<T>(ref T field, T value, PropertyChangedEventHandler propertyChanged = null, [CallerMemberName] string propertyName = null)
+        private bool propertyChanged = true;
+
+        protected bool SetField<T>(ref T field, T value)
         {
             if (EqualityComparer<T>.Default.Equals(field, value)) return false;
             field = value;
-            propertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            propertyChanged = true;
             return true;
         }
 
@@ -26,6 +27,23 @@ namespace NubiloSoft.CoverageExt
         public void TriggerRedraw()
         {
             RedrawNeeded();
+        }
+
+        public event EventHandler OnSettingsChanged;
+        public void TriggerSettingsChanged()
+        {
+            if (propertyChanged) {
+                OnSettingsChanged?.Invoke(this, EventArgs.Empty);
+                propertyChanged = false;
+            }
+        }
+
+        public event PropertyChangedEventHandler OnShowCodeCoveragePropertyChanged;
+        public void ToggleShowCodeCoverage()
+        {
+            this.ShowCodeCoverage = !this.ShowCodeCoverage;
+            OnShowCodeCoveragePropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+            propertyChanged = false;
         }
         #endregion
 
@@ -37,12 +55,11 @@ namespace NubiloSoft.CoverageExt
             set => SetField(ref useNativeCoverageSupport, value);
         }
 
-        public event PropertyChangedEventHandler OnShowCodeCoveragePropertyChanged;
         private bool showCodeCoverage = false;
         public bool ShowCodeCoverage
         {
             get => this.showCodeCoverage;
-            set => SetField(ref showCodeCoverage, value, OnShowCodeCoveragePropertyChanged);
+            set => SetField(ref showCodeCoverage, value);
         }
 
         private bool compileBeforeRunning = false;
@@ -54,34 +71,32 @@ namespace NubiloSoft.CoverageExt
         #endregion
 
         #region color definitions
-        public event PropertyChangedEventHandler OnColorPropertyChanged;
-
         private Color uncoveredBrushColor;
         public Color UncoveredBrushColor
         {
             get => this.uncoveredBrushColor;
-            set => SetField(ref uncoveredBrushColor, value, OnColorPropertyChanged);
+            set => SetField(ref uncoveredBrushColor, value);
         }
 
         private Color uncoveredPenColor = Color.FromArgb(0xD0, 0xFF, 0xCF, 0xB8);
         public Color UncoveredPenColor
         {
             get => this.uncoveredPenColor;
-            set => SetField(ref uncoveredPenColor, value, OnColorPropertyChanged);
+            set => SetField(ref uncoveredPenColor, value);
         }
 
         private Color coveredBrushColor;
         public Color CoveredBrushColor
         {
             get => this.coveredBrushColor;
-            set => SetField(ref coveredBrushColor, value, OnColorPropertyChanged);
+            set => SetField(ref coveredBrushColor, value);
         }
 
         private Color coveredPenColor = Color.FromArgb(0xD0, 0xBD, 0xFC, 0xBF);
         public Color CoveredPenColor
         {
             get => this.coveredPenColor;
-            set => SetField(ref coveredPenColor, value, OnColorPropertyChanged);
+            set => SetField(ref coveredPenColor, value);
         }
         #endregion
 

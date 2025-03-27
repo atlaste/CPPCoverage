@@ -58,7 +58,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             {
                 // listen to events that change the setting properties
                 Settings.Instance.OnShowCodeCoveragePropertyChanged += Instance_OnShowCodeCoveragePropertyChanged;
-                Settings.Instance.OnColorPropertyChanged += Instance_OnColorPropertyChanged;
+                Settings.Instance.OnSettingsChanged += Instance_OnSettingsChanged;
                 Settings.Instance.RedrawNeeded += Instance_OnRedrawNeeded;
 
                 // Listen to any event that changes the layout (text changes, scrolling, etc)
@@ -67,7 +67,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             else
             {
                 Settings.Instance.OnShowCodeCoveragePropertyChanged -= Instance_OnShowCodeCoveragePropertyChanged;
-                Settings.Instance.OnColorPropertyChanged -= Instance_OnColorPropertyChanged;
+                Settings.Instance.OnSettingsChanged -= Instance_OnSettingsChanged;
                 Settings.Instance.RedrawNeeded -= Instance_OnRedrawNeeded;
                 view.LayoutChanged -= OnLayoutChanged;
             }
@@ -111,9 +111,9 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Instance_OnColorPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void Instance_OnSettingsChanged(object sender, EventArgs e)
         {
-            this.outputWindow.WriteDebugLine("Instance_OnColorPropertyChanged");
+            this.outputWindow.WriteDebugLine("Instance_OnSettingsChanged");
             InitializeColors();
             Redraw();
         }
