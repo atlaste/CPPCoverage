@@ -60,6 +60,7 @@ namespace NubiloSoft.CoverageExt
 
             // this forces the options to be loaded, since it call the Load function on the OptionPageGrid
             GeneralOptionPageGrid page = (GeneralOptionPageGrid)GetDialogPage(typeof(GeneralOptionPageGrid));
+            page.UpdateSettings();
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             if (await GetServiceAsync(typeof(IMenuCommandService)) is OleMenuCommandService mcs)
