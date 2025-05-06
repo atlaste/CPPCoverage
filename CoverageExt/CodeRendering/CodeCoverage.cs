@@ -33,6 +33,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal Pen coveredPen;
 
         private EnvDTE.DTE dte;
+        private OutputWindow outputWindow;
 
         private CoverageState[] currentCoverage;
         private ProfileVector currentProfile;
@@ -40,6 +41,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte)
         {
             this.dte = dte;
+            this.outputWindow = new OutputWindow(dte);
             this.view = view;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
             this.layer.Opacity = 0.4;
@@ -100,6 +102,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// <param name="e"></param>
         private void Instance_OnShowCodeCoveragePropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
+            this.outputWindow.WriteDebugLine("Instance_OnShowCodeCoveragePropertyChanged");
             Redraw();
         }
 
@@ -110,6 +113,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// <param name="e"></param>
         private void Instance_OnColorPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
+            this.outputWindow.WriteDebugLine("Instance_OnColorPropertyChanged");
             InitializeColors();
             Redraw();
         }
