@@ -218,9 +218,7 @@ namespace NubiloSoft.CoverageExt
                     }
 
                     string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile);
-#if DEBUG
-                    this.output.WriteLine("Execute coverage: {0}", arguments);
-#endif
+                    this.output.WriteDebugLine("Execute coverage: {0}", arguments);
 
                     process.StartInfo.WorkingDirectory = dllFolder;
                     process.StartInfo.Arguments = arguments;
@@ -296,9 +294,7 @@ namespace NubiloSoft.CoverageExt
                     }
 
                     string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile);
-#if DEBUG
-                    this.output.WriteLine("Execute coverage: {0}", arguments);
-#endif
+                    this.output.WriteDebugLine("Execute coverage: {0}", arguments);
 
                     process.StartInfo.WorkingDirectory = Path.GetDirectoryName(tempFile);
                     process.StartInfo.Arguments = arguments;
