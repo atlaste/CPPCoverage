@@ -37,7 +37,8 @@ private:
 
 	bool StringStartsWith(const std::string::const_iterator& start, const std::string::const_iterator& end, const std::string_view& prefix)
 	{
-		if (end - start < prefix.length())
+		const auto distance = std::distance(start, end);
+		if ((distance < 0) || ((size_t)distance < prefix.length()))
 			return false;
 		return std::mismatch(prefix.begin(), prefix.end(), start).first == prefix.end();
 	}
