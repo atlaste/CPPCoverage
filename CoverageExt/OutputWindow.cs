@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EnvDTE;
+﻿using EnvDTE;
 using EnvDTE80;
 
 namespace NubiloSoft.CoverageExt
@@ -66,6 +61,13 @@ namespace NubiloSoft.CoverageExt
                     window.OutputString(string.Format(format, par) + "\r\n");
                 }
             }
+        }
+
+        public void WriteDebugLine(string format, params object[] par)
+        {
+#if DEBUG
+            WriteLine(format, par);
+#endif
         }
     }
 }
