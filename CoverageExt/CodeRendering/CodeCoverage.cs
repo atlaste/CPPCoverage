@@ -33,6 +33,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal Pen coveredPen;
 
         private EnvDTE.DTE dte;
+        private OutputWindow outputWindow;
 
         private CoverageState[] currentCoverage;
         private ProfileVector currentProfile;
@@ -40,6 +41,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte)
         {
             this.dte = dte;
+            this.outputWindow = new OutputWindow(dte);
             this.view = view;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
             this.layer.Opacity = 0.4;
@@ -56,7 +58,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             {
                 // listen to events that change the setting properties
                 Settings.Instance.OnShowCodeCoveragePropertyChanged += Instance_OnShowCodeCoveragePropertyChanged;
-                Settings.Instance.OnColorPropertyChanged += Instance_OnColorPropertyChanged;
+                Settings.Instance.OnSettingsChanged += Instance_OnSettingsChanged;
                 Settings.Instance.RedrawNeeded += Instance_OnRedrawNeeded;
 
                 // Listen to any event that changes the layout (text changes, scrolling, etc)
@@ -65,7 +67,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             else
             {
                 Settings.Instance.OnShowCodeCoveragePropertyChanged -= Instance_OnShowCodeCoveragePropertyChanged;
-                Settings.Instance.OnColorPropertyChanged -= Instance_OnColorPropertyChanged;
+                Settings.Instance.OnSettingsChanged -= Instance_OnSettingsChanged;
                 Settings.Instance.RedrawNeeded -= Instance_OnRedrawNeeded;
                 view.LayoutChanged -= OnLayoutChanged;
             }
@@ -100,6 +102,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// <param name="e"></param>
         private void Instance_OnShowCodeCoveragePropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
+            this.outputWindow.WriteDebugLine("Instance_OnShowCodeCoveragePropertyChanged");
             Redraw();
         }
 
@@ -108,8 +111,9 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void Instance_OnColorPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void Instance_OnSettingsChanged(object sender, EventArgs e)
         {
+            this.outputWindow.WriteDebugLine("Instance_OnSettingsChanged");
             InitializeColors();
             Redraw();
         }

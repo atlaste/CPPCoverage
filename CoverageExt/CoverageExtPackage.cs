@@ -301,7 +301,7 @@ namespace NubiloSoft.CoverageExt
             OleMenuCommand menuCommand = sender as OleMenuCommand;
             if (menuCommand != null)
             {
-                Settings.Instance.ShowCodeCoverage = !Settings.Instance.ShowCodeCoverage;
+                Settings.Instance.ToggleShowCodeCoverage();
                 menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
             }
         }

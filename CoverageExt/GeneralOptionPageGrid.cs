@@ -78,6 +78,7 @@ namespace NubiloSoft.CoverageExt
             Settings.Instance.UncoveredPenColor = convert(UncoveredPen);
             Settings.Instance.CoveredBrushColor = convert(CoveredBrush);
             Settings.Instance.CoveredPenColor = convert(CoveredPen);
+            Settings.Instance.TriggerSettingsChanged();
         }
     }
 }
