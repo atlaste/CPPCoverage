@@ -189,42 +189,39 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             CoverageState[] currentFile = new CoverageState[0];
             ProfileVector currentProf = new Data.ProfileVector(0);
 
-            if (Settings.Instance.ShowCodeCoverage)
+            string activeFilename = GetActiveFilename();
+            if (activeFilename != null)
             {
-                string activeFilename = GetActiveFilename();
-                if (activeFilename != null)
-                {
-                    Tuple<BitVector, ProfileVector> activeReport = null;
-                    DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
+                Tuple<BitVector, ProfileVector> activeReport = null;
+                DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
 
-                    var dataProvider = Data.ReportManagerSingleton.Instance(dte);
-                    if (dataProvider != null)
+                var dataProvider = Data.ReportManagerSingleton.Instance(dte);
+                if (dataProvider != null)
+                {
+                    var coverageData = dataProvider.UpdateData();
+                    if (coverageData != null && activeFilename != null)
                     {
-                        var coverageData = dataProvider.UpdateData();
-                        if (coverageData != null && activeFilename != null)
+                        if (coverageData.FileDate >= activeFileLastWrite)
                         {
-                            if (coverageData.FileDate >= activeFileLastWrite)
-                            {
-                                activeReport = coverageData.GetData(activeFilename);
-                            }
+                            activeReport = coverageData.GetData(activeFilename);
                         }
                     }
+                }
 
-                    if (activeReport != null)
+                if (activeReport != null)
+                {
+                    currentProf = activeReport.Item2;
+                    currentFile = new CoverageState[activeReport.Item1.Count];
+
+                    foreach (var item in activeReport.Item1.Enumerate())
                     {
-                        currentProf = activeReport.Item2;
-                        currentFile = new CoverageState[activeReport.Item1.Count];
-
-                        foreach (var item in activeReport.Item1.Enumerate())
+                        if (item.Value)
                         {
-                            if (item.Value)
-                            {
-                                currentFile[item.Key] = CoverageState.Covered;
-                            }
-                            else
-                            {
-                                currentFile[item.Key] = CoverageState.Uncovered;
-                            }
+                            currentFile[item.Key] = CoverageState.Covered;
+                        }
+                        else
+                        {
+                            currentFile[item.Key] = CoverageState.Uncovered;
                         }
                     }
                 }
