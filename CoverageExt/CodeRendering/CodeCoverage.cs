@@ -177,14 +177,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             ThreadHelper.JoinableTaskFactory.Run(async delegate {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                if (Settings.Instance.ShowCodeCoverage)
-                {
-                    UpdateLayer(view.TextViewLines);
-                }
-                else
-                {
-                    layer.RemoveAllAdornments();
-                }
+                UpdateLayer(view.TextViewLines);
             });
         }
 
@@ -251,11 +244,18 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private void UpdateLayer(IList<ITextViewLine> lines)
         {
-            InitCurrent();
-
-            foreach (ITextViewLine line in lines)
+            if (Settings.Instance.ShowCodeCoverage)
             {
-                HighlightCoverage(line);
+                InitCurrent();
+
+                foreach (ITextViewLine line in lines)
+                {
+                    HighlightCoverage(line);
+                }
+            }
+            else
+            {
+                layer.RemoveAllAdornments();
             }
         }
 
