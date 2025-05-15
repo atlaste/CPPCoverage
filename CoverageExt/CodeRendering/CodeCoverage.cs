@@ -246,11 +246,14 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             if (Settings.Instance.ShowCodeCoverage)
             {
-                InitCurrent();
-
-                foreach (ITextViewLine line in lines)
+                if (lines.Count != 0)
                 {
-                    HighlightCoverage(line);
+                    InitCurrent();
+
+                    foreach (ITextViewLine line in lines)
+                    {
+                        HighlightCoverage(line);
+                    }
                 }
             }
             else
