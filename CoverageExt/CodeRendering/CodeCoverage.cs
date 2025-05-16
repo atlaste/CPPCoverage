@@ -255,7 +255,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
             foreach (ITextViewLine line in lines)
             {
-                HighlightCoverage(currentProfile, line);
+                HighlightCoverage(line);
             }
         }
 
@@ -332,9 +332,9 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             return lines;
         }
 
-        private void HighlightCoverage(ProfileVector profiledata, ITextViewLine line)
+        private void HighlightCoverage(ITextViewLine line)
         {
-            if (view == null || profiledata == null || line == null || view.TextSnapshot == null) { return; }
+            if (view == null || currentProfile == null || line == null || view.TextSnapshot == null) { return; }
 
             IWpfTextViewLineCollection textViewLines = view.TextViewLines;
 
@@ -374,7 +374,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 }
             }
 
-            var profile = profiledata.Get(lineno);
+            var profile = currentProfile.Get(lineno);
             if (profile != null && profile.Item1 != 0 || profile.Item2 != 0)
             {
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
