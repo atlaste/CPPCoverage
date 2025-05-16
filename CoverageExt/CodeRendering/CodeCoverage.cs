@@ -184,51 +184,32 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// <summary>
         /// Initializes the current coverage data
         /// </summary>
-        private void InitCurrent()
+        private bool InitCurrent()
         {
-            CoverageState[] currentFile = new CoverageState[0];
-            ProfileVector currentProf = new Data.ProfileVector(0);
-
             string activeFilename = GetActiveFilename();
-            if (activeFilename != null)
+            if ( activeFilename == null ) return false;
+
+            var dataProvider = ReportManagerSingleton.Instance(dte);
+            if ( dataProvider == null ) return false;
+
+            var coverageData = dataProvider.UpdateData();
+            if ( coverageData == null ) return false;
+
+            DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
+            if ( coverageData.FileDate < activeFileLastWrite ) return false;
+
+            Tuple<BitVector, ProfileVector> activeReport = coverageData.GetData(activeFilename);
+            if ( activeReport == null ) return false;
+
+            currentProfile = activeReport.Item2;
+            currentCoverage = new CoverageState[activeReport.Item1.Count];
+
+            foreach (var item in activeReport.Item1.Enumerate())
             {
-                Tuple<BitVector, ProfileVector> activeReport = null;
-                DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
-
-                var dataProvider = Data.ReportManagerSingleton.Instance(dte);
-                if (dataProvider != null)
-                {
-                    var coverageData = dataProvider.UpdateData();
-                    if (coverageData != null && activeFilename != null)
-                    {
-                        if (coverageData.FileDate >= activeFileLastWrite)
-                        {
-                            activeReport = coverageData.GetData(activeFilename);
-                        }
-                    }
-                }
-
-                if (activeReport != null)
-                {
-                    currentProf = activeReport.Item2;
-                    currentFile = new CoverageState[activeReport.Item1.Count];
-
-                    foreach (var item in activeReport.Item1.Enumerate())
-                    {
-                        if (item.Value)
-                        {
-                            currentFile[item.Key] = CoverageState.Covered;
-                        }
-                        else
-                        {
-                            currentFile[item.Key] = CoverageState.Uncovered;
-                        }
-                    }
-                }
+                currentCoverage[item.Key] = item.Value ? CoverageState.Covered : CoverageState.Uncovered;
             }
 
-            this.currentCoverage = currentFile;
-            this.currentProfile = currentProf;
+            return true;
         }
 
         /// <summary>
@@ -243,14 +224,18 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             if (Settings.Instance.ShowCodeCoverage)
             {
-                if (lines.Count != 0)
+                if ( InitCurrent() )
                 {
-                    InitCurrent();
-
                     foreach (ITextViewLine line in lines)
                     {
                         HighlightCoverage(line);
                     }
+                }
+                else
+                {
+                    currentCoverage = null;
+                    currentProfile = null;
+                    layer.RemoveAllAdornments();
                 }
             }
             else
@@ -334,7 +319,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private void HighlightCoverage(ITextViewLine line)
         {
-            if (view == null || currentProfile == null || line == null || view.TextSnapshot == null) { return; }
+            if (view == null || currentCoverage == null || currentProfile == null || line == null || view.TextSnapshot == null) { return; }
 
             IWpfTextViewLineCollection textViewLines = view.TextViewLines;
 
