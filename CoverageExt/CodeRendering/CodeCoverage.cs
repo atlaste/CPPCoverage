@@ -255,7 +255,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
             foreach (ITextViewLine line in lines)
             {
-                HighlightCoverage(currentCoverage, currentProfile, line);
+                HighlightCoverage(currentProfile, line);
             }
         }
 
@@ -332,7 +332,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             return lines;
         }
 
-        private void HighlightCoverage(CoverageState[] coverdata, ProfileVector profiledata, ITextViewLine line)
+        private void HighlightCoverage(ProfileVector profiledata, ITextViewLine line)
         {
             if (view == null || profiledata == null || line == null || view.TextSnapshot == null) { return; }
 
@@ -343,7 +343,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             int offsetPosition = VsVersion.Vs2022OrLater ? 0 : 1;
             int lineno = offsetPosition + view.TextSnapshot.GetLineNumberFromPosition(line.Extent.Start);
 
-            CoverageState covered = lineno < coverdata.Length ? coverdata[lineno] : CoverageState.Irrelevant;
+            CoverageState covered = lineno < currentCoverage.Length ? currentCoverage[lineno] : CoverageState.Irrelevant;
 
             if (covered != CoverageState.Irrelevant)
             {
