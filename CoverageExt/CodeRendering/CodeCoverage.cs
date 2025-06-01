@@ -177,18 +177,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             ThreadHelper.JoinableTaskFactory.Run(async delegate {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                if (Settings.Instance.ShowCodeCoverage)
-                {
-                    InitCurrent();
-
-                    foreach (ITextViewLine line in view.TextViewLines)
-                    {
-                        HighlightCoverage(currentCoverage, currentProfile, line);
-                    }
-                } else
-                {
-                    layer.RemoveAllAdornments();
-                }
+                UpdateLayer(view.TextViewLines);
             });
         }
 
@@ -200,42 +189,39 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             CoverageState[] currentFile = new CoverageState[0];
             ProfileVector currentProf = new Data.ProfileVector(0);
 
-            if (Settings.Instance.ShowCodeCoverage)
+            string activeFilename = GetActiveFilename();
+            if (activeFilename != null)
             {
-                string activeFilename = GetActiveFilename();
-                if (activeFilename != null)
-                {
-                    Tuple<BitVector, ProfileVector> activeReport = null;
-                    DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
+                Tuple<BitVector, ProfileVector> activeReport = null;
+                DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
 
-                    var dataProvider = Data.ReportManagerSingleton.Instance(dte);
-                    if (dataProvider != null)
+                var dataProvider = Data.ReportManagerSingleton.Instance(dte);
+                if (dataProvider != null)
+                {
+                    var coverageData = dataProvider.UpdateData();
+                    if (coverageData != null && activeFilename != null)
                     {
-                        var coverageData = dataProvider.UpdateData();
-                        if (coverageData != null && activeFilename != null)
+                        if (coverageData.FileDate >= activeFileLastWrite)
                         {
-                            if (coverageData.FileDate >= activeFileLastWrite)
-                            {
-                                activeReport = coverageData.GetData(activeFilename);
-                            }
+                            activeReport = coverageData.GetData(activeFilename);
                         }
                     }
+                }
 
-                    if (activeReport != null)
+                if (activeReport != null)
+                {
+                    currentProf = activeReport.Item2;
+                    currentFile = new CoverageState[activeReport.Item1.Count];
+
+                    foreach (var item in activeReport.Item1.Enumerate())
                     {
-                        currentProf = activeReport.Item2;
-                        currentFile = new CoverageState[activeReport.Item1.Count];
-
-                        foreach (var item in activeReport.Item1.Enumerate())
+                        if (item.Value)
                         {
-                            if (item.Value)
-                            {
-                                currentFile[item.Key] = CoverageState.Covered;
-                            }
-                            else
-                            {
-                                currentFile[item.Key] = CoverageState.Uncovered;
-                            }
+                            currentFile[item.Key] = CoverageState.Covered;
+                        }
+                        else
+                        {
+                            currentFile[item.Key] = CoverageState.Uncovered;
                         }
                     }
                 }
@@ -250,11 +236,26 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
-            InitCurrent();
+            UpdateLayer(e.NewOrReformattedLines);
+        }
 
-            foreach (ITextViewLine line in e.NewOrReformattedLines)
+        private void UpdateLayer(IList<ITextViewLine> lines)
+        {
+            if (Settings.Instance.ShowCodeCoverage)
             {
-                HighlightCoverage(currentCoverage, currentProfile, line);
+                if (lines.Count != 0)
+                {
+                    InitCurrent();
+
+                    foreach (ITextViewLine line in lines)
+                    {
+                        HighlightCoverage(line);
+                    }
+                }
+            }
+            else
+            {
+                layer.RemoveAllAdornments();
             }
         }
 
@@ -331,9 +332,9 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             return lines;
         }
 
-        private void HighlightCoverage(CoverageState[] coverdata, ProfileVector profiledata, ITextViewLine line)
+        private void HighlightCoverage(ITextViewLine line)
         {
-            if (view == null || profiledata == null || line == null || view.TextSnapshot == null) { return; }
+            if (view == null || currentProfile == null || line == null || view.TextSnapshot == null) { return; }
 
             IWpfTextViewLineCollection textViewLines = view.TextViewLines;
 
@@ -342,7 +343,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             int offsetPosition = VsVersion.Vs2022OrLater ? 0 : 1;
             int lineno = offsetPosition + view.TextSnapshot.GetLineNumberFromPosition(line.Extent.Start);
 
-            CoverageState covered = lineno < coverdata.Length ? coverdata[lineno] : CoverageState.Irrelevant;
+            CoverageState covered = lineno < currentCoverage.Length ? currentCoverage[lineno] : CoverageState.Irrelevant;
 
             if (covered != CoverageState.Irrelevant)
             {
@@ -373,7 +374,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 }
             }
 
-            var profile = profiledata.Get(lineno);
+            var profile = currentProfile.Get(lineno);
             if (profile != null && profile.Item1 != 0 || profile.Item2 != 0)
             {
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -405,7 +406,5 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 }
             }
         }
-
-
     }
 }
