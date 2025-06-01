@@ -141,3 +141,8 @@ So... in short: if a template specialization is hit, we'll mark the line as gree
 # License
 
 Your friendly BSD license. Please give credits where credits are deserved.
+
+# About
+
+Most of this code is written by Stefan de Bruijn (nickname: atlaste). 
+A special thank you must go to Michał Antoniak (nickname: MAntoniak) who contributed quite a few significant PR's.
