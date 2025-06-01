@@ -35,6 +35,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private EnvDTE.DTE dte;
         private OutputWindow outputWindow;
 
+        private DateTime currentReportDate;
         private CoverageState[] currentCoverage;
         private ProfileVector currentProfile;
 
@@ -45,6 +46,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             this.view = view;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
             this.layer.Opacity = 0.4;
+            currentReportDate = DateTime.MinValue;
 
             SetupHandleEvents(true);
 
@@ -198,6 +200,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
             if ( coverageData.FileDate < activeFileLastWrite ) return false;
 
+            if ( currentReportDate == coverageData.FileDate ) {
+                return true;
+            }
+
+            currentReportDate = coverageData.FileDate;
             Tuple<BitVector, ProfileVector> activeReport = coverageData.GetData(activeFilename);
             if ( activeReport == null ) return false;
 
@@ -235,6 +242,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 {
                     currentCoverage = null;
                     currentProfile = null;
+                    currentReportDate = DateTime.MinValue;
                     layer.RemoveAllAdornments();
                 }
             }
