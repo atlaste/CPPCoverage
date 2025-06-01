@@ -56,9 +56,10 @@ namespace NubiloSoft.CoverageExt
         {
             if (window != null)
             {
+                string message = (par.Length != 0) ? string.Format(format, par) : format;
                 lock (windowLock)
                 {
-                    window.OutputString(string.Format(format, par) + "\r\n");
+                    window.OutputString(message + "\r\n");
                 }
             }
         }
