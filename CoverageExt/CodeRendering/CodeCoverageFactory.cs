@@ -2,6 +2,7 @@
 using System.ComponentModel.Composition;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using DTE = EnvDTE.DTE;
@@ -30,6 +31,9 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         [Import]
         public SVsServiceProvider ServiceProvider = null;
 
+        [Import]
+        public ITextDocumentFactoryService textDocumentFactory { get; set; }
+
         /// <summary>
         /// Instantiates a CodeCoverage manager when a textView is created.
         /// </summary>
@@ -39,7 +43,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             DTE dte = (DTE)ServiceProvider.GetService(typeof(DTE));
 
             // Store this thing somewhere so our GC doesn't incidentally destroy it.
-            var cover = new CodeCoverage(textView, dte);
+            var cover = new CodeCoverage(textView, dte, textDocumentFactory);
 
             textView.Closed += (object sender, EventArgs e) => {
                 cover.Close();
