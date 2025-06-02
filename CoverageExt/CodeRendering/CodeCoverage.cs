@@ -35,15 +35,18 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private EnvDTE.DTE dte;
         private OutputWindow outputWindow;
 
+        private readonly ITextDocumentFactoryService textDocumentFactory;
+        private ITextDocument TextDocument;
         private DateTime currentReportDate;
         private CoverageState[] currentCoverage;
         private ProfileVector currentProfile;
 
-        public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte)
+        public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte, ITextDocumentFactoryService textDocumentFactory )
         {
             this.dte = dte;
             this.outputWindow = new OutputWindow(dte);
             this.view = view;
+            this.textDocumentFactory = textDocumentFactory;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
             this.layer.Opacity = 0.4;
             currentReportDate = DateTime.MinValue;
@@ -164,7 +167,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             try
             {
-                return dte.ActiveDocument.FullName;
+                var res = this.textDocumentFactory.TryGetTextDocument(view.TextBuffer, out TextDocument);
+                return res ? TextDocument.FilePath : null;
             }
             catch
             {
