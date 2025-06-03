@@ -23,8 +23,7 @@ struct FileCallbackInfo
   FileCallbackInfo(const std::string& filename) :
     filename(filename)
   {
-    auto& opts = RuntimeOptions::Instance();
-    if (opts.CodePath.empty())
+    if (RuntimeOptions::Instance().CodePaths.empty())
     {
       auto idx = filename.find("x64");
       if (idx == std::string::npos)
@@ -44,10 +43,6 @@ struct FileCallbackInfo
         throw "Cannot locate source file base for this executable";
       }
       sourcePath = filename.substr(0, idx);
-    }
-    else
-    {
-      sourcePath = opts.CodePath;
     }
   }
 
@@ -75,11 +70,11 @@ struct FileCallbackInfo
     std::swap(lineData, newLineData);
   }
 
-  bool PathMatches(const char* filename)
+  bool PathMatches(const char* first, const std::string& second)
   {
-    const char* ptr = filename;
-    const char* gt = sourcePath.data();
-    const char* gte = gt + sourcePath.size();
+    const char* ptr = first;
+    const char* gt = second.data();
+    const char* gte = gt + second.size();
 
     for (; *ptr && gt != gte; ++ptr, ++gt)
     {
@@ -89,6 +84,25 @@ struct FileCallbackInfo
     }
 
     return true;
+  }
+
+  bool PathMatches(const char* filename)
+  {
+    if (!sourcePath.empty())
+    {
+      return PathMatches(filename, sourcePath);
+    }
+
+    const auto& codePaths = RuntimeOptions::Instance().CodePaths;
+    for (const auto& codePath : codePaths)
+    {
+      if (PathMatches(filename, codePath))
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   FileLineInfo* LineInfo(const std::string& filename, DWORD64 lineNumber)
@@ -117,6 +131,8 @@ struct FileCallbackInfo
       default: WriteNative(filename, mergedProfileInfo); break;
     }
   }
+
+private:
 
   void WriteClover(const std::string& filename)
   {
@@ -362,42 +378,67 @@ struct FileCallbackInfo
 
     FileCoverageV2::writeHeader(ofs);
 
-    const std::string codePath = RuntimeOptions::Instance().CodePath;
-    if (!codePath.empty())
+    std::vector<std::string> filepaths;
+    filepaths.reserve(lineData.size());
+
+    for (const auto& item : lineData)
     {
-      FileCoverageV2::openDirectory(ofs, codePath);
+      filepaths.push_back(item.first);
     }
 
-    for (auto& it : lineData)
+    for (const auto& dirPath : RuntimeOptions::Instance().CodePaths)
     {
-      auto filepath = it.first;
-      // if CodePath, Avoid to dump coverage on external file
-      if (!codePath.empty())
+      bool dirPartAdded = false;
+
+      for (auto& it : lineData)
       {
+        auto filepath = it.first;
+
         // Check if it's a subpath
-        auto relativeFile = std::filesystem::relative(filepath, codePath);
-        if (relativeFile.empty() || relativeFile.native().front() == '.')
+        if (!dirPath.empty())
         {
-#ifndef NDEBUG
-          if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+          auto relativeFile = std::filesystem::relative(filepath, dirPath);
+          if (relativeFile.empty() || relativeFile.native().front() == '.')
           {
-            std::cerr << std::format("Refuse coverage on file {0} because not relative to {1}", filepath, codePath) << std::endl;
+            continue; // Skip this item
           }
-#endif
-          continue; // Skip this item
+          filepath = relativeFile.generic_string();
         }
-        filepath = relativeFile.generic_string();
+
+        if (!dirPartAdded && !dirPath.empty())
+        {
+          dirPartAdded = true;
+          FileCoverageV2::openDirectory(ofs, dirPath);
+        }
+
+        auto coverage = encodeCoverage(*it.second.get());
+        coverage.md5Code = md5.encode(it.first);
+        coverage.write(filepath, ofs);
+
+        filepaths.erase(std::remove(filepaths.begin(), filepaths.end(), it.first), filepaths.end());
       }
 
-      auto coverage = encodeCoverage(*it.second.get());
-      coverage.md5Code = md5.encode(it.first);
-
-      coverage.write(filepath, ofs);
+      if (dirPartAdded && !dirPath.empty())
+      {
+        FileCoverageV2::closeDirectory(ofs);
+      }
     }
 
-    if (!codePath.empty())
+    if (!filepaths.empty() && RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
     {
-      FileCoverageV2::closeDirectory(ofs);
+      std::cerr << "List of refuse coverage files (because not relative to any code path):" << std::endl;
+
+      for (const auto& path : filepaths)
+      {
+        std::cerr << std::format("- {0}", path) << std::endl;
+      }
+
+      std::cerr << std::endl << "List of code paths:" << std::endl;
+
+      for (const auto& dirPath : RuntimeOptions::Instance().CodePaths)
+      {
+        std::cerr << std::format("- {0}", dirPath) << std::endl;
+      }
     }
 
     FileCoverageV2::writeFooter(ofs);

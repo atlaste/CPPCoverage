@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -32,7 +33,8 @@ namespace NubiloSoft.CoverageExt
             return @"""" + path + @"""";
         }
 
-        public void Start(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline, bool merge)
+        public void Start(string solutionFolder, List<string> codePaths, string platform, string dllFolder, string dllFilename,
+          string workingDirectory, string commandline, bool merge)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -42,7 +44,7 @@ namespace NubiloSoft.CoverageExt
                 // Allocate Report before enter to thread
                 Data.ReportManagerSingleton.Instance(dte);
 
-                Thread t = new Thread(() => StartImpl(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline, merge))
+                Thread t = new Thread(() => StartImpl(solutionFolder, codePaths, platform, dllFolder, dllFilename, workingDirectory, commandline, merge))
                 {
                     IsBackground = true,
                     Name = "Code coverage generator thread"
@@ -146,7 +148,8 @@ namespace NubiloSoft.CoverageExt
             throw new Exception("Cannot find vstest.console.exe.");
         }
 
-        private string PrepareArguments(string solutionFolder, string platform, string dllPath, string workingDirectory, string commandline, string reportFile, string mergeFile)
+        private string PrepareArguments(string solutionFolder, List<string> codePaths, string platform, string dllPath,
+          string workingDirectory, string commandline, string reportFile, string mergeFile)
         {
             StringBuilder argumentBuilder = new StringBuilder();
 
@@ -157,8 +160,11 @@ namespace NubiloSoft.CoverageExt
                 argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
                 argumentBuilder.Append(" -o ");
                 argumentBuilder.Append(PathWithQuotes(reportFile));
-                argumentBuilder.Append(" -p ");
-                argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
+                foreach (var codePath in codePaths)
+                {
+                    argumentBuilder.Append(" -p ");
+                    argumentBuilder.Append(PathWithQuotes(codePath.TrimEnd('\\', '/')));
+                }
                 if (!String.IsNullOrEmpty(mergeFile))
                 {
                     argumentBuilder.Append(" -m ");
@@ -216,23 +222,14 @@ namespace NubiloSoft.CoverageExt
             }
             else
             {
-                string sourcesFilter = solutionFolder;
-                int smidx = sourcesFilter.IndexOf(' ');
-                if (smidx > 0)
-                {
-                    sourcesFilter = sourcesFilter.Substring(0, smidx);
-                    int lidx = sourcesFilter.LastIndexOf('\\');
-                    if (lidx >= 0)
-                    {
-                        sourcesFilter = sourcesFilter.Substring(0, lidx - 1);
-                    }
-                }
-
                 argumentBuilder.Append("--quiet --export_type cobertura:");
                 argumentBuilder.Append(PathWithQuotes(reportFile));
-                argumentBuilder.Append(" --continue_after_cpp_exception --cover_children ");
-                argumentBuilder.Append("--sources ");
-                argumentBuilder.Append(sourcesFilter);
+                argumentBuilder.Append(" --continue_after_cpp_exception --cover_children");
+                foreach (var codePath in codePaths)
+                {
+                    argumentBuilder.Append(" --sources=");
+                    argumentBuilder.Append(PathWithQuotes(codePath.TrimEnd('\\', '/')));
+                }
             }
 
             argumentBuilder.Append(" -- ");
@@ -268,7 +265,8 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline, bool merge)
+        private void StartImpl(string solutionFolder, List<string> codePaths, string platform, string dllFolder, string dllFilename,
+          string workingDirectory, string commandline, bool merge)
         {
             try
             {
@@ -289,7 +287,8 @@ namespace NubiloSoft.CoverageExt
                     throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                 }
 
-                string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile, merge ? resultFile : String.Empty);
+                string arguments = PrepareArguments(solutionFolder, codePaths, platform, Path.Combine(dllFolder, dllFilename),
+                  workingDirectory, commandline, tempFile, merge ? resultFile : String.Empty);
                 output.WriteLine("Execute coverage: {0}", arguments);
 
                 process.StartInfo.WorkingDirectory = !Settings.Instance.UseOpenCppCoverageRunner ? dllFolder : Path.GetDirectoryName(tempFile);

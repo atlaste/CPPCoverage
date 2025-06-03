@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 #include <string>
 
 enum class VerboseLevel
@@ -43,7 +44,7 @@ public:
 
   std::string MergedOutput;
   std::string WorkingDirectory;
-  std::string CodePath;
+  std::list<std::string> CodePaths;
   std::string Executable;
   std::string ExecutableArguments;
   std::string PackageName = "Program.exe";
