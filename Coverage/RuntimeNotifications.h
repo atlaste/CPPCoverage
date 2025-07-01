@@ -143,18 +143,21 @@ struct RuntimeNotifications
 
 	void Handle(const char* data, const size_t size)
 	{
+		static constexpr std::string_view IGNORE_FOLDER = "IGNORE FOLDER:";
+		static constexpr std::string_view IGNORE_FILE = "IGNORE FILE:";
+
 		std::string s(data, data + size);
-		if (s.substr(0, 14) == "IGNORE FOLDER:")
+		if (s.substr(0, IGNORE_FOLDER.size()) == IGNORE_FOLDER)
 		{
-			auto folder = Trim(s.substr(14));
+			auto folder = Trim(s.substr(IGNORE_FOLDER.size()));
 			auto fullname = GetFQN(folder);
 
 			std::cout << "Ignoring folder: " << fullname << std::endl;
 			postProcessing.emplace_back(std::make_unique<RuntimeFolderFilter>(fullname));
 		}
-		else if (s.substr(0, 12) == "IGNORE FILE:")
+		else if (s.substr(0, IGNORE_FILE.size()) == IGNORE_FILE)
 		{
-			auto file = Trim(s.substr(12));
+			auto file = Trim(s.substr(IGNORE_FILE.size()));
 			auto fullname = GetFQN(file);
 
 			std::cout << "Ignoring file: " << file << std::endl;
