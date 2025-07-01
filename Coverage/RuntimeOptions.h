@@ -28,14 +28,13 @@ public:
 		Native,
 		Cobertura,
 		Clover
-
 	} ExportFormat;
 
 
 	std::string OutputFile;
 
-    std::string MergedOutput;
-    std::string WorkingDirectory;
+	std::string MergedOutput;
+	std::string WorkingDirectory;
 	std::string CodePath;
 	std::string Executable;
 	std::string ExecutableArguments;
@@ -45,7 +44,7 @@ public:
 	{
 		if (sourcePath.empty())
 		{
-			if (CodePath.size() != 0)
+			if (!CodePath.empty())
 			{
 				auto idx = CodePath.find("x64");
 				if (idx == std::string::npos)

@@ -169,7 +169,7 @@ void ParseCommandLine(int argc, const char **argv)
     while (idx < cmdLine.size() && cmdLine[idx + 1] == ' ') { ++idx; }
 
     std::string childCommand = cmdLine.substr(idx+1);
-    if (childCommand.size() == 0)
+    if (childCommand.empty())
     {
         throw std::exception("Expected executable filename in command line.");
     }

@@ -91,7 +91,7 @@ struct RuntimeNotifications
 
 	std::string GetFQN(std::string s)
 	{
-		if (s.size() == 0) return s;
+		if (s.empty()) return s;
 
 		if (s.size() > 1 && s[1] == ':')
 		{
@@ -112,7 +112,7 @@ struct RuntimeNotifications
 		else
 		{
 			auto cp = RuntimeOptions::Instance().SourcePath();
-			if (cp.size() == 0) { return s; }
+			if (cp.empty()) { return s; }
 
 			while (s.size() > 3 && s.substr(s.size() - 3, 3) == "..\\")
 			{
