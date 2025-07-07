@@ -5,9 +5,13 @@ you with an easy-to-use, light-weight C++ code coverage and profiler, right from
 
 # Installation
 
-Prerequisites: VS2013 or VS2015. Any edition should work, even though this is only tested on VS2015 Community.
 
-- Install this extension: https://github.com/atlaste/VSOpenCPPCoverage/raw/master/CoverageExt/CoverageExt.vsix .
+Prerequisites: 
+
+For VS2013 or VS2015 grab version 1 from the releases tab. 
+For VS2022 grab version 2 from the releases tab. -->
+
+Any edition should work, even though this is only tested on VS2015 Community. 
 
 # Getting started
 
