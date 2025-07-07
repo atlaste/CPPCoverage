@@ -26,7 +26,10 @@ namespace NubiloSoft.CoverageExt
         public event Action RedrawNeeded;
         public void TriggerRedraw()
         {
-            RedrawNeeded();
+            if (RedrawNeeded != null)
+            {
+                RedrawNeeded();
+            }
         }
 
         public event EventHandler OnSettingsChanged;
