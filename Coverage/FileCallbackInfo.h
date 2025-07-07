@@ -22,7 +22,7 @@ struct FileCallbackInfo
 		filename(filename)
 	{
 		auto& opts = RuntimeOptions::Instance();
-		if (opts.CodePath.size() == 0)
+		if (opts.CodePath.empty())
 		{
 			auto idx = filename.find("x64");
 			if (idx == std::string::npos)

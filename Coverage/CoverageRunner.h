@@ -290,7 +290,7 @@ struct CoverageRunner
 					if (SymEnumLines(proc->Handle, dllBase, NULL, NULL, SymEnumLinesCallback, &ci))
 					{
 						if (!options.UseStaticCodeAnalysis ||
-							!SymEnumSymbols(proc->Handle, dllBase, NULL, SymEnumSymbolsCallback, &ci) || ci.reachableCode.size() == 0)
+							!SymEnumSymbols(proc->Handle, dllBase, NULL, SymEnumSymbolsCallback, &ci) || ci.reachableCode.empty())
 						{
 							auto err = Util::GetLastErrorAsString();
 							if (!quiet)
@@ -957,7 +957,7 @@ struct CoverageRunner
 		}
 
 		auto outputFile = options.OutputFile;
-		if (outputFile.size() == 0)
+		if (outputFile.empty())
 		{
 			outputFile = options.Executable + ".cov";
 		}
