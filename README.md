@@ -146,3 +146,7 @@ Your friendly BSD license. Please give credits where credits are deserved.
 
 Most of this code is written by Stefan de Bruijn (nickname: atlaste). 
 A special thank you must go to Michał Antoniak (nickname: MAntoniak) who contributed quite a few significant PR's.
+
+# Talk, contact
+
+Have something to contribute or want to discuss something? Join us on discord: https://discord.gg/4He86kN5
