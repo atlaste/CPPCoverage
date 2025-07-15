@@ -153,4 +153,4 @@ A special thank you must go to Michał Antoniak (nickname: MAntoniak) who contri
 
 # Talk, contact
 
-Have something to contribute or want to discuss something? Join us on discord: https://discord.gg/4He86kN5
+Have something to contribute or want to discuss something? Join us on discord: [https://discord.gg/4He86kN5](https://discord.gg/rgHhXVwuJQ)
