@@ -22,7 +22,7 @@ struct MyClass
 
 extern "C"
 {
-	__declspec(dllexport) int __stdcall RunAll()
+	__declspec(dllexport) int __cdecl RunAll()
 	{
 		MyClass::DoSomething();
 
