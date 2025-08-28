@@ -95,10 +95,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <AdditionalDependencies>dbghelp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(SolutionDir)/CoverageExt/Resources/$(TargetName)$(TargetExt)</OutputFile>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -125,6 +128,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ProgramDataBaseFileName>$(IntDir)vc$(PlatformToolsetVersion).pdb</ProgramDataBaseFileName>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -135,9 +139,12 @@
   <ItemGroup>
     <ClCompile Include="Disassembler\ReachabilityAnalysis.cpp" />
     <ClCompile Include="Disassembler\X86DisassemblerDecoder.cpp" />
+    <ClCompile Include="FileInfo.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MergeRunner.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="base64.h" />
     <ClInclude Include="BreakpointData.h" />
     <ClInclude Include="CallbackInfo.h" />
     <ClInclude Include="CoverageRunner.h" />
@@ -145,9 +152,13 @@
     <ClInclude Include="Disassembler\X86DisassemblerDecoder.h" />
     <ClInclude Include="Disassembler\X86DisassemblerDecoderCommon.h" />
     <ClInclude Include="FileCallbackInfo.h" />
+    <ClInclude Include="FileCoverageV2.h" />
     <ClInclude Include="FileInfo.h" />
     <ClInclude Include="FileLineInfo.h" />
+    <ClInclude Include="md5.h" />
     <ClInclude Include="MergeRunner.h" />
+    <ClInclude Include="MergeRunnerV1.h" />
+    <ClInclude Include="MergeRunnerV2.h" />
     <ClInclude Include="ProcessInfo.h" />
     <ClInclude Include="ProfileNode.h" />
     <ClInclude Include="RuntimeNotifications.h" />

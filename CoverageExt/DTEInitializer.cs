@@ -22,6 +22,7 @@ namespace NubiloSoft.CoverageExt
 
         internal DteInitializer(IVsShell shellService, Action callback)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             int hr;
 
             this.shellService = shellService;
@@ -35,6 +36,8 @@ namespace NubiloSoft.CoverageExt
 
         int IVsShellPropertyEvents.OnShellPropertyChange(int propid, object var)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             int hr;
             bool isZombie;
 

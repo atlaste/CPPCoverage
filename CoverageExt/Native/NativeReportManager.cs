@@ -16,16 +16,23 @@ namespace NubiloSoft.CoverageExt.Native
             this.activeCoverageFilename = null;
         }
 
-        private DTE dte;
-        private OutputWindow output;
+        protected DTE dte;
+        protected OutputWindow output;
 
-        private Data.ICoverageData activeCoverageReport;
-        private string activeCoverageFilename;
+        protected Data.ICoverageData activeCoverageReport;
+        protected string activeCoverageFilename;
 
-        private object lockObject = new object();
+        protected object lockObject = new object();
 
-        public ICoverageData UpdateData()
+        public virtual bool IsValid(Settings instance)
         {
+            return !instance.UseOpenCppCoverageRunner
+              && instance.Format == CoverageFormat.Native;
+        }
+
+        ICoverageData Data.IReportManager.UpdateData()
+        {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             // It makes no sense to have multiple instances of our coverage data in our memory, so
             // this is exposed as a singleton. Updating needs concurrency control. It's pretty fast, so 
             // a simple lock will do.
@@ -48,6 +55,7 @@ namespace NubiloSoft.CoverageExt.Native
 
         private ICoverageData UpdateDataImpl()
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 string filename = dte.Solution.FileName;
@@ -74,7 +82,7 @@ namespace NubiloSoft.CoverageExt.Native
                     if (activeCoverageReport == null)
                     {
                         output.WriteLine("Updating coverage results from: {0}", coverageFile);
-                        activeCoverageReport = Load(coverageFile);
+                        activeCoverageReport = Load(coverageFile, folder);
                         activeCoverageFilename = coverageFile;
                     }
                 }
@@ -84,14 +92,22 @@ namespace NubiloSoft.CoverageExt.Native
             return activeCoverageReport;
         }
 
-        private ICoverageData Load(string filename)
+        public Data.ICoverageData UpdateData()
         {
+            throw new NotImplementedException();
+        }
+
+        virtual public ICoverageData Load(string filename, string solution)
+        {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             ICoverageData report = null;
             if (filename != null)
             {
                 try
                 {
-                    report = new Native.NativeData(filename);
+                    report = new Native.NativeData();
+                    report.Parsing(filename, solution);
                 }
                 catch (Exception e)
                 {

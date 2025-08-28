@@ -35,6 +35,18 @@ namespace NubiloSoft.CoverageExt
         [Description("Build project and dependencies before run code coverage")]
         public bool CompileBeforeRunning { get; set; } = false;
 
+        [Category("General")]
+        [DisplayName("Coverage Format")]
+        [Description("Coverage Format used to produce file (WARNING: need to use Native or NativeV2 to be show in visual studio")]
+        [DefaultValue(CoverageFormat.NativeV2)]
+        [TypeConverter(typeof(CoverageFormat))]
+        public CoverageFormat Format { get; set; } = CoverageFormat.NativeV2;
+
+        [Category("General")]
+        [DisplayName("Use OpenCppCoverage")]
+        [Description("Replace native coverage system by OpenCppCoverage. Must be into C:\\Program files\\")]
+        public bool OpenCppCoverage { get; set; } = false;
+
         [Category("Colors")]
         [DisplayName("Uncovered Brush")]
         [Description("Uncovered Brush")]

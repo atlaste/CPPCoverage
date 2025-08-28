@@ -1,13 +1,15 @@
 #pragma once
 
 #include "FileLineInfo.h"
-#include "FileInfo.h"
+#include "FileCoverageV2.h"
 #include "BreakpointData.h"
 #include "RuntimeOptions.h"
 #include "CallbackInfo.h"
+#include "md5.h"
 #include "ProfileNode.h"
 #include "RuntimeNotifications.h"
 
+#include <iostream>
 #include <string>
 #include <set>
 #include <unordered_map>
@@ -22,7 +24,7 @@ struct FileCallbackInfo
 		filename(filename)
 	{
 		auto& opts = RuntimeOptions::Instance();
-		if (opts.CodePath.size() == 0)
+		if (opts.CodePath.empty())
 		{
 			auto idx = filename.find("x64");
 			if (idx == std::string::npos)
@@ -112,8 +114,9 @@ struct FileCallbackInfo
 	{
 		switch (exportFormat)
 		{
-			case RuntimeOptions::Clover: WriteClover(filename); break;
+			case RuntimeOptions::Clover:    WriteClover(filename); break;
 			case RuntimeOptions::Cobertura: WriteCobertura(filename); break;
+			case RuntimeOptions::NativeV2:  WriteNativeV2(filename, mergedProfileInfo); break;
 			default: WriteNative(filename, mergedProfileInfo); break;
 		}
 	}
@@ -280,8 +283,7 @@ struct FileCallbackInfo
 
 	void WriteNative(const std::string& filename, std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>& mergedProfileInfo)
 	{
-		std::string reportFilename = filename;
-		std::ofstream ofs(reportFilename);
+		std::ofstream ofs(filename);
 
 		for (auto& it : lineData)
 		{
@@ -335,5 +337,60 @@ struct FileCallbackInfo
 				ofs << std::endl;
 			}
 		}
+	}
+
+	void WriteNativeV2(const std::string& filename, std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>& mergedProfileInfo)
+	{
+		const auto encodeCoverage = [](const FileInfo& info) -> FileCoverageV2
+		{
+			assert(info.relevant.size() == info.lines.size());
+			auto itRelevant = info.relevant.cbegin();
+			FileCoverageV2 coverage(info.lines.size());
+			
+			auto itCoverage = coverage._code.begin();
+
+			for (const auto& line : info.lines)
+			{
+				*itCoverage = coverage.encodeLine(*itRelevant, line);
+				++itCoverage;
+				++itRelevant;
+			}
+			return coverage;
+		};
+
+		std::ofstream ofs(filename);
+		
+		MD5 md5;
+
+		FileCoverageV2::writeHeader(ofs);
+
+		for (auto& it : lineData)
+		{
+			auto filepath = it.first;
+			// if SolutionPath, Avoid to dump coverage on external file
+			if (!RuntimeOptions::Instance().SolutionPath.empty())
+			{
+				// Check if it's a subpath
+				auto relativeFile = std::filesystem::relative(filepath, RuntimeOptions::Instance().SolutionPath);
+				if (relativeFile.empty() || relativeFile.native().front() == '.')
+				{
+#ifndef NDEBUG
+					if (!RuntimeOptions::Instance().Quiet)
+					{
+						std::cerr << std::format("Refuse coverage on file {0} because not relative to {1}", filepath, RuntimeOptions::Instance().SolutionPath) << std::endl;
+					}
+#endif
+					continue; // Skip this item
+				}
+				filepath = relativeFile.generic_string();
+			}
+
+			auto coverage = encodeCoverage(*it.second.get());
+			coverage.md5Code = md5.encode(it.first);
+
+			coverage.write(filepath, ofs);
+		}
+		FileCoverageV2::writeFooter(ofs);
+		ofs.close();
 	}
 };

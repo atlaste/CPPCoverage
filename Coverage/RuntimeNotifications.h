@@ -15,7 +15,7 @@
 
 struct RuntimeCoverageFilter
 {
-	virtual bool IgnoreFile(const std::string& file) = 0;
+	virtual bool IgnoreFile(const std::string& file) const = 0;
 };
 
 struct RuntimeFileFilter : RuntimeCoverageFilter
@@ -26,7 +26,7 @@ struct RuntimeFileFilter : RuntimeCoverageFilter
 
 	std::string file;
 
-	virtual bool IgnoreFile(const std::string& found) override
+	bool IgnoreFile(const std::string& found) const override
 	{
 		if (found.size() == file.size())
 		{
@@ -51,7 +51,7 @@ struct RuntimeFolderFilter : RuntimeCoverageFilter
 
 	std::string folder;
 
-	virtual bool IgnoreFile(const std::string& found) override
+	bool IgnoreFile(const std::string& found) const override
 	{
 		if (found.size() > folder.size())
 		{
@@ -91,7 +91,7 @@ struct RuntimeNotifications
 
 	std::string GetFQN(std::string s)
 	{
-		if (s.size() == 0) return s;
+		if (s.empty()) return s;
 
 		if (s.size() > 1 && s[1] == ':')
 		{
@@ -112,7 +112,7 @@ struct RuntimeNotifications
 		else
 		{
 			auto cp = RuntimeOptions::Instance().SourcePath();
-			if (cp.size() == 0) { return s; }
+			if (cp.empty()) { return s; }
 
 			while (s.size() > 3 && s.substr(s.size() - 3, 3) == "..\\")
 			{
@@ -143,18 +143,21 @@ struct RuntimeNotifications
 
 	void Handle(const char* data, const size_t size)
 	{
+		static constexpr std::string_view IGNORE_FOLDER = "IGNORE FOLDER:";
+		static constexpr std::string_view IGNORE_FILE = "IGNORE FILE:";
+
 		std::string s(data, data + size);
-		if (s.substr(0, 14) == "IGNORE FOLDER:")
+		if (s.substr(0, IGNORE_FOLDER.size()) == IGNORE_FOLDER)
 		{
-			auto folder = Trim(s.substr(14));
+			auto folder = Trim(s.substr(IGNORE_FOLDER.size()));
 			auto fullname = GetFQN(folder);
 
 			std::cout << "Ignoring folder: " << fullname << std::endl;
 			postProcessing.emplace_back(std::make_unique<RuntimeFolderFilter>(fullname));
 		}
-		else if (s.substr(0, 12) == "IGNORE FILE:")
+		else if (s.substr(0, IGNORE_FILE.size()) == IGNORE_FILE)
 		{
-			auto file = Trim(s.substr(12));
+			auto file = Trim(s.substr(IGNORE_FILE.size()));
 			auto fullname = GetFQN(file);
 
 			std::cout << "Ignoring file: " << file << std::endl;
@@ -174,9 +177,9 @@ struct RuntimeNotifications
 		}
 	}
 
-	bool IgnoreFile(const std::string& filename)
+	bool IgnoreFile(const std::string& filename) const
 	{
-		for (auto& it : postProcessing)
+		for (const auto& it : postProcessing)
 		{
 			if (it->IgnoreFile(filename))
 			{

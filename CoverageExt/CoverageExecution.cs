@@ -1,3 +1,4 @@
+using Microsoft.VisualStudio.Utilities.Internal;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -31,12 +32,13 @@ namespace NubiloSoft.CoverageExt
             return @"""" + path + @"""";
         }
 
-        public void Start(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
+        public void Start(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline, bool merge)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             // We want 1 thread to do this; never more.
             if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
-                Thread t = new Thread(() => StartImpl(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline))
+                Thread t = new Thread(() => StartImpl(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline, merge))
                 {
                     IsBackground = true,
                     Name = "Code coverage generator thread"
@@ -50,7 +52,7 @@ namespace NubiloSoft.CoverageExt
 
         private (string, string) CoverageReportPaths( string solutionFolder )
         {
-            string ext = Settings.Instance.UseNativeCoverageSupport ? ".cov" : ".xml";
+            string ext = !Settings.Instance.UseOpenCppCoverageRunner ? ".cov" : ".xml";
             string resPathBase = Path.Combine(solutionFolder, "CodeCoverage" + ext);
             string tmpPathBase = Path.Combine(solutionFolder, "CodeCoverage.tmp" + ext);
             return (resPathBase, tmpPathBase);
@@ -58,7 +60,7 @@ namespace NubiloSoft.CoverageExt
 
         private string CoverageExePath( string platform )
         {
-            if (Settings.Instance.UseNativeCoverageSupport)
+            if (!Settings.Instance.UseOpenCppCoverageRunner)
             {
                 // Find the executables for Coverage.exe
                 string location = typeof(CoverageExecution).Assembly.Location;
@@ -84,6 +86,7 @@ namespace NubiloSoft.CoverageExt
 
         private string CreateVsTestExePath()
         {
+
             // TODO: We can do much better here by using the registry...
             var folders = new[]
             {
@@ -134,16 +137,24 @@ namespace NubiloSoft.CoverageExt
             throw new Exception("Cannot find vstest.console.exe.");
         }
 
-        private string PrepareArguments( string solutionFolder, string platform, string dllPath, string workingDirectory, string commandline, string reportFile )
+        private string PrepareArguments(string solutionFolder, string platform, string dllPath, string workingDirectory, string commandline, string reportFile, string mergeFile)
         {
             StringBuilder argumentBuilder = new StringBuilder();
 
-            if (Settings.Instance.UseNativeCoverageSupport)
+            if (!Settings.Instance.UseOpenCppCoverageRunner)
             {
-                argumentBuilder.Append("-o ");
+                //argumentBuilder.Append("-quiet "); // Not show info
+                argumentBuilder.Append("-solution ");
+                argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
+                argumentBuilder.Append(" -o ");
                 argumentBuilder.Append(PathWithQuotes(reportFile));
                 argumentBuilder.Append(" -p ");
                 argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
+                if( !String.IsNullOrEmpty(mergeFile) )
+                {
+                    argumentBuilder.Append(" -m ");
+                    argumentBuilder.Append(PathWithQuotes(mergeFile.TrimEnd('\\', '/')));
+                }
 
                 if (!String.IsNullOrEmpty(workingDirectory))
                 {
@@ -194,7 +205,7 @@ namespace NubiloSoft.CoverageExt
             return argumentBuilder.ToString();
         }
 
-        private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline)
+        private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline, bool merge)
         {
             try
             {
@@ -215,10 +226,10 @@ namespace NubiloSoft.CoverageExt
                     throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                 }
 
-                string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile);
+                string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile, merge ? resultFile: String.Empty);
                 this.output.WriteDebugLine("Execute coverage: {0}", arguments);
 
-                process.StartInfo.WorkingDirectory = Settings.Instance.UseNativeCoverageSupport ? dllFolder : Path.GetDirectoryName(tempFile);
+                process.StartInfo.WorkingDirectory = !Settings.Instance.UseOpenCppCoverageRunner ? dllFolder : Path.GetDirectoryName(tempFile);
                 process.StartInfo.Arguments = arguments;
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.UseShellExecute = false;
@@ -260,12 +271,15 @@ namespace NubiloSoft.CoverageExt
 
                 if (File.Exists(tempFile))
                 {
-                    // All fine, update file:
-                    if (File.Exists(resultFile))
+                    if(!merge)
                     {
-                        File.Delete(resultFile);
+                        // All fine, update file:
+                        if (File.Exists(resultFile))
+                        {
+                            File.Delete(resultFile);
+                        }
+                        File.Move(tempFile, resultFile);
                     }
-                    File.Move(tempFile, resultFile);
                 }
                 else
                 {

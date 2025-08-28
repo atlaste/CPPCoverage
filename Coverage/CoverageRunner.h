@@ -9,12 +9,13 @@
 
 #include "Disassembler/ReachabilityAnalysis.h"
 
-#include <string>
+#include <algorithm>
+#include <format>
 #include <iostream>
-#include <sstream>
+#include <filesystem>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <algorithm>
 
 #include <Windows.h>
 #include <psapi.h>
@@ -40,7 +41,18 @@ struct CoverageRunner
 
 		if (info->fileInfo->PathMatches(lineInfo->FileName))
 		{
-			auto file = lineInfo->FileName;
+			// Try to find if file exists (and can be covered)
+			auto file = std::string(lineInfo->FileName);
+			if( !std::filesystem::exists(file) )
+			{
+#ifndef NDEBUG
+				if (!RuntimeOptions::Instance().Quiet)
+				{
+					std::cerr << std::format("Impossible to find file : {0}", file) << std::endl;
+				}
+#endif
+				return FALSE;
+			}
 
 			PVOID addr = reinterpret_cast<PVOID>(lineInfo->Address);
 			auto it = info->breakpointsToSet.find(addr);
@@ -290,7 +302,7 @@ struct CoverageRunner
 					if (SymEnumLines(proc->Handle, dllBase, NULL, NULL, SymEnumLinesCallback, &ci))
 					{
 						if (!options.UseStaticCodeAnalysis ||
-							!SymEnumSymbols(proc->Handle, dllBase, NULL, SymEnumSymbolsCallback, &ci) || ci.reachableCode.size() == 0)
+							!SymEnumSymbols(proc->Handle, dllBase, NULL, SymEnumSymbolsCallback, &ci) || ci.reachableCode.empty())
 						{
 							auto err = Util::GetLastErrorAsString();
 							if (!quiet)
@@ -957,7 +969,7 @@ struct CoverageRunner
 		}
 
 		auto outputFile = options.OutputFile;
-		if (outputFile.size() == 0)
+		if (outputFile.empty())
 		{
 			outputFile = options.Executable + ".cov";
 		}

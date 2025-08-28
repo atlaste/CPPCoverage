@@ -12,13 +12,7 @@ using System.Windows.Media;
 
 namespace NubiloSoft.CoverageExt.CodeRendering
 {
-    public enum CoverageState : int
-    {
-        Irrelevant,
-        Covered,
-        Partially,
-        Uncovered
-    }
+    
 
     public class CodeCoverage : IDisposable
     {
@@ -107,6 +101,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// <param name="e"></param>
         private void Instance_OnShowCodeCoveragePropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             this.outputWindow.WriteDebugLine("Instance_OnShowCodeCoveragePropertyChanged");
             Redraw();
         }
@@ -118,6 +114,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// <param name="e"></param>
         private void Instance_OnSettingsChanged(object sender, EventArgs e)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             this.outputWindow.WriteDebugLine("Instance_OnSettingsChanged");
             InitializeColors();
             Redraw();
@@ -209,15 +207,15 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             }
 
             currentReportDate = coverageData.FileDate;
-            Tuple<BitVector, ProfileVector> activeReport = coverageData.GetData(activeFilename);
+            var activeReport = coverageData.GetData(activeFilename);
             if ( activeReport == null ) return false;
 
-            currentProfile = activeReport.Item2;
-            currentCoverage = new CoverageState[activeReport.Item1.Count];
+            currentProfile = activeReport.profile();
+            currentCoverage = new CoverageState[activeReport.nbLines()];
 
-            foreach (var item in activeReport.Item1.Enumerate())
+            for (uint i = 0; i < currentCoverage.Length; i++)
             {
-                currentCoverage[item.Key] = item.Value ? CoverageState.Covered : CoverageState.Uncovered;
+                currentCoverage[i] = activeReport.state(i);
             }
 
             return true;

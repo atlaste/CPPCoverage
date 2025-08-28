@@ -23,6 +23,8 @@ namespace NubiloSoft.CoverageExt.Report
         public CoverageReportToolWindow() :
             base(null)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             // Set the window title reading it from the resources.
             this.Caption = Resources.ToolWindowTitle;
 
@@ -44,6 +46,7 @@ namespace NubiloSoft.CoverageExt.Report
 
         private DTE GetDTE()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             return (DTE)GetService(typeof(DTE));
         }
 

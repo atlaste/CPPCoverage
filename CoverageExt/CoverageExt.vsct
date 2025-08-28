@@ -39,25 +39,20 @@
          must be a menu. -->
     <Groups>
 
-      <Group guid="guidCoverageExtCmdSet" id="CoverageMenuGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
-      </Group>
-
       <Group guid="guidProjectSpecificMenuCmdSet" id="RunCoverageMenuGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_PROJNODE"/>
       </Group>
 
-      <Group guid="guidFileSpecificMenuCmdSet" id="ShowCoverageMenuGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      <Group guid="guidCppCoverageMenuCmdSet" id="CppCoverageMenuGroup" priority="0x0600">
+        <Parent guid="guidCppCoverageMenuCmdSet" id="CppCoverageMenu"/>
       </Group>
     </Groups>
     
     <!--This section defines the elements the user can interact with, like a menu command or a button 
         or combo box in a toolbar. -->
     <Buttons>
-      <Button guid="guidCoverageExtCmdSet" id="cmdCoverageReport" priority="0x0100" type="Button">
-        <!-- I'd much rather add this to the 'test' visual studio menu, but don't have a clue how to do that. For now, the 'tools' will do. -->
-        <Parent guid="guidCoverageExtCmdSet" id="CoverageMenuGroup" />
+      <Button guid="guidCppCoverageMenuCmdSet" id="cmdCoverageReport" priority="0x0100" type="Button">
+        <Parent guid="guidCppCoverageMenuCmdSet" id="CppCoverageMenuGroup" />
         <Icon guid="guidImages" id="bmpPic2" />
         <Strings>
           <ButtonText>Coverage report</ButtonText>
@@ -71,12 +66,22 @@
         <!-- CommandFlag DefaultInvisible - Apparently not working correctly. Unsure why. -->
         <Strings>
           <CommandName>cmdCoverageGenerate</CommandName>
-          <ButtonText>Run code coverage</ButtonText>
+          <ButtonText>Clean and Run code coverage</ButtonText>
         </Strings>
       </Button>
+	  <Button guid="guidProjectSpecificMenuCmdSet" id="cmdCoverageGenerateMerge" priority="0x0100" type="Button">
+		<Parent guid="guidProjectSpecificMenuCmdSet" id="RunCoverageMenuGroup" />
+		<Icon guid="guidImages" id="bmpPic1" />
+		<CommandFlag>DynamicVisibility</CommandFlag>
+		<!-- CommandFlag DefaultInvisible - Apparently not working correctly. Unsure why. -->
+		<Strings>
+			<CommandName>cmdCoverageGenerateMerge</CommandName>
+			<ButtonText>Run code coverage and merge</ButtonText>
+		</Strings>
+      </Button>
 
-      <Button guid="guidFileSpecificMenuCmdSet" id="cmdCoverageShow" priority="0x0100" type="Button">
-        <Parent guid="guidFileSpecificMenuCmdSet" id="ShowCoverageMenuGroup" />
+      <Button guid="guidCppCoverageMenuCmdSet" id="cmdCoverageShow" priority="0x0100" type="Button">
+        <Parent guid="guidCppCoverageMenuCmdSet" id="CppCoverageMenuGroup" />
         <!--<Icon guid="guidImages" id="bmpPic1" />-->
         <CommandFlag>DynamicVisibility</CommandFlag>
         <!-- CommandFlag DefaultInvisible - Apparently not working correctly. Unsure why. -->
@@ -96,29 +101,36 @@
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
       <Bitmap guid="guidImages" href="Images\CoverageIcons.png" usedList="bmpPic1,bmpPic2"/>
     </Bitmaps>
+
+	<Menus>
+	  <Menu guid="guidCppCoverageMenuCmdSet" id="CppCoverageMenu" priority="0x700" type="Menu">
+	  	<Parent guid="guidSHLMainMenu" id="IDG_VS_MM_TOOLSADDINS" />
+	  	<Strings>
+	  		<ButtonText>CppCoverage</ButtonText>
+	  	</Strings>
+	  </Menu>
+	</Menus>
  
   </Commands>
 
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="guidCoverageExtPkg" value="{3D61029D-1E2F-4471-93CA-18FDB2F50CD9}" />
-    
-    <!-- This is the guid used to group the menu commands together -->
-    <GuidSymbol name="guidCoverageExtCmdSet" value="{E660CA32-95F9-4934-B485-ABA39170A77D}">
-      <!-- Main menu item (Generate report) -->
-      <IDSymbol name="CoverageMenuGroup" value="0x1020" />
-      <IDSymbol name="cmdCoverageReport" value="0x0100" />
-    </GuidSymbol>
 
     <GuidSymbol name="guidProjectSpecificMenuCmdSet" value="{CAA6399C-8807-43AB-A999-2CA0DB82A56C}">
       <!-- Context menu (Run coverage) -->
       <IDSymbol name="RunCoverageMenuGroup" value="0x1021" />
       <IDSymbol name="cmdCoverageGenerate" value="0x0102"/>
+	  <IDSymbol name="cmdCoverageGenerateMerge" value="0x0105"/>
     </GuidSymbol>
 
-    <GuidSymbol name ="guidFileSpecificMenuCmdSet" value="{0D8FDCC0-98E9-45AD-915A-D3A3BF5DE720}">
-      <IDSymbol name ="ShowCoverageMenuGroup" value="0x1022"/>
-      <IDSymbol name ="cmdCoverageShow" value="0x0104"/>
+	<!-- This is the guid used to group the menu commands together -->
+    <GuidSymbol name ="guidCppCoverageMenuCmdSet" value="{0D8FDCC0-98E9-45AD-915A-D3A3BF5DE720}">
+	  <IDSymbol name ="CppCoverageMenu"         value="0x1023" />
+	  <!-- Main menu item (Generate report) -->
+	  <IDSymbol name ="CppCoverageMenuGroup"    value="0x1022" />
+	  <IDSymbol name ="cmdCoverageShow"         value="0x0104" />
+	  <IDSymbol name ="cmdCoverageReport"       value="0x0100" />
     </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{297f4203-5709-4993-bf1d-1d63aa74c564}" >

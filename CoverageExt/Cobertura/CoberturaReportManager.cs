@@ -1,7 +1,9 @@
 ﻿extern alias EnvDTE;
 using System;
 using System.IO;
+using EnvDTE;
 using NubiloSoft.CoverageExt.Data;
+using NubiloSoft.CoverageExt.Native;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
@@ -24,8 +26,15 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
         private object lockObject = new object();
 
+        public bool IsValid(Settings instance)
+        {
+            return instance.UseOpenCppCoverageRunner;
+        }
+
         public ICoverageData UpdateData()
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             // It makes no sense to have multiple instances of our coverage data in our memory, so
             // this is exposed as a singleton. Updating needs concurrency control. It's pretty fast, so 
             // a simple lock will do.
@@ -48,6 +57,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
         private ICoverageData UpdateDataImpl()
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 string filename = dte.Solution.FileName;
@@ -74,7 +84,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                     if (activeCoverageReport == null)
                     {
                         output.WriteLine("Updating coverage results from: {0}", coverageFile);
-                        activeCoverageReport = Load(coverageFile);
+                        activeCoverageReport = Load(coverageFile, folder);
                         activeCoverageFilename = coverageFile;
                     }
                 }
@@ -84,14 +94,17 @@ namespace NubiloSoft.CoverageExt.Cobertura
             return activeCoverageReport;
         }
 
-        private ICoverageData Load(string filename)
+        private ICoverageData Load(string filename, string solution)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             ICoverageData report = null;
             if (filename != null)
             {
                 try
                 {
-                    report = new Cobertura.CoberturaData(filename);
+                    report = new Cobertura.CoberturaData();
+                    report.Parsing(filename, solution);
                 }
                 catch (Exception e)
                 {

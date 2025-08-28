@@ -5,6 +5,14 @@ using System.Windows.Media;
 
 namespace NubiloSoft.CoverageExt
 {
+    public enum CoverageFormat
+    {
+        Native,
+        NativeV2,
+        //Cobertura,
+        //Clover
+    }
+
     public class Settings
     {
         private static readonly Settings instance = new Settings();
@@ -26,7 +34,10 @@ namespace NubiloSoft.CoverageExt
         public event Action RedrawNeeded;
         public void TriggerRedraw()
         {
-            RedrawNeeded();
+            if (RedrawNeeded != null)
+            {
+                RedrawNeeded();
+            }
         }
 
         public event EventHandler OnSettingsChanged;
@@ -48,11 +59,18 @@ namespace NubiloSoft.CoverageExt
         #endregion
 
         #region general properties
-        private bool useNativeCoverageSupport = true;
-        public bool UseNativeCoverageSupport
+        private CoverageFormat format = CoverageFormat.NativeV2;
+        public CoverageFormat Format
         {
-            get { return useNativeCoverageSupport; }
-            set => SetField(ref useNativeCoverageSupport, value);
+            get { return format; }
+            set => SetField(ref format, value);
+        }
+
+        private bool useOpenCppCoverageRunner = false;
+        public bool UseOpenCppCoverageRunner
+        {
+            get => this.useOpenCppCoverageRunner;
+            set => SetField(ref useOpenCppCoverageRunner, value);
         }
 
         private bool showCodeCoverage = false;
