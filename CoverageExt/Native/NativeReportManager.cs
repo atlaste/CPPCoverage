@@ -81,9 +81,13 @@ namespace NubiloSoft.CoverageExt.Native
 
                     if (activeCoverageReport == null)
                     {
+                        output.WriteLine("------ Start update Coverage ------");
                         output.WriteLine("Updating coverage results from: {0}", coverageFile);
+                        var watch = System.Diagnostics.Stopwatch.StartNew();
                         activeCoverageReport = Load(coverageFile, folder);
                         activeCoverageFilename = coverageFile;
+                        watch.Stop();
+                        output.WriteLine("========== Done in {0} ms with {1} entries ==========", watch.ElapsedMilliseconds, activeCoverageReport.nbEntries());
                     }
                 }
             }

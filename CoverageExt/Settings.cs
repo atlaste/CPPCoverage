@@ -88,7 +88,7 @@ namespace NubiloSoft.CoverageExt
         }
         #endregion
 
-        #region color definitions
+        #region Bright color definitions
         private Color uncoveredBrushColor;
         public Color UncoveredBrushColor
         {
@@ -115,6 +115,36 @@ namespace NubiloSoft.CoverageExt
         {
             get => this.coveredPenColor;
             set => SetField(ref coveredPenColor, value);
+        }
+        #endregion
+
+        #region Dark color definitions
+        private Color uncoveredDarkBrushColor;
+        public Color UncoveredDarkBrushColor
+        {
+            get => this.uncoveredDarkBrushColor;
+            set => SetField(ref uncoveredDarkBrushColor, value);
+        }
+
+        private Color uncoveredDarkPenColor = Color.FromArgb(0xFF, 0x30, 0x00, 0x00);
+        public Color UncoveredDarkPenColor
+        {
+            get => this.uncoveredDarkPenColor;
+            set => SetField(ref uncoveredDarkPenColor, value);
+        }
+
+        private Color coveredDarkBrushColor;
+        public Color CoveredDarkBrushColor
+        {
+            get => this.coveredDarkBrushColor;
+            set => SetField(ref coveredDarkBrushColor, value);
+        }
+
+        private Color coveredDarkPenColor = Color.FromArgb(0xFF, 0x00, 0x30, 0x00);
+        public Color CoveredDarkPenColor
+        {
+            get => this.coveredDarkPenColor;
+            set => SetField(ref coveredDarkPenColor, value);
         }
         #endregion
 

@@ -47,29 +47,53 @@ namespace NubiloSoft.CoverageExt
         [Description("Replace native coverage system by OpenCppCoverage. Must be into C:\\Program files\\")]
         public bool OpenCppCoverage { get; set; } = false;
 
-        [Category("Colors")]
+        [Category("Bright Colors")]
         [DisplayName("Uncovered Brush")]
         [Description("Uncovered Brush")]
         [TypeConverter(typeof(CustomColorConverter))]
         public Color UncoveredBrush { get; set; } = Color.FromArgb(0xFF, 0xFF, 0xCF, 0xB8);
 
-        [Category("Colors")]
+        [Category("Bright Colors")]
         [DisplayName("Uncovered Pen")]
         [Description("Uncovered Pen")]
         [TypeConverter(typeof(CustomColorConverter))]
         public Color UncoveredPen { get; set; } = Color.FromArgb(0xD0, 0xFF, 0xCF, 0xB8);
 
-        [Category("Colors")]
+        [Category("Bright Colors")]
         [DisplayName("Covered Brush")]
         [Description("Covered Brush")]
         [TypeConverter(typeof(CustomColorConverter))]
         public Color CoveredBrush { get; set; } = Color.FromArgb(0xFF, 0xBD, 0xFC, 0xBF);
 
-        [Category("Colors")]
+        [Category("Bright Colors")]
         [DisplayName("Covered Pen")]
         [Description("Covered Pen")]
         [TypeConverter(typeof(CustomColorConverter))]
         public Color CoveredPen { get; set; } = Color.FromArgb(0xD0, 0xBD, 0xFC, 0xBF);
+
+        [Category("Dark Colors")]
+        [DisplayName("Uncovered Brush")]
+        [Description("Uncovered Brush")]
+        [TypeConverter(typeof(CustomColorConverter))]
+        public Color UncoveredDarkBrush { get; set; } = Color.FromArgb(0x00, 0x30, 0x05, 0x05);
+
+        [Category("Dark Colors")]
+        [DisplayName("Uncovered Pen")]
+        [Description("Uncovered Pen")]
+        [TypeConverter(typeof(CustomColorConverter))]
+        public Color UncoveredDarkPen { get; set; } = Color.FromArgb(0xFF, 0x30, 0x05, 0x05);
+
+        [Category("Dark Colors")]
+        [DisplayName("Covered Brush")]
+        [Description("Covered Brush")]
+        [TypeConverter(typeof(CustomColorConverter))]
+        public Color CoveredDarkBrush { get; set; } = Color.FromArgb(0xFF, 0x05, 0x30, 0x05);
+
+        [Category("Dark Colors")]
+        [DisplayName("Covered Pen")]
+        [Description("Covered Pen")]
+        [TypeConverter(typeof(CustomColorConverter))]
+        public Color CoveredDarkPen { get; set; } = Color.FromArgb(0x00, 0x05, 0x30, 0x05);
 
         protected override void OnApply( PageApplyEventArgs e )
         {
@@ -86,10 +110,15 @@ namespace NubiloSoft.CoverageExt
 
             Settings.Instance.ShowCodeCoverage = ShowCodeCoverage;
             Settings.Instance.CompileBeforeRunning = CompileBeforeRunning;
-            Settings.Instance.UncoveredBrushColor = convert(UncoveredBrush);
-            Settings.Instance.UncoveredPenColor = convert(UncoveredPen);
-            Settings.Instance.CoveredBrushColor = convert(CoveredBrush);
-            Settings.Instance.CoveredPenColor = convert(CoveredPen);
+            Settings.Instance.UncoveredBrushColor   = convert(UncoveredBrush);
+            Settings.Instance.UncoveredPenColor     = convert(UncoveredPen);
+            Settings.Instance.CoveredBrushColor     = convert(CoveredBrush);
+            Settings.Instance.CoveredPenColor       = convert(CoveredPen);
+
+            Settings.Instance.UncoveredDarkBrushColor   = convert(UncoveredDarkBrush);
+            Settings.Instance.UncoveredDarkPenColor     = convert(UncoveredDarkPen);
+            Settings.Instance.CoveredDarkBrushColor     = convert(CoveredDarkBrush);
+            Settings.Instance.CoveredDarkPenColor       = convert(CoveredDarkPen);
             Settings.Instance.TriggerSettingsChanged();
         }
     }

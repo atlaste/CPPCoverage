@@ -1,10 +1,13 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.PlatformUI;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using NubiloSoft.CoverageExt.Data;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Drawing2D;
+using System.Drawing.Printing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -24,6 +27,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal Pen uncoveredPen;
         internal SolidColorBrush coveredBrush;
         internal SolidColorBrush coveredPenBrush;
+        internal SolidColorBrush classicPenBrush;
         internal Pen coveredPen;
 
         private EnvDTE.DTE dte;
@@ -35,6 +39,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private CoverageState[] currentCoverage;
         private ProfileVector currentProfile;
 
+        private IFileCoverageData activeReport;
+
         public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte, ITextDocumentFactoryService textDocumentFactory )
         {
             this.dte = dte;
@@ -42,12 +48,12 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             this.view = view;
             this.textDocumentFactory = textDocumentFactory;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
-            this.layer.Opacity = 0.4;
+            //this.layer.Opacity = 0.4;
             currentReportDate = DateTime.MinValue;
 
             SetupHandleEvents(true);
 
-            // make sure the burshes are atleast initialized once
+            // make sure the brushes are at least initialized once
             InitializeColors();
         }
 
@@ -59,6 +65,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 Settings.Instance.OnShowCodeCoveragePropertyChanged += Instance_OnShowCodeCoveragePropertyChanged;
                 Settings.Instance.OnSettingsChanged += Instance_OnSettingsChanged;
                 Settings.Instance.RedrawNeeded += Instance_OnRedrawNeeded;
+                VSColorTheme.ThemeChanged += HandleThemeChange; // When VS Theme changed
 
                 // Listen to any event that changes the layout (text changes, scrolling, etc)
                 view.LayoutChanged += OnLayoutChanged;
@@ -69,7 +76,14 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 Settings.Instance.OnSettingsChanged -= Instance_OnSettingsChanged;
                 Settings.Instance.RedrawNeeded -= Instance_OnRedrawNeeded;
                 view.LayoutChanged -= OnLayoutChanged;
+                VSColorTheme.ThemeChanged -= HandleThemeChange; // When VS Theme changed
             }
+        }
+
+        private void HandleThemeChange(ThemeChangedEventArgs e)
+        {
+            InitializeColors();
+            Redraw();
         }
 
         /// <summary>
@@ -126,35 +140,60 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void InitializeColors()
         {
-            // Color for uncovered code:
-            if (uncoveredBrush?.Color != Settings.Instance.UncoveredBrushColor)
+            var backgroundColor = VSColorTheme.GetThemedColor(EnvironmentColors.SystemWindowTextColorKey);
+
+            System.Windows.Media.Color[] colors;
+            if( (backgroundColor.R + backgroundColor.G + backgroundColor.B) / 3 < 127 )
             {
-                uncoveredBrush = new SolidColorBrush(Settings.Instance.UncoveredBrushColor);
+                colors = new[] { Settings.Instance.UncoveredBrushColor,
+                                 Settings.Instance.UncoveredPenColor,
+                                 Settings.Instance.CoveredBrushColor,
+                                 Settings.Instance.CoveredPenColor
+                };
+            }
+            else
+            {
+                colors = new[] { Settings.Instance.UncoveredDarkBrushColor,
+                                 Settings.Instance.UncoveredDarkPenColor,
+                                 Settings.Instance.CoveredDarkBrushColor,
+                                 Settings.Instance.CoveredDarkPenColor
+                };
+            }
+
+            // Color for uncovered code:
+            if (uncoveredBrush?.Color != colors[0])
+            {
+                uncoveredBrush = new SolidColorBrush(colors[0]);
                 uncoveredBrush.Freeze();
             }
 
-            if (uncoveredPenBrush?.Color != Settings.Instance.UncoveredPenColor)
+            if (uncoveredPenBrush?.Color != colors[1])
             {
-                uncoveredPenBrush = new SolidColorBrush(Settings.Instance.UncoveredPenColor);
+                uncoveredPenBrush = new SolidColorBrush(colors[1]);
                 uncoveredPenBrush.Freeze();
                 uncoveredPen = new Pen(uncoveredPenBrush, 0.5);
                 uncoveredPen.Freeze();
             }
 
             // Color for covered code:
-            if (coveredBrush?.Color != Settings.Instance.CoveredBrushColor)
+            if (coveredBrush?.Color != colors[2])
             {
-                coveredBrush = new SolidColorBrush(Settings.Instance.CoveredBrushColor);
+                coveredBrush = new SolidColorBrush(colors[2]);
                 coveredBrush.Freeze();
             }
 
-            if (coveredPenBrush?.Color != Settings.Instance.CoveredPenColor)
+            if (coveredPenBrush?.Color != colors[3])
             {
-                coveredPenBrush = new SolidColorBrush(Settings.Instance.CoveredPenColor);
+                coveredPenBrush = new SolidColorBrush(colors[3]);
                 coveredPenBrush.Freeze();
                 coveredPen = new Pen(coveredPenBrush, 0.5);
                 coveredPen.Freeze();
             }
+
+            var penMediaColor = VSColorTheme.GetThemedColor(EnvironmentColors.SystemWindowTextColorKey);
+            var penColor = System.Windows.Media.Color.FromArgb(penMediaColor.A, penMediaColor.R, penMediaColor.G, penMediaColor.B);
+            classicPenBrush = new SolidColorBrush(penColor);
+            classicPenBrush.Freeze();
         }
 
         /// <summary>
@@ -207,9 +246,16 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             }
 
             currentReportDate = coverageData.FileDate;
-            var activeReport = coverageData.GetData(activeFilename);
-            if ( activeReport == null ) return false;
+            activeReport = coverageData.GetData(activeFilename);
+            if (activeReport == null)
+            {
+                this.outputWindow.WriteDebugLine("No report found for this file: {0}", activeFilename);
+                return false;
+            }
+            else
+                this.outputWindow.WriteDebugLine("Report found for this file: {0}", activeFilename);
 
+            /*
             currentProfile = activeReport.profile();
             currentCoverage = new CoverageState[activeReport.nbLines()];
 
@@ -217,6 +263,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             {
                 currentCoverage[i] = activeReport.state(i);
             }
+            */
 
             return true;
         }
@@ -235,15 +282,23 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             {
                 if ( InitCurrent() )
                 {
-                    foreach (ITextViewLine line in lines)
+                    if(lines.Count == 0)
                     {
-                        HighlightCoverage(line);
+                        Redraw();
+                    }
+                    else
+                    {
+                        foreach (ITextViewLine line in lines)
+                        {
+                            HighlightCoverage(line);
+                        }
                     }
                 }
                 else
                 {
                     currentCoverage = null;
                     currentProfile = null;
+                    activeReport = null;
                     currentReportDate = DateTime.MinValue;
                     layer.RemoveAllAdornments();
                 }
@@ -329,7 +384,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private void HighlightCoverage(ITextViewLine line)
         {
-            if (view == null || currentCoverage == null || currentProfile == null || line == null || view.TextSnapshot == null) { return; }
+            if (view == null || activeReport == null || line == null || view.TextSnapshot == null) { return; }
 
             IWpfTextViewLineCollection textViewLines = view.TextViewLines;
 
@@ -338,7 +393,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             int offsetPosition = VsVersion.Vs2022OrLater ? 0 : 1;
             int lineno = offsetPosition + view.TextSnapshot.GetLineNumberFromPosition(line.Extent.Start);
 
-            CoverageState covered = lineno < currentCoverage.Length ? currentCoverage[lineno] : CoverageState.Irrelevant;
+            CoverageState covered = lineno < activeReport.nbLines() ? activeReport.state((uint)lineno) : CoverageState.Irrelevant;
 
             if (covered != CoverageState.Irrelevant)
             {
@@ -347,11 +402,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
                 if (g != null)
                 {
-                    g = new RectangleGeometry(new Rect(g.Bounds.X, g.Bounds.Y, view.ViewportWidth, g.Bounds.Height));
+                    var rectG = new RectangleGeometry(new Rect(g.Bounds.X, g.Bounds.Y, view.ViewportWidth, g.Bounds.Height));
 
                     GeometryDrawing drawing = (covered == CoverageState.Covered) ?
-                        new GeometryDrawing(coveredBrush, coveredPen, g) :
-                        new GeometryDrawing(uncoveredBrush, uncoveredPen, g);
+                        new GeometryDrawing(coveredBrush, coveredPen, rectG) :
+                        new GeometryDrawing(uncoveredBrush, uncoveredPen, rectG);
 
                     drawing.Freeze();
 
@@ -362,42 +417,72 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                     image.Source = drawingImage;
 
                     //Align the image with the top of the bounds of the text geometry
-                    Canvas.SetLeft(image, g.Bounds.Left);
-                    Canvas.SetTop(image, g.Bounds.Top);
+                    Canvas.SetLeft(image, rectG.Bounds.Left);
+                    Canvas.SetTop(image, rectG.Bounds.Top);
 
                     layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, span, null, image, null);
+
+                    // Show count if possible
+                    if (covered != CoverageState.Uncovered && activeReport.hasCounting())
+                    {
+                        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                        //sb.Append("Count=");
+                        sb.Append(activeReport.count((uint)lineno));
+
+                        double widthCount = 100.0;
+                        double x = view.ViewportWidth - widthCount;
+                        //double x = g.Bounds.X + g.Bounds.Width + 20;
+                        //if (x < view.ViewportWidth / 2) { x = view.ViewportWidth / 2; }
+                        var rectCountG = new RectangleGeometry(new Rect(x, g.Bounds.Y, widthCount, g.Bounds.Height));
+
+                        Label lbl = new Label();
+                        lbl.FontSize = 8;
+                        lbl.Foreground = classicPenBrush;
+                        lbl.Background = Brushes.Transparent;
+                        lbl.FontFamily = new FontFamily("Verdana");
+                        lbl.FontWeight = FontWeights.Bold;
+                        lbl.Content = sb.ToString();
+
+                        Canvas.SetLeft(lbl, rectCountG.Bounds.Left);
+                        Canvas.SetTop(lbl, rectCountG.Bounds.Top);
+
+                        layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, span, null, lbl, null);
+                    }
                 }
             }
 
-            var profile = currentProfile.Get(lineno);
-            if (profile != null && profile.Item1 != 0 || profile.Item2 != 0)
+            if(currentProfile != null)
             {
-                System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                sb.Append(profile.Item1);
-                sb.Append("%/");
-                sb.Append(profile.Item2);
-                sb.Append("%");
-
-                SnapshotSpan span = new SnapshotSpan(view.TextSnapshot, Span.FromBounds(line.Start, line.End));
-                Geometry g = textViewLines.GetMarkerGeometry(span);
-
-                if (g != null) // Yes, this apparently happens...
+                var profile = currentProfile.Get(lineno);
+                if (profile != null && profile.Item1 != 0 || profile.Item2 != 0)
                 {
-                    double x = g.Bounds.X + g.Bounds.Width + 20;
-                    if (x < view.ViewportWidth / 2) { x = view.ViewportWidth / 2; }
-                    g = new RectangleGeometry(new Rect(x, g.Bounds.Y, 30, g.Bounds.Height));
+                    System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                    sb.Append(profile.Item1);
+                    sb.Append("%/");
+                    sb.Append(profile.Item2);
+                    sb.Append("%");
 
-                    Label lbl = new Label();
-                    lbl.FontSize = 7;
-                    lbl.Foreground = Brushes.Black;
-                    lbl.Background = Brushes.Transparent;
-                    lbl.FontFamily = new FontFamily("Verdana");
-                    lbl.Content = sb.ToString();
+                    SnapshotSpan span = new SnapshotSpan(view.TextSnapshot, Span.FromBounds(line.Start, line.End));
+                    Geometry g = textViewLines.GetMarkerGeometry(span);
 
-                    Canvas.SetLeft(lbl, g.Bounds.Left);
-                    Canvas.SetTop(lbl, g.Bounds.Top);
+                    if (g != null) // Yes, this apparently happens...
+                    {
+                        double x = g.Bounds.X + g.Bounds.Width + 20;
+                        if (x < view.ViewportWidth / 2) { x = view.ViewportWidth / 2; }
+                        g = new RectangleGeometry(new Rect(x, g.Bounds.Y, 30, g.Bounds.Height));
 
-                    layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, span, null, lbl, null);
+                        Label lbl = new Label();
+                        lbl.FontSize = 7;
+                        lbl.Foreground = Brushes.Black;
+                        lbl.Background = Brushes.Transparent;
+                        lbl.FontFamily = new FontFamily("Verdana");
+                        lbl.Content = sb.ToString();
+
+                        Canvas.SetLeft(lbl, g.Bounds.Left);
+                        Canvas.SetTop(lbl, g.Bounds.Top);
+
+                        layer.AddAdornment(AdornmentPositioningBehavior.TextRelative, span, null, lbl, null);
+                    }
                 }
             }
         }

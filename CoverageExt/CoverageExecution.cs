@@ -164,6 +164,17 @@ namespace NubiloSoft.CoverageExt
                     argumentBuilder.Append(" -w ");
                     argumentBuilder.Append(PathWithQuotes(workingDirectory));
                 }
+
+                argumentBuilder.Append(" -format ");
+                switch(Settings.Instance.Format)
+                {
+                    default:
+                        argumentBuilder.Append(" native");
+                        break;
+                    case CoverageFormat.NativeV2:
+                        argumentBuilder.Append(" nativeV2");
+                        break;
+                }
             }
             else
             {

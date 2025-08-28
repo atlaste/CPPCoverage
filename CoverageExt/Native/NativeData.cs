@@ -42,6 +42,10 @@ namespace NubiloSoft.CoverageExt.Native
             {
                 return profile;
             }
+            public bool hasCounting()
+            {
+                return false;
+            }
         }
 
         protected Dictionary<string, FileCoverageData> lookup = new Dictionary<string, FileCoverageData>();
@@ -56,6 +60,8 @@ namespace NubiloSoft.CoverageExt.Native
         }
 
         public DateTime FileDate { get; set; }
+
+        public UInt32 nbEntries() => (UInt32)lookup.Count();
 
         public IEnumerable<Tuple<string, FileCoverageStats>> Overview()
         {

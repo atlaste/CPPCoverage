@@ -24,6 +24,8 @@ namespace NubiloSoft.CoverageExt.Data
         UInt32 count(UInt32 idLine);
         UInt32 nbLines();
         ProfileVector profile();
+
+        bool hasCounting();
     }
 
     public interface ICoverageData
@@ -33,6 +35,8 @@ namespace NubiloSoft.CoverageExt.Data
 
         DateTime FileDate { get; }
         IEnumerable<Tuple<string, FileCoverageStats>> Overview();
+
+        UInt32 nbEntries();
 
         void Parsing(string filename, string solutionDir);
     }

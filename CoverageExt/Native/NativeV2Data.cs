@@ -24,10 +24,10 @@ namespace NubiloSoft.CoverageExt.Native
                 Debug.Assert(data.Length % 2 == 0);
 
                 _lines = new ushort[data.Length/2];
-                for (ushort objIndex = 0; objIndex < data.Length; ++objIndex)
+                for (UInt32 objIndex = 0; objIndex < _lines.Length; ++objIndex)
                 {
-                    _lines[objIndex] = (ushort)((data[objIndex * sizeof(UInt16)] << 8) +
-                                                                 data[objIndex + 1]);
+                    UInt32 id = objIndex * sizeof(UInt16);
+                    _lines[objIndex] = (ushort)((data[id+1] << 8) + data[id]);
                 }
             }
             // Check FileCoverageV2.h : it's must be the same
@@ -61,7 +61,12 @@ namespace NubiloSoft.CoverageExt.Native
 
             ProfileVector IFileCoverageData.profile()
             {
-                throw new NotImplementedException();
+                return null;
+            }
+
+            public bool hasCounting()
+            {
+                return true;
             }
         }
 
@@ -86,6 +91,8 @@ namespace NubiloSoft.CoverageExt.Native
             }
         }
 
+        public UInt32 nbEntries() => (UInt32)lookup.Count();
+
         void ICoverageData.Parsing(string filename, string solutionDir)
         {
             // Get file date (for modified checks)
@@ -95,22 +102,25 @@ namespace NubiloSoft.CoverageExt.Native
             xmlDoc.Load(filename);
             var xmlEntities = new List<XmlEntity>();
 
-            foreach (XmlNode item in xmlDoc.ChildNodes)
+            XmlNodeList filesNodes = xmlDoc.SelectNodes("/CppCoverage/file");
+            foreach (XmlNode item in filesNodes)
             {
-                if( item.LocalName == "file" )
+                if (item.LocalName == "file")
                 {
                     string currentFile = item.Attributes["path"].InnerText;
                     // File is valid
-                    if(!String.IsNullOrEmpty(currentFile))
+                    if (!String.IsNullOrEmpty(currentFile))
                     {
                         // Build full path if needed
-                        if( !System.IO.Path.IsPathRooted(currentFile) )
+                        if (!System.IO.Path.IsPathRooted(currentFile))
                         {
                             currentFile = System.IO.Path.Combine(solutionDir, currentFile);
                         }
 
+                        currentFile = currentFile.Replace('/', '\\').ToLower();
+
                         // Check file is existing and keep the coverage information
-                        if( System.IO.File.Exists(currentFile) )
+                        if (System.IO.File.Exists(currentFile))
                         {
                             var coverage = new NativeV2CoverageData();
                             coverage.stats = new FileCoverageStats();
@@ -120,9 +130,9 @@ namespace NubiloSoft.CoverageExt.Native
                                 //Read stat : <stats nbLinesInFile="67" nbLinesOfCode="22" nbLinesCovered="0"/>
                                 if (fileItem.LocalName == "stats")
                                 {
-                                    coverage.stats.lineInsideFile  = UInt32.Parse(item.Attributes["nbLinesInFile"].InnerText);
-                                    coverage.stats.lineOfCodeFile  = UInt32.Parse(item.Attributes["nbLinesOfCode"].InnerText);
-                                    coverage.stats.lineCoveredFile = UInt32.Parse(item.Attributes["nbLinesCovered"].InnerText);
+                                    coverage.stats.lineInsideFile  = UInt32.Parse(fileItem.Attributes["nbLinesInFile"].InnerText);
+                                    coverage.stats.lineOfCodeFile  = UInt32.Parse(fileItem.Attributes["nbLinesOfCode"].InnerText);
+                                    coverage.stats.lineCoveredFile = UInt32.Parse(fileItem.Attributes["nbLinesCovered"].InnerText);
                                 }
                                 //Read coverage :
                                 else if (fileItem.LocalName == "coverage")
@@ -130,7 +140,7 @@ namespace NubiloSoft.CoverageExt.Native
                                     coverage.addCoverage(fileItem.InnerText);
                                 }
                             }
-                            lookup.Add(currentFile.ToLower(), coverage);
+                            lookup.Add(currentFile, coverage);
                         }
                     }
                 }
