@@ -5,9 +5,13 @@ you with an easy-to-use, light-weight C++ code coverage and profiler, right from
 
 # Installation
 
-Prerequisites: VS2013 or VS2015. Any edition should work, even though this is only tested on VS2015 Community.
+Prerequisites: 
 
-- Install this extension: https://github.com/atlaste/VSOpenCPPCoverage/raw/master/CoverageExt/CoverageExt.vsix .
+- For VS2013 or VS2015 grab version 1 from the releases tab. 
+- For VS2022 grab version 2 from the releases tab.
+- Any edition should work (so pro, enterprise, community, or whatever they made up).
+
+Just install the VISX and start using it.
 
 # Getting started
 
@@ -146,3 +150,7 @@ Your friendly BSD license. Please give credits where credits are deserved.
 
 Most of this code is written by Stefan de Bruijn (nickname: atlaste). 
 A special thank you must go to Michał Antoniak (nickname: MAntoniak) who contributed quite a few significant PR's.
+
+# Talk, contact
+
+Have something to contribute or want to discuss something? Join us on discord: [https://discord.gg/4He86kN5](https://discord.gg/rgHhXVwuJQ)
