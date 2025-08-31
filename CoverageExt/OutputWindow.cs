@@ -8,7 +8,7 @@ namespace NubiloSoft.CoverageExt
     {
         public OutputWindow(DTE dte)
         {
-            //Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 lock (windowLock)
@@ -55,7 +55,20 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        public async void WriteLine(string format, params object[] par) 
+        public void WriteLine(string format, params object[] par)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (window != null)
+            {
+                string message = (par.Length != 0) ? string.Format(format, par) : format;
+                lock (windowLock)
+                {
+                    window.OutputString(message + "\r\n");
+                }
+            }
+        }
+
+        public async System.Threading.Tasks.Task WriteLineAsync(string format, params object[] par) 
         {
             if (window != null)
             {
@@ -69,10 +82,10 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        public async void WriteDebugLine(string format, params object[] par)
+        public async System.Threading.Tasks.Task WriteDebugLineAsync(string format, params object[] par)
         {
 #if DEBUG
-            WriteLine(format, par);
+            await WriteLineAsync(format, par);
 #endif
         }
     }

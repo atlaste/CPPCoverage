@@ -318,19 +318,6 @@ namespace NubiloSoft.CoverageExt
             if (menuCommand != null && dte != null)
             {
                 menuCommand.Visible = dte.ActiveSolutionProjects != null;
-                /*
-                var activeDocument = dte.ActiveDocument;
-                if( activeDocument != null )
-                {
-                    var fullName = activeDocument.FullName;
-
-                    if (fullName.EndsWith(".h") || fullName.EndsWith(".cpp"))
-                    {
-                        menuCommand.Visible = true;
-                    }
-                }
-                menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
-                */
                 menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
             }
         }

@@ -36,7 +36,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private readonly ITextDocumentFactoryService textDocumentFactory;
         private ITextDocument TextDocument;
         private DateTime currentReportDate;
-        private CoverageState[] currentCoverage;
         private ProfileVector currentProfile;
 
         private IFileCoverageData activeReport;
@@ -82,6 +81,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private void HandleThemeChange(ThemeChangedEventArgs e)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             InitializeColors();
             Redraw();
         }
@@ -117,7 +118,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            this.outputWindow.WriteDebugLine("Instance_OnShowCodeCoveragePropertyChanged");
+            this.outputWindow.WriteLine("Instance_OnShowCodeCoveragePropertyChanged");
             Redraw();
         }
 
@@ -130,7 +131,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            this.outputWindow.WriteDebugLine("Instance_OnSettingsChanged");
+            this.outputWindow.WriteLine("Instance_OnSettingsChanged");
             InitializeColors();
             Redraw();
         }
@@ -229,6 +230,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private bool InitCurrent()
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             string activeFilename = GetActiveFilename();
             if ( activeFilename == null ) return false;
 
@@ -249,21 +252,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             activeReport = coverageData.GetData(activeFilename);
             if (activeReport == null)
             {
-                this.outputWindow.WriteDebugLine("No report found for this file: {0}", activeFilename);
+                this.outputWindow.WriteLine("No report found for this file: {0}", activeFilename);
                 return false;
             }
             else
-                this.outputWindow.WriteDebugLine("Report found for this file: {0}", activeFilename);
-
-            /*
-            currentProfile = activeReport.profile();
-            currentCoverage = new CoverageState[activeReport.nbLines()];
-
-            for (uint i = 0; i < currentCoverage.Length; i++)
-            {
-                currentCoverage[i] = activeReport.state(i);
-            }
-            */
+                this.outputWindow.WriteLine("Report found for this file: {0}", activeFilename);
 
             return true;
         }
@@ -273,11 +266,15 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             UpdateLayer(e.NewOrReformattedLines);
         }
 
         private void UpdateLayer(IList<ITextViewLine> lines)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             if (Settings.Instance.ShowCodeCoverage)
             {
                 if ( InitCurrent() )
@@ -296,7 +293,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 }
                 else
                 {
-                    currentCoverage = null;
                     currentProfile = null;
                     activeReport = null;
                     currentReportDate = DateTime.MinValue;

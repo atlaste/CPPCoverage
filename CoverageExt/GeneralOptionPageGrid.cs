@@ -28,11 +28,13 @@ namespace NubiloSoft.CoverageExt
         [Category("General")]
         [DisplayName("Show code coverage")]
         [Description("Should we show the code coverage or not")]
+        [DefaultValue(true)]
         public bool ShowCodeCoverage { get; set; } = true;
 
         [Category("General")]
         [DisplayName("Build project before running")]
         [Description("Build project and dependencies before run code coverage")]
+        [DefaultValue(false)]
         public bool CompileBeforeRunning { get; set; } = false;
 
         [Category("General")]
@@ -45,6 +47,7 @@ namespace NubiloSoft.CoverageExt
         [Category("General")]
         [DisplayName("Use OpenCppCoverage")]
         [Description("Replace native coverage system by OpenCppCoverage. Must be into C:\\Program files\\")]
+        [DefaultValue(false)]
         public bool OpenCppCoverage { get; set; } = false;
 
         [Category("Bright Colors")]
