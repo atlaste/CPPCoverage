@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EnvDTE;
+using NubiloSoft.CoverageExt.Native;
 
 namespace NubiloSoft.CoverageExt.Data
 {
@@ -17,15 +18,23 @@ namespace NubiloSoft.CoverageExt.Data
 
         public static IReportManager Instance(DTE dte)
         {
-            if (dte != null && instance == null)
+            if (dte != null)
             {
                 lock (lockObject)
                 {
-                    if (instance == null)
+                    if (instance == null || !instance.IsValid(Settings.Instance))
                     {
-                        if (Settings.Instance.UseNativeCoverageSupport)
+                        if (!Settings.Instance.UseOpenCppCoverageRunner)
                         {
-                            instance = new Native.NativeReportManager(dte);
+                            switch (Settings.Instance.Format)
+                            {
+                                case CoverageFormat.Native:
+                                instance = new Native.NativeReportManager(dte);
+                                break;
+                                case CoverageFormat.NativeV2:
+                                instance = new Native.NativeV2ReportManager(dte);
+                                break;
+                            }
                         }
                         else
                         {

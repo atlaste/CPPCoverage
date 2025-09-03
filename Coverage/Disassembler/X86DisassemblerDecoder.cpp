@@ -16,16 +16,17 @@
 /* Capstone Disassembly Engine */
 /* By Nguyen Anh Quynh <aquynh@gmail.com>, 2013-2014 */
 
-#include <stdarg.h>   /* for va_*()       */
+#include <cstdarg>   /* for va_*()       */
 #if defined(CAPSTONE_HAS_OSXKERNEL)
 #include <libkern/libkern.h>
 #else
-#include <stdlib.h>   /* for exit()       */
+#include <cstdlib>   /* for exit()       */
 #endif
 
 #define ARR_SIZE(a) (sizeof(a)/sizeof(a[0]))
 
 #include "X86DisassemblerDecoder.h"
+#include <iostream>
 
 /// Specifies whether a ModR/M byte is needed and (if so) which
 /// instruction each possible value of the ModR/M byte corresponds to.  Once
@@ -237,7 +238,7 @@ static InstrUID decode(OpcodeType type,
 	switch (dec->modrm_type)
 	{
 		default:
-			//debug("Corrupt table!  Unknown modrm_type");
+			std::cerr << "Corrupt table!  Unknown modrm_type" << std::endl;
 			return 0;
 		case MODRM_ONEENTRY:
 			return modRMTable[dec->instructionIDs];

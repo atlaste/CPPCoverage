@@ -4,48 +4,85 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using Microsoft.VisualStudio.Utilities.Internal;
 using NubiloSoft.CoverageExt.Data;
+using static NubiloSoft.CoverageExt.Native.NativeV2Data;
 
 namespace NubiloSoft.CoverageExt.Native
 {
     public class NativeData : ICoverageData
     {
-        private Dictionary<string, Tuple<BitVector, ProfileVector>> lookup = new Dictionary<string, Tuple<BitVector, ProfileVector>>();
+        public class FileCoverageData : IFileCoverageData
+        {
+            public BitVector vector;
+            public ProfileVector profile;
 
-        public Tuple<BitVector, ProfileVector> GetData(string filename)
+            public FileCoverageData(BitVector vector, ProfileVector profile)
+            {
+                this.vector = vector;
+                this.profile = profile;
+            }
+
+            uint IFileCoverageData.count(uint idLine)
+            {
+                return 0;
+            }
+
+            CoverageState IFileCoverageData.state(uint idLine)
+            {
+                return vector.IsFound((int)idLine) ? CoverageState.Covered : CoverageState.Uncovered;
+            }
+
+            UInt32 IFileCoverageData.nbLines()
+            {
+                return (UInt32)vector.Count; 
+            }
+
+            ProfileVector IFileCoverageData.profile()
+            {
+                return profile;
+            }
+            public bool hasCounting()
+            {
+                return false;
+            }
+        }
+
+        protected Dictionary<string, FileCoverageData> lookup = new Dictionary<string, FileCoverageData>();
+
+        public IFileCoverageData GetData(string filename)
         {
             filename = filename.Replace('/', '\\').ToLower();
 
-            Tuple<BitVector, ProfileVector> result = null;
+            FileCoverageData result = null;
             lookup.TryGetValue(filename, out result);
             return result;
         }
 
         public DateTime FileDate { get; set; }
 
-        public IEnumerable<Tuple<string, int, int>> Overview()
+        public UInt32 nbEntries() => (UInt32)lookup.Count();
+
+        public IEnumerable<Tuple<string, FileCoverageStats>> Overview()
         {
             foreach (var kv in lookup)
             {
-                int covered = 0;
-                int uncovered = 0;
-                foreach (var item in kv.Value.Item1.Enumerate())
+                var stats = new FileCoverageStats();
+                foreach (var item in kv.Value.vector.Enumerate())
                 {
                     if (item.Value)
                     {
-                        ++covered;
-                    }
-                    else
-                    {
-                        ++uncovered;
+                        ++stats.lineCoveredFile;
                     }
                 }
-
-                yield return new Tuple<string, int, int>(kv.Key, covered, uncovered);
+                stats.lineOfCodeFile = (uint)kv.Value.vector.Count;
+                stats.lineInsideFile = stats.lineOfCodeFile;
+                
+                yield return new Tuple<string, FileCoverageStats>(kv.Key, stats);
             }
         }
 
-        public NativeData(string filename)
+        public void Parsing(string filename, string solutionDir)
         {
             // Get file date (for modified checks)
             FileDate = new System.IO.FileInfo(filename).LastWriteTimeUtc;
@@ -119,11 +156,11 @@ namespace NubiloSoft.CoverageExt.Native
                             else
                             {
                                 name = prof;
-                                lookup.Add(currentFile.ToLower(), new Tuple<BitVector, ProfileVector>(currentVector, currentProfile));
+                                lookup.Add(currentFile.ToLower(), new FileCoverageData(currentVector, currentProfile));
                                 continue;
                             }
 
-                            lookup.Add(currentFile.ToLower(), new Tuple<BitVector, ProfileVector>(currentVector, currentProfile));
+                            lookup.Add(currentFile.ToLower(), new FileCoverageData(currentVector, currentProfile));
                         }
                     }
                     // otherwise: ignore; grab next line

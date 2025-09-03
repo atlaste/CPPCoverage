@@ -15,7 +15,7 @@
 
 struct RuntimeCoverageFilter
 {
-	virtual bool IgnoreFile(const std::string& file) = 0;
+	virtual bool IgnoreFile(const std::string& file) const = 0;
 };
 
 struct RuntimeFileFilter : RuntimeCoverageFilter
@@ -26,7 +26,7 @@ struct RuntimeFileFilter : RuntimeCoverageFilter
 
 	std::string file;
 
-	virtual bool IgnoreFile(const std::string& found) override
+	bool IgnoreFile(const std::string& found) const override
 	{
 		if (found.size() == file.size())
 		{
@@ -51,7 +51,7 @@ struct RuntimeFolderFilter : RuntimeCoverageFilter
 
 	std::string folder;
 
-	virtual bool IgnoreFile(const std::string& found) override
+	bool IgnoreFile(const std::string& found) const override
 	{
 		if (found.size() > folder.size())
 		{
@@ -177,9 +177,9 @@ struct RuntimeNotifications
 		}
 	}
 
-	bool IgnoreFile(const std::string& filename)
+	bool IgnoreFile(const std::string& filename) const
 	{
-		for (auto& it : postProcessing)
+		for (const auto& it : postProcessing)
 		{
 			if (it->IgnoreFile(filename))
 			{

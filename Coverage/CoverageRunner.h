@@ -9,12 +9,13 @@
 
 #include "Disassembler/ReachabilityAnalysis.h"
 
-#include <string>
+#include <algorithm>
+#include <format>
 #include <iostream>
-#include <sstream>
+#include <filesystem>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include <algorithm>
 
 #include <Windows.h>
 #include <psapi.h>
@@ -40,7 +41,18 @@ struct CoverageRunner
 
 		if (info->fileInfo->PathMatches(lineInfo->FileName))
 		{
-			auto file = lineInfo->FileName;
+			// Try to find if file exists (and can be covered)
+			auto file = std::string(lineInfo->FileName);
+			if( !std::filesystem::exists(file) )
+			{
+#ifndef NDEBUG
+				if (!RuntimeOptions::Instance().Quiet)
+				{
+					std::cerr << std::format("Impossible to find file : {0}", file) << std::endl;
+				}
+#endif
+				return FALSE;
+			}
 
 			PVOID addr = reinterpret_cast<PVOID>(lineInfo->Address);
 			auto it = info->breakpointsToSet.find(addr);
@@ -391,7 +403,7 @@ struct CoverageRunner
 		return result;
 	}
 
-	void Start()
+	bool Start()
 	{
 		SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_LOAD_ANYTHING);
 
@@ -478,6 +490,9 @@ struct CoverageRunner
 		bool entryBreakpoint = true;
 		bool initializedDbgInfo = false;
 
+		// Check if all process works
+		bool executionSuccess = true;
+
 		std::unordered_map<DWORD, std::unique_ptr<ProcessInfo>> processMap;
 
 		while (continueDebugging)
@@ -546,6 +561,9 @@ struct CoverageRunner
 					{
 						std::cout << "Process exited with code: " << debugEvent.u.ExitProcess.dwExitCode << "." << std::endl;
 					}
+
+					// Success application must return 0
+					executionSuccess &= (debugEvent.u.ExitProcess.dwExitCode == 0);
 
 					processMap.erase(debugEvent.dwProcessId);
 					continueDebugging = processMap.empty() ? false : true;
@@ -970,5 +988,7 @@ struct CoverageRunner
 		{
 			std::cout << "done." << std::endl;
 		}
+
+		return executionSuccess;
 	}
 };

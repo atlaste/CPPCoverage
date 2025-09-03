@@ -26,6 +26,7 @@ public:
 	enum ExportFormatType
 	{
 		Native,
+		NativeV2,
 		Cobertura,
 		Clover
 	} ExportFormat;
@@ -39,6 +40,7 @@ public:
 	std::string Executable;
 	std::string ExecutableArguments;
 	std::string PackageName = "Program.exe";
+	std::string SolutionPath;
 
 	std::string SourcePath()
 	{

@@ -5,9 +5,14 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using EnvDTE;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.VCProjectEngine;
+using NubiloSoft.CoverageExt.Data;
+using static Microsoft.VisualStudio.Threading.AsyncReaderWriterLock;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -25,7 +30,8 @@ namespace NubiloSoft.CoverageExt
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#115", "1.0", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
-    [ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
+    //[ProvideAutoLoad(UIContextGuids.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideAutoLoad(UIContextGuids.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideToolWindow(typeof(Report.CoverageReportToolWindow))]
     [Guid(GuidList.guidCoverageExtPkgString)]
     [ProvideOptionPage(typeof(GeneralOptionPageGrid), "CPPCoverage", "General", 0, 0, true)]
@@ -55,7 +61,11 @@ namespace NubiloSoft.CoverageExt
         {
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
 
+            await TaskScheduler.Default;
+
+            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             await base.InitializeAsync(cancellationToken, progress);
+            
             InitializeDTE();
 
             // this forces the options to be loaded, since it call the Load function on the OptionPageGrid
@@ -67,8 +77,9 @@ namespace NubiloSoft.CoverageExt
             {
                 // Create the command for the tool window
                 {
-                    CommandID menuCommandID = new CommandID(GuidList.guidCoverageExtCmdSet, (int)PkgCmdIDList.cmdCoverageReport);
-                    MenuCommand menuItem = new MenuCommand(ShowToolWindow, menuCommandID);
+                    CommandID menuCommandID = new CommandID(GuidList.guidCppCoverageMenuCmdSet, (int)PkgCmdIDList.cmdCoverageReport);
+                    OleMenuCommand menuItem = new OleMenuCommand(ShowToolWindow, menuCommandID);
+                    menuItem.BeforeQueryStatus += HaveCoverage_BeforeQueryStatus;
                     mcs.AddCommand(menuItem);
                 }
 
@@ -80,11 +91,27 @@ namespace NubiloSoft.CoverageExt
                     mcs.AddCommand(menuItem);
                 }
 
+                // Create the command for the context menu
+                {
+                    CommandID menuCommandID = new CommandID(GuidList.guidProjectSpecificMenuCmdSet, (int)PkgCmdIDList.cmdCoverageGenerateMerge);
+                    OleMenuCommand menuItem = new OleMenuCommand(RunCoverageMergeItemCallback, menuCommandID);
+                    menuItem.BeforeQueryStatus += ProjectContextMenuItem_BeforeQueryStatus;
+                    mcs.AddCommand(menuItem);
+                }
+
                 // Create the command for the file menu
                 {
-                    CommandID menuCommandID = new CommandID(GuidList.guidFileSpecificMenuCmdSet, (int)PkgCmdIDList.cmdCoverageShow);
+                    CommandID menuCommandID = new CommandID(GuidList.guidCppCoverageMenuCmdSet, (int)PkgCmdIDList.cmdCoverageShow);
                     OleMenuCommand menuItem = new OleMenuCommand(FileContextMenuItemCallback, menuCommandID);
                     menuItem.BeforeQueryStatus += FileContextMenuItem_BeforeQueryStatus;
+                    mcs.AddCommand(menuItem);
+                }
+
+                // Create the command for the file menu
+                {
+                    CommandID menuCommandID = new CommandID(GuidList.guidCppCoverageMenuCmdSet, (int)PkgCmdIDList.cmdCoverageClean);
+                    OleMenuCommand menuItem = new OleMenuCommand(CoverageCleanItemCallback, menuCommandID);
+                    menuItem.BeforeQueryStatus += HaveCoverage_BeforeQueryStatus;
                     mcs.AddCommand(menuItem);
                 }
             }
@@ -93,13 +120,13 @@ namespace NubiloSoft.CoverageExt
         // See http://www.mztools.com/articles/2013/MZ2013029.aspx
         private void InitializeDTE()
         {
-            Microsoft.VisualStudio.Shell.Interop.IVsShell shellService;
+            ThreadHelper.ThrowIfNotOnUIThread();
 
             this.dte = this.GetService(typeof(SDTE)) as EnvDTE80.DTE2;
 
             if (this.dte == null) // The IDE is not yet fully initialized
             {
-                shellService = this.GetService(typeof(SVsShell)) as IVsShell;
+                var shellService = this.GetService(typeof(SVsShell)) as IVsShell;
                 this.dteInitializer = new DteInitializer(shellService, this.InitializeDTE);
             }
             else
@@ -115,6 +142,8 @@ namespace NubiloSoft.CoverageExt
         /// </summary>
         private void ShowToolWindow(object sender, EventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             // Get the instance number 0 of this tool window. This window is single instance so this instance
             // is actually the only one.
             // The last flag is set to true so that if the tool window does not exists it will be created.
@@ -133,6 +162,8 @@ namespace NubiloSoft.CoverageExt
         /// </summary>
         private void ProjectContextMenuItem_BeforeQueryStatus(object sender, EventArgs e)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             OleMenuCommand menuCommand = sender as OleMenuCommand;
             if (menuCommand != null && dte != null)
             {
@@ -155,6 +186,20 @@ namespace NubiloSoft.CoverageExt
 
         private void ProjectContextMenuItemCallback(object sender, EventArgs e)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ContextMenuRunCoverage(sender, e, false);
+        }
+
+        private void RunCoverageMergeItemCallback(object sender, EventArgs e)
+        {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ContextMenuRunCoverage(sender, e, true);
+        }
+
+        private void ContextMenuRunCoverage(object sender, EventArgs e, bool merge)
+        {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             var dte = this.dte.DTE;
             OutputWindow outputWindow = null;
             try
@@ -177,12 +222,12 @@ namespace NubiloSoft.CoverageExt
                             {
                                 var solutionConfiguration = dte.Solution.Properties.Item("ActiveConfig").Value.ToString();
                                 var projectBuilder = new ProjectBuilder(dte, outputWindow, project.UniqueName, solutionConfiguration,
-                                    () => RunCoverage(dte, outputWindow, vcproj));
+                                    () => RunCoverage(dte, outputWindow, vcproj, merge));
                                 projectBuilder.Build();
                             }
                             else
                             {
-                                RunCoverage(dte, outputWindow, vcproj);
+                                RunCoverage(dte, outputWindow, vcproj, merge);
                             }
                         }
                     }
@@ -197,8 +242,9 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private void RunCoverage( EnvDTE.DTE dte, OutputWindow outputWindow, VCProject vcproj )
+        private void RunCoverage( EnvDTE.DTE dte, OutputWindow outputWindow, VCProject vcproj, bool merge )
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 IVCCollection configs = (IVCCollection)vcproj.Configurations;
@@ -259,7 +305,8 @@ namespace NubiloSoft.CoverageExt
                         System.IO.Path.GetDirectoryName(command),
                         System.IO.Path.GetFileName(command),
                         workingDirectory,
-                        arguments);
+                        arguments,
+                        merge);
                 }
             }
             catch (NotSupportedException ex)
@@ -280,18 +327,12 @@ namespace NubiloSoft.CoverageExt
 
         private void FileContextMenuItem_BeforeQueryStatus(object sender, EventArgs e)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             OleMenuCommand menuCommand = sender as OleMenuCommand;
             if (menuCommand != null && dte != null)
             {
-                menuCommand.Visible = false;  // default to not visible
-                var activeDocument = dte.ActiveDocument;
-                var fullName = activeDocument.FullName;
-
-                if (fullName.EndsWith(".h") || fullName.EndsWith(".cpp"))
-                {
-                    menuCommand.Visible = true;
-                }
-
+                menuCommand.Visible = dte.ActiveSolutionProjects != null;
                 menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
             }
         }
@@ -303,6 +344,45 @@ namespace NubiloSoft.CoverageExt
             {
                 Settings.Instance.ToggleShowCodeCoverage();
                 menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
+            }
+        }
+
+        private void HaveCoverage_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
+            OleMenuCommand menuCommand = sender as OleMenuCommand;
+            if (menuCommand != null && dte != null)
+            {
+                // Enable button only if exists
+                var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
+                menuCommand.Enabled = CoverageExecution.HaveCoverageReport(solutionFolder);
+            }
+        }
+        
+
+        /// <summary>
+        /// Remove current code coverage files.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void CoverageCleanItemCallback(object sender, EventArgs e)
+        {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
+            OleMenuCommand menuCommand = sender as OleMenuCommand;
+            if (menuCommand != null)
+            {
+                var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
+                
+                // Clean data
+                ReportManagerSingleton.Instance(dte).ResetData();
+                
+                // Remove files
+                CoverageExecution.CleanCoverageFrom(solutionFolder);
+
+                // Refresh GUI
+                Settings.Instance.TriggerCleanNeeded();
             }
         }
     }

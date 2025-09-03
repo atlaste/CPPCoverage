@@ -1,5 +1,8 @@
 ﻿using EnvDTE;
 using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
+using System.Windows.Forms;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -7,6 +10,7 @@ namespace NubiloSoft.CoverageExt
     {
         public OutputWindow(DTE dte)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 lock (windowLock)
@@ -42,6 +46,7 @@ namespace NubiloSoft.CoverageExt
 
         public void Clear()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (window != null)
             {
                 lock (windowLock)
@@ -59,8 +64,18 @@ namespace NubiloSoft.CoverageExt
                 string message = (par.Length != 0) ? string.Format(format, par) : format;
                 lock (windowLock)
                 {
-                    window.OutputString(message + "\r\n");
+                    _ = WriteLineAsync(message);
                 }
+            }
+        }
+
+        private async System.Threading.Tasks.Task WriteLineAsync(string message) 
+        {
+            await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            lock (windowLock)
+            {
+                window.OutputString(message + "\r\n");
             }
         }
 

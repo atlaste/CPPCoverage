@@ -40,6 +40,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// <param name="textView">The <see cref="IWpfTextView"/> upon which the adornment should be placed</param>
         public void TextViewCreated(IWpfTextView textView)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+
             DTE dte = (DTE)ServiceProvider.GetService(typeof(DTE));
 
             // Store this thing somewhere so our GC doesn't incidentally destroy it.

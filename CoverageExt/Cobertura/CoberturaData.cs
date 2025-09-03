@@ -5,53 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using NubiloSoft.CoverageExt.Data;
+using NubiloSoft.CoverageExt.Native;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
-    public class CoberturaData : ICoverageData
+    public class CoberturaData : NativeData
     {
         private string source = null;
-        private Dictionary<string, BitVector> lookup = new Dictionary<string, BitVector>();
-
-        public Tuple<BitVector, ProfileVector> GetData(string filename)
-        {
-            filename = filename.Replace('/', '\\').ToLower();
-            int idx = filename.IndexOf('\\');
-
-            BitVector result = null;
-            if (idx >= 0 && filename.Substring(0, idx) == source)
-            {
-                string file = filename.Substring(idx);
-                lookup.TryGetValue(file, out result);
-            }
-            return new Tuple<BitVector, ProfileVector>(result, emptyVector);
-        }
-
-        private static ProfileVector emptyVector = new ProfileVector(0);
-
-        public DateTime FileDate { get; set; }
-
-        public IEnumerable<Tuple<string, int, int>> Overview()
-        {
-            foreach (var kv in lookup)
-            {
-                int covered = 0 ;
-                int uncovered = 0;
-                foreach (var item in kv.Value.Enumerate())
-                {
-                    if (item.Value)
-                    {
-                        ++covered;
-                    }
-                    else
-                    {
-                        ++uncovered;
-                    }
-                }
-
-                yield return new Tuple<string, int, int>(kv.Key, covered, uncovered);
-            }
-        }
 
         private void PostProcess(string filename)
         {
@@ -65,18 +25,18 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 file = file.Replace('/', '\\').ToLower();
                 if (!file.StartsWith("\\")) { file = basefolder + file; }
 
-                HandlePragmas.Update(file, item.Value);
+                HandlePragmas.Update(file, item.Value.vector);
             }
         }
 
-        public CoberturaData(string filename)
+        public new void Parsing(string filename, string solutionDir)
         {
             // Start initializing the data
             source = null;
-            lookup = new Dictionary<string, BitVector>();
+            lookup = new Dictionary<string, FileCoverageData>();
 
             // Current vector
-            BitVector current = null;
+            FileCoverageData current = null;
 
             // Get file date (for modified checks)
             FileDate = new System.IO.FileInfo(filename).LastWriteTimeUtc;
@@ -122,7 +82,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
                                             if (!lookup.TryGetValue(file.ToLower(), out current))
                                             {
-                                                current = new BitVector();
+                                                current.vector = new BitVector();
                                                 lookup.Add(file.ToLower(), current);
                                             }
                                         }
@@ -140,11 +100,11 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
                                             if (hits == "0")
                                             {
-                                                current.Set(int.Parse(num) - 1, false);
+                                                current.vector.Set(int.Parse(num) - 1, false);
                                             }
                                             else
                                             {
-                                                current.Set(int.Parse(num) - 1, true);
+                                                current.vector.Set(int.Parse(num) - 1, true);
                                             }
                                         }
                                         break;
@@ -182,8 +142,8 @@ namespace NubiloSoft.CoverageExt.Cobertura
                                         if (state == State.Class)
                                         {
                                             state = State.Classes;
-                                            current.Finish();
-                                            current = null;
+                                            current.vector.Finish();
+                                            current.vector = null;
                                         }
                                         break;
 

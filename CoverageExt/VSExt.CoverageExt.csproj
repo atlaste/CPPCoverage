@@ -51,7 +51,7 @@
     <AssemblyName>CoverageExt</AssemblyName>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
-    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -278,11 +278,11 @@
     <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
     </Reference>
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="WindowsBase" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
     <Reference Include="System.Xaml" />
   </ItemGroup>
   <ItemGroup>
@@ -313,6 +313,8 @@
     <Compile Include="GeneralOptionPageGrid.cs" />
     <Compile Include="Native\NativeData.cs" />
     <Compile Include="Native\NativeReportManager.cs" />
+    <Compile Include="Native\NativeV2Data.cs" />
+    <Compile Include="Native\NativeV2ReportManager.cs" />
     <Compile Include="ProjectBuilder.cs" />
     <Compile Include="Report\CoverageReport.xaml.cs">
       <DependentUpon>CoverageReport.xaml</DependentUpon>
@@ -341,6 +343,7 @@
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

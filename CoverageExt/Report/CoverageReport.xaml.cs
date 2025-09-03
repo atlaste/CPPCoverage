@@ -145,8 +145,8 @@ namespace NubiloSoft.CoverageExt.Report
                         {
                             Filename = item.Item1,
                             Name = null,
-                            Count = item.Item2,
-                            Total = item.Item2 + item.Item3
+                            Count = (int)item.Item2.lineCoveredFile,
+                            Total = (int)item.Item2.lineOfCodeFile
                         });
                 }
             }
@@ -198,6 +198,7 @@ namespace NubiloSoft.CoverageExt.Report
 
         private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             if (sender != null)
             {
                 DataGrid grid = sender as DataGrid;

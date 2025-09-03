@@ -5,6 +5,14 @@ using System.Windows.Media;
 
 namespace NubiloSoft.CoverageExt
 {
+    public enum CoverageFormat
+    {
+        Native,
+        NativeV2,
+        //Cobertura,
+        //Clover
+    }
+
     public class Settings
     {
         private static readonly Settings instance = new Settings();
@@ -32,6 +40,16 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
+
+        public event Action CleanNeeded;
+        public void TriggerCleanNeeded()
+        {
+            if (CleanNeeded != null)
+            {
+                CleanNeeded();
+            }
+        }
+
         public event EventHandler OnSettingsChanged;
         public void TriggerSettingsChanged()
         {
@@ -51,11 +69,18 @@ namespace NubiloSoft.CoverageExt
         #endregion
 
         #region general properties
-        private bool useNativeCoverageSupport = true;
-        public bool UseNativeCoverageSupport
+        private CoverageFormat format = CoverageFormat.NativeV2;
+        public CoverageFormat Format
         {
-            get { return useNativeCoverageSupport; }
-            set => SetField(ref useNativeCoverageSupport, value);
+            get { return format; }
+            set => SetField(ref format, value);
+        }
+
+        private bool useOpenCppCoverageRunner = false;
+        public bool UseOpenCppCoverageRunner
+        {
+            get => this.useOpenCppCoverageRunner;
+            set => SetField(ref useOpenCppCoverageRunner, value);
         }
 
         private bool showCodeCoverage = false;
@@ -73,7 +98,7 @@ namespace NubiloSoft.CoverageExt
         }
         #endregion
 
-        #region color definitions
+        #region Bright color definitions
         private Color uncoveredBrushColor;
         public Color UncoveredBrushColor
         {
@@ -100,6 +125,36 @@ namespace NubiloSoft.CoverageExt
         {
             get => this.coveredPenColor;
             set => SetField(ref coveredPenColor, value);
+        }
+        #endregion
+
+        #region Dark color definitions
+        private Color uncoveredDarkBrushColor;
+        public Color UncoveredDarkBrushColor
+        {
+            get => this.uncoveredDarkBrushColor;
+            set => SetField(ref uncoveredDarkBrushColor, value);
+        }
+
+        private Color uncoveredDarkPenColor = Color.FromArgb(0xFF, 0x30, 0x00, 0x00);
+        public Color UncoveredDarkPenColor
+        {
+            get => this.uncoveredDarkPenColor;
+            set => SetField(ref uncoveredDarkPenColor, value);
+        }
+
+        private Color coveredDarkBrushColor;
+        public Color CoveredDarkBrushColor
+        {
+            get => this.coveredDarkBrushColor;
+            set => SetField(ref coveredDarkBrushColor, value);
+        }
+
+        private Color coveredDarkPenColor = Color.FromArgb(0xFF, 0x00, 0x30, 0x00);
+        public Color CoveredDarkPenColor
+        {
+            get => this.coveredDarkPenColor;
+            set => SetField(ref coveredDarkPenColor, value);
         }
         #endregion
 
