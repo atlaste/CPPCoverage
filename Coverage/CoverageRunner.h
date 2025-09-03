@@ -658,8 +658,8 @@ struct CoverageRunner
 									auto numberBytes = threadContextInfo.Rcx;
 									auto pointer = threadContextInfo.Rdx;
 #else
-									auto numberBytes = threadContextInfo.Eax;
-									auto pointer = threadContextInfo.Ecx;
+									auto numberBytes = threadContextInfo.Ecx;
+									auto pointer = threadContextInfo.Eax;
 #endif
 
 									auto data = new char[numberBytes + 1];
