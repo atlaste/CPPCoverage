@@ -78,13 +78,13 @@ namespace NubiloSoft.CoverageExt
         [DisplayName("Uncovered Brush")]
         [Description("Uncovered Brush")]
         [TypeConverter(typeof(CustomColorConverter))]
-        public Color UncoveredDarkBrush { get; set; } = Color.FromArgb(0x00, 0x30, 0x05, 0x05);
+        public Color UncoveredDarkBrush { get; set; } = Color.FromArgb(0xFF, 0x30, 0x05, 0x05);
 
         [Category("Dark Colors")]
         [DisplayName("Uncovered Pen")]
         [Description("Uncovered Pen")]
         [TypeConverter(typeof(CustomColorConverter))]
-        public Color UncoveredDarkPen { get; set; } = Color.FromArgb(0xFF, 0x30, 0x05, 0x05);
+        public Color UncoveredDarkPen { get; set; } = Color.FromArgb(0x00, 0x30, 0x05, 0x05);
 
         [Category("Dark Colors")]
         [DisplayName("Covered Brush")]

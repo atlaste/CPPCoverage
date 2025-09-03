@@ -40,6 +40,16 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
+
+        public event Action CleanNeeded;
+        public void TriggerCleanNeeded()
+        {
+            if (CleanNeeded != null)
+            {
+                CleanNeeded();
+            }
+        }
+
         public event EventHandler OnSettingsChanged;
         public void TriggerSettingsChanged()
         {

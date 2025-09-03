@@ -53,15 +53,23 @@
     <Buttons>
       <Button guid="guidCppCoverageMenuCmdSet" id="cmdCoverageReport" priority="0x0100" type="Button">
         <Parent guid="guidCppCoverageMenuCmdSet" id="CppCoverageMenuGroup" />
-        <Icon guid="guidImages" id="bmpPic2" />
+        <Icon guid="guidImages" id="icoReport" />
         <Strings>
           <ButtonText>Coverage report</ButtonText>
         </Strings>
       </Button>
 
+	  <Button guid="guidCppCoverageMenuCmdSet" id="cmdCoverageClean" priority="0x0100" type="Button">
+		<Parent guid="guidCppCoverageMenuCmdSet" id="CppCoverageMenuGroup" />
+		<Icon guid="guidImages" id="icoClean" />
+		<Strings>
+			<ButtonText>Clean current coverage</ButtonText>
+		</Strings>
+	  </Button>
+
       <Button guid="guidProjectSpecificMenuCmdSet" id="cmdCoverageGenerate" priority="0x0100" type="Button">
         <Parent guid="guidProjectSpecificMenuCmdSet" id="RunCoverageMenuGroup" />
-        <Icon guid="guidImages" id="bmpPic1" />
+        <Icon guid="guidImages" id="icoCov" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <!-- CommandFlag DefaultInvisible - Apparently not working correctly. Unsure why. -->
         <Strings>
@@ -71,7 +79,7 @@
       </Button>
 	  <Button guid="guidProjectSpecificMenuCmdSet" id="cmdCoverageGenerateMerge" priority="0x0100" type="Button">
 		<Parent guid="guidProjectSpecificMenuCmdSet" id="RunCoverageMenuGroup" />
-		<Icon guid="guidImages" id="bmpPic1" />
+		<Icon guid="guidImages" id="icoMerge" />
 		<CommandFlag>DynamicVisibility</CommandFlag>
 		<!-- CommandFlag DefaultInvisible - Apparently not working correctly. Unsure why. -->
 		<Strings>
@@ -99,7 +107,7 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used 
             inside a button definition. An important aspect of this declaration is that the element id 
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Images\CoverageIcons.png" usedList="bmpPic1,bmpPic2"/>
+      <Bitmap guid="guidImages" href="Images\CoverageIcons.png" usedList="bmpPic1,icoReport,icoCov,icoMerge,icoClean"/>
     </Bitmaps>
 
 	<Menus>
@@ -131,11 +139,15 @@
 	  <IDSymbol name ="CppCoverageMenuGroup"    value="0x1022" />
 	  <IDSymbol name ="cmdCoverageShow"         value="0x0104" />
 	  <IDSymbol name ="cmdCoverageReport"       value="0x0100" />
+	  <IDSymbol name ="cmdCoverageClean"        value="0x0106" />
     </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{297f4203-5709-4993-bf1d-1d63aa74c564}" >
-      <IDSymbol name="bmpPic1" value="1" />
-      <IDSymbol name="bmpPic2" value="2" />
+      <IDSymbol name="bmpPic1"   value="1" />
+      <IDSymbol name="icoReport" value="2" />
+	  <IDSymbol name="icoCov"    value="3" />
+	  <IDSymbol name="icoMerge"  value="4" />
+	  <IDSymbol name="icoClean"  value="5" />
     </GuidSymbol>
   </Symbols>
 

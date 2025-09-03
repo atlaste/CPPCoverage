@@ -403,7 +403,7 @@ struct CoverageRunner
 		return result;
 	}
 
-	void Start()
+	bool Start()
 	{
 		SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_LOAD_ANYTHING);
 
@@ -490,6 +490,9 @@ struct CoverageRunner
 		bool entryBreakpoint = true;
 		bool initializedDbgInfo = false;
 
+		// Check if all process works
+		bool executionSuccess = true;
+
 		std::unordered_map<DWORD, std::unique_ptr<ProcessInfo>> processMap;
 
 		while (continueDebugging)
@@ -558,6 +561,9 @@ struct CoverageRunner
 					{
 						std::cout << "Process exited with code: " << debugEvent.u.ExitProcess.dwExitCode << "." << std::endl;
 					}
+
+					// Success application must return 0
+					executionSuccess &= (debugEvent.u.ExitProcess.dwExitCode == 0);
 
 					processMap.erase(debugEvent.dwProcessId);
 					continueDebugging = processMap.empty() ? false : true;
@@ -981,5 +987,7 @@ struct CoverageRunner
 		{
 			std::cout << "done." << std::endl;
 		}
+
+		return executionSuccess;
 	}
 };

@@ -1,3 +1,4 @@
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Utilities.Internal;
 using System;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DTE = EnvDTE.DTE;
+using System.Windows.Forms;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -54,12 +56,18 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private (string, string) CoverageReportPaths( string solutionFolder )
+        static public (string, string) CoverageReportPaths( string solutionFolder )
         {
             string ext = !Settings.Instance.UseOpenCppCoverageRunner ? ".cov" : ".xml";
             string resPathBase = Path.Combine(solutionFolder, "CodeCoverage" + ext);
             string tmpPathBase = Path.Combine(solutionFolder, "CodeCoverage.tmp" + ext);
             return (resPathBase, tmpPathBase);
+        }
+
+        static public bool HaveCoverageReport(string solutionFolder)
+        {
+            (string resultFile, string tempFile) = CoverageExecution.CoverageReportPaths(solutionFolder);
+            return System.IO.File.Exists(resultFile);
         }
 
         private string CoverageExePath( string platform )
@@ -118,21 +126,21 @@ namespace NubiloSoft.CoverageExt
                 string file = pf + fold + "vstest.console.exe";
                 if (File.Exists(file))
                 {
-                    _ = this.output.WriteLineAsync("Found vstest console app.");
+                    output.WriteLine("Found vstest console app.");
                     return file;
                 }
             }
 
             pf = ProgramFilesX64Path.TrimEnd('\\');
-            _ = this.output.WriteLineAsync(pf);
+            output.WriteLine(pf);
 
             foreach (var fold in folders)
             {
                 string file = pf + fold + "vstest.console.exe";
-                _ = this.output.WriteLineAsync(file);
+                output.WriteLine(file);
                 if (File.Exists(file))
                 {
-                    _ = this.output.WriteLineAsync("Found vstest console app.");
+                    output.WriteLine("Found vstest console app.");
                     return file;
                 }
             }
@@ -219,6 +227,20 @@ namespace NubiloSoft.CoverageExt
             return argumentBuilder.ToString();
         }
 
+        static public void CleanCoverageFrom(string solutionFolder)
+        {
+            // Delete old coverage file
+            (string resultFile, string tempFile) = CoverageReportPaths(solutionFolder);
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+            if (File.Exists(resultFile))
+            {
+                File.Delete(resultFile);
+            }
+        }
+
         private void StartImpl(string solutionFolder, string platform, string dllFolder, string dllFilename, string workingDirectory, string commandline, bool merge)
         {
             try
@@ -234,14 +256,14 @@ namespace NubiloSoft.CoverageExt
                 Process process = new Process();
                 process.StartInfo.FileName = CoverageExePath(platform);
 
+                string filename = Path.GetFileName(process.StartInfo.FileName);
                 if (!File.Exists(process.StartInfo.FileName))
                 {
-                    string filename = Path.GetFileName(process.StartInfo.FileName);
                     throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                 }
 
                 string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile, merge ? resultFile: String.Empty);
-                _ = this.output.WriteLineAsync("Execute coverage: {0}", arguments);
+                output.WriteLine("Execute coverage: {0}", arguments);
 
                 process.StartInfo.WorkingDirectory = !Settings.Instance.UseOpenCppCoverageRunner ? dllFolder : Path.GetDirectoryName(tempFile);
                 process.StartInfo.Arguments = arguments;
@@ -270,6 +292,20 @@ namespace NubiloSoft.CoverageExt
                     process.Kill();
                     throw new Exception("Creating code coverage timed out (more than 15min).");
                 }
+                else if(process.ExitCode != 0)
+                {
+                    string message = "";
+                    switch (process.ExitCode)
+                    {
+                        case 4:
+                            message = String.Format("Coverage may failed.\n\r{0} is not finished with rc=0.", filename);
+                        break;
+                        default:
+                            message = String.Format("Coverage application returns code {0}", process.ExitCode);
+                        break;
+                    }
+                    MessageBox.Show(message, "Coverage Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
 
                 string consoleOutput = tb.ToString();
 
@@ -297,12 +333,12 @@ namespace NubiloSoft.CoverageExt
                 }
                 else
                 {
-                    _ = output.WriteLineAsync("No coverage report generated. Cannot continue.");
+                    output.WriteLine("No coverage report generated. Cannot continue.");
                 }
             }
             catch (Exception ex)
             {
-                _ = output.WriteLineAsync("Uncaught error during coverage execution: {0}", ex.Message);
+                output.WriteLine("Uncaught error during coverage execution: {0}", ex.Message);
             }
             Data.ReportManagerSingleton.Instance(dte).ResetData();
             Settings.Instance.TriggerRedraw();
@@ -317,7 +353,7 @@ namespace NubiloSoft.CoverageExt
                 string s = e.Data;
 
                 tb.AppendLine(s);
-                _ = output.WriteLineAsync(s);
+                output.WriteLine(s);
 
                 lastEvent = DateTime.UtcNow;
             }

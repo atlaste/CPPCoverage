@@ -1,6 +1,8 @@
 ﻿using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
+using System.Windows.Forms;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -44,7 +46,7 @@ namespace NubiloSoft.CoverageExt
 
         public void Clear()
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (window != null)
             {
                 lock (windowLock)
@@ -57,35 +59,30 @@ namespace NubiloSoft.CoverageExt
 
         public void WriteLine(string format, params object[] par)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
             if (window != null)
             {
                 string message = (par.Length != 0) ? string.Format(format, par) : format;
                 lock (windowLock)
                 {
-                    window.OutputString(message + "\r\n");
+                    _ = WriteLineAsync(message);
                 }
             }
         }
 
-        public async System.Threading.Tasks.Task WriteLineAsync(string format, params object[] par) 
+        private async System.Threading.Tasks.Task WriteLineAsync(string message) 
         {
-            if (window != null)
-            {
-                string message = (par.Length != 0) ? string.Format(format, par) : format;
-                await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                lock (windowLock)
-                {
-                    window.OutputString(message + "\r\n");
-                }
+            lock (windowLock)
+            {
+                window.OutputString(message + "\r\n");
             }
         }
 
-        public async System.Threading.Tasks.Task WriteDebugLineAsync(string format, params object[] par)
+        public void WriteDebugLine(string format, params object[] par)
         {
 #if DEBUG
-            await WriteLineAsync(format, par);
+            WriteLine(format, par);
 #endif
         }
     }

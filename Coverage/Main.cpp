@@ -29,6 +29,7 @@ void ShowHelp()
 	std::cout << "  1:                  Executable missing" << std::endl;
 	std::cout << "  2:                  Coverage failure" << std::endl;
 	std::cout << "  3:                  Merge failure" << std::endl;
+    std::cout << "  4:                  Application return error code" << std::endl;
     std::cout << "Example:" << std::endl;
     std::cout << "  coverage.exe -- myProgram.exe -param 1" << std::endl;
     std::cout << "    Run coverage on myProgram.exe with argument -param 1" << std::endl;
@@ -254,7 +255,10 @@ int main(int argc, const char** argv)
         {
             // Run
             CoverageRunner debug(opts);
-            debug.Start();
+            if (!debug.Start())
+            {
+                return 4;
+            }
         }
     }
     catch(const std::exception& e)

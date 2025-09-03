@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.Text.Formatting;
 using NubiloSoft.CoverageExt.Data;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Drawing.Drawing2D;
 using System.Drawing.Printing;
 using System.IO;
@@ -64,6 +65,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 Settings.Instance.OnShowCodeCoveragePropertyChanged += Instance_OnShowCodeCoveragePropertyChanged;
                 Settings.Instance.OnSettingsChanged += Instance_OnSettingsChanged;
                 Settings.Instance.RedrawNeeded += Instance_OnRedrawNeeded;
+                Settings.Instance.CleanNeeded += Instance_OnClean;
                 VSColorTheme.ThemeChanged += HandleThemeChange; // When VS Theme changed
 
                 // Listen to any event that changes the layout (text changes, scrolling, etc)
@@ -74,6 +76,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 Settings.Instance.OnShowCodeCoveragePropertyChanged -= Instance_OnShowCodeCoveragePropertyChanged;
                 Settings.Instance.OnSettingsChanged -= Instance_OnSettingsChanged;
                 Settings.Instance.RedrawNeeded -= Instance_OnRedrawNeeded;
+                Settings.Instance.CleanNeeded -= Instance_OnClean;
                 view.LayoutChanged -= OnLayoutChanged;
                 VSColorTheme.ThemeChanged -= HandleThemeChange; // When VS Theme changed
             }
@@ -92,7 +95,28 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void Instance_OnRedrawNeeded()
         {
-            Redraw();
+            ThreadHelper.JoinableTaskFactory.Run(async delegate ()
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                Redraw();
+            });
+        }
+        /// <summary>
+        /// Acts on the event of a clean
+        /// </summary>
+        private void Instance_OnClean()
+        {
+            ThreadHelper.JoinableTaskFactory.Run( async delegate ()
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                
+                currentProfile = null;
+                activeReport   = null;
+                currentReportDate = DateTime.MinValue;
+                layer.RemoveAllAdornments();
+
+                Redraw();
+            });
         }
 
         public void Close()
@@ -118,7 +142,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            this.outputWindow.WriteLine("Instance_OnShowCodeCoveragePropertyChanged");
+            this.outputWindow.WriteDebugLine("Instance_OnShowCodeCoveragePropertyChanged");
             Redraw();
         }
 
@@ -131,7 +155,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            this.outputWindow.WriteLine("Instance_OnSettingsChanged");
+            this.outputWindow.WriteDebugLine("Instance_OnSettingsChanged");
             InitializeColors();
             Redraw();
         }
@@ -215,14 +239,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         }
 
         /// <summary>
-        /// Does a full redraw of the addornment layer
+        /// Does a full redraw of the adornment layer
         /// </summary>
         private void Redraw()
         {
-            ThreadHelper.JoinableTaskFactory.Run(async delegate {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                UpdateLayer(view.TextViewLines);
-            });
+            UpdateLayer(view.TextViewLines);
         }
 
         /// <summary>
@@ -230,8 +251,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private bool InitCurrent()
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-
             string activeFilename = GetActiveFilename();
             if ( activeFilename == null ) return false;
 
@@ -252,11 +271,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             activeReport = coverageData.GetData(activeFilename);
             if (activeReport == null)
             {
-                this.outputWindow.WriteLine("No report found for this file: {0}", activeFilename);
+                outputWindow.WriteDebugLine("No report found for this file: {0}", activeFilename);
                 return false;
             }
             else
-                this.outputWindow.WriteLine("Report found for this file: {0}", activeFilename);
+                outputWindow.WriteDebugLine("Report found for this file: {0}", activeFilename);
 
             return true;
         }
@@ -266,38 +285,34 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-
             UpdateLayer(e.NewOrReformattedLines);
         }
 
         private void UpdateLayer(IList<ITextViewLine> lines)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-
             if (Settings.Instance.ShowCodeCoverage)
             {
-                if ( InitCurrent() )
+                if (activeReport != null && lines.Count == 0)
                 {
-                    if(lines.Count == 0)
-                    {
-                        Redraw();
-                    }
-                    else
+                    Redraw();
+                }
+                else
+                {
+                    if (InitCurrent())
                     {
                         foreach (ITextViewLine line in lines)
                         {
                             HighlightCoverage(line);
                         }
                     }
-                }
-                else
-                {
-                    currentProfile = null;
-                    activeReport = null;
-                    currentReportDate = DateTime.MinValue;
-                    layer.RemoveAllAdornments();
-                }
+                    else
+                    {
+                        currentProfile = null;
+                        activeReport = null;
+                        currentReportDate = DateTime.MinValue;
+                        layer.RemoveAllAdornments();
+                    }
+                }   
             }
             else
             {
