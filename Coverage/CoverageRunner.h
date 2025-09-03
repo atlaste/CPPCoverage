@@ -661,17 +661,18 @@ struct CoverageRunner
 									auto numberBytes = threadContextInfo.Ecx;
 									auto pointer = threadContextInfo.Eax;
 #endif
-
-									auto data = new char[numberBytes + 1];
-									SIZE_T numberBytesRead;
-									ReadProcessMemory(process->Handle, reinterpret_cast<LPVOID>(pointer), data, numberBytes, &numberBytesRead);
-									data[numberBytesRead] = 0;
-
-									if (!quiet)
 									{
-										std::cout << "Child process notification: " << data << std::endl;
+										auto data = std::make_unique<char[]>(numberBytes + 1);
+										SIZE_T numberBytesRead;
+										ReadProcessMemory(process->Handle, reinterpret_cast<LPVOID>(pointer), data.get(), numberBytes, &numberBytesRead);
+										data[numberBytesRead] = 0;
 
-										notifications.Handle(data, numberBytesRead);
+										if (!quiet)
+										{
+											std::cout << "Child process notification: " << data << std::endl;
+
+											notifications.Handle(data.get(), numberBytesRead);
+										}
 									}
 
 									// Reset the first breakpoint, set the second breakpoint
