@@ -24,7 +24,10 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
             CoverageState IFileCoverageData.state(uint idLine)
             {
-                return vector.IsFound((int)idLine) ? CoverageState.Covered : CoverageState.Uncovered;
+                if (!vector.IsFound((int)idLine)) {
+                    return CoverageState.Irrelevant;
+                }
+                return vector.IsSet((int)idLine) ? CoverageState.Covered : CoverageState.Uncovered;
             }
 
             UInt32 IFileCoverageData.nbLines()
