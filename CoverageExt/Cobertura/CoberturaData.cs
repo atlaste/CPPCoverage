@@ -12,9 +12,9 @@ namespace NubiloSoft.CoverageExt.Cobertura
         {
             public BitVector vector;
 
-            public FileCoverageData(BitVector vector)
+            public FileCoverageData()
             {
-                this.vector = vector;
+                this.vector = new BitVector();
             }
 
             uint IFileCoverageData.count(uint idLine)
@@ -52,9 +52,11 @@ namespace NubiloSoft.CoverageExt.Cobertura
         public IFileCoverageData GetData(string filename)
         {
             filename = filename.Replace('/', '\\').ToLower();
+            int idx = filename.IndexOf('\\');
+            string filenameWithoutDriveLetter = (idx >= 0) ? filename.Substring(idx) : filename;
 
             FileCoverageData result = null;
-            lookup.TryGetValue(filename, out result);
+            lookup.TryGetValue(filenameWithoutDriveLetter, out result);
             return result;
         }
 
@@ -150,7 +152,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
                                             if (!lookup.TryGetValue(file.ToLower(), out current))
                                             {
-                                                current.vector = new BitVector();
+                                                current = new FileCoverageData();
                                                 lookup.Add(file.ToLower(), current);
                                             }
                                         }
@@ -211,7 +213,6 @@ namespace NubiloSoft.CoverageExt.Cobertura
                                         {
                                             state = State.Classes;
                                             current.vector.Finish();
-                                            current.vector = null;
                                         }
                                         break;
 
