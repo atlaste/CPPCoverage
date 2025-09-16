@@ -113,6 +113,8 @@ namespace NubiloSoft.CoverageExt
 
             Settings.Instance.ShowCodeCoverage = ShowCodeCoverage;
             Settings.Instance.CompileBeforeRunning = CompileBeforeRunning;
+            Settings.Instance.Format = Format;
+            Settings.Instance.UseOpenCppCoverageRunner = OpenCppCoverage;
             Settings.Instance.UncoveredBrushColor   = convert(UncoveredBrush);
             Settings.Instance.UncoveredPenColor     = convert(UncoveredPen);
             Settings.Instance.CoveredBrushColor     = convert(CoveredBrush);
