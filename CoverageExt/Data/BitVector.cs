@@ -38,34 +38,31 @@ namespace NubiloSoft.CoverageExt.Data
             }
         }
 
-        public bool IsSet(int index)
+        private int GetValue(int index)
         {
             int byteIndex = index >> 2;
-            int bitIndex = (index & 0x3);
 
             if (byteIndex >= data.Length)
             {
-                return false;
+                return 0;
             }
-            else
-            {
-                return ((data[byteIndex] >> bitIndex) & 0x01) != 0;
-            }
+            return data[byteIndex];
+        }
+
+        public bool IsSet(int index)
+        {
+            int bitIndex = index & 0x3;
+            int value = GetValue(index);
+
+            return ((value >> bitIndex) & 0x01) != 0;
         }
 
         public bool IsFound(int index)
         {
-            int byteIndex = index >> 2;
-            int bitIndex = (index & 0x3);
+            int bitIndex = index & 0x3;
+            int value = GetValue(index);
 
-            if (byteIndex >= data.Length)
-            {
-                return false;
-            }
-            else
-            {
-                return ((data[byteIndex] >> bitIndex) & 0x10) != 0;
-            }
+            return ((value >> bitIndex) & 0x10) != 0;
         }
 
         public void Remove(int index)
