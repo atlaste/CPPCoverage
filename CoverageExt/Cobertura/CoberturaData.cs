@@ -1,17 +1,84 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 using NubiloSoft.CoverageExt.Data;
-using NubiloSoft.CoverageExt.Native;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
-    public class CoberturaData : NativeData
+    public class CoberturaData : ICoverageData
     {
+        public class FileCoverageData : IFileCoverageData
+        {
+            public BitVector vector;
+            public ProfileVector profile;
+
+            public FileCoverageData(BitVector vector, ProfileVector profile)
+            {
+                this.vector = vector;
+                this.profile = profile;
+            }
+
+            uint IFileCoverageData.count(uint idLine)
+            {
+                return 0;
+            }
+
+            CoverageState IFileCoverageData.state(uint idLine)
+            {
+                return vector.IsFound((int)idLine) ? CoverageState.Covered : CoverageState.Uncovered;
+            }
+
+            UInt32 IFileCoverageData.nbLines()
+            {
+                return (UInt32)vector.Count;
+            }
+
+            ProfileVector IFileCoverageData.profile()
+            {
+                return profile;
+            }
+
+            public bool hasCounting()
+            {
+                return false;
+            }
+        }
+
+        private Dictionary<string, FileCoverageData> lookup = new Dictionary<string, FileCoverageData>();
         private string source = null;
+
+        public IFileCoverageData GetData(string filename)
+        {
+            filename = filename.Replace('/', '\\').ToLower();
+
+            FileCoverageData result = null;
+            lookup.TryGetValue(filename, out result);
+            return result;
+        }
+
+        public DateTime FileDate { get; set; }
+
+        public UInt32 nbEntries() => (UInt32)lookup.Count();
+
+        public IEnumerable<Tuple<string, FileCoverageStats>> Overview()
+        {
+            foreach (var kv in lookup)
+            {
+                var stats = new FileCoverageStats();
+                foreach (var item in kv.Value.vector.Enumerate())
+                {
+                    if (item.Value)
+                    {
+                        ++stats.lineCoveredFile;
+                    }
+                }
+                stats.lineOfCodeFile = (uint)kv.Value.vector.Count;
+                stats.lineInsideFile = stats.lineOfCodeFile;
+
+                yield return new Tuple<string, FileCoverageStats>(kv.Key, stats);
+            }
+        }
 
         private void PostProcess(string filename)
         {
@@ -29,7 +96,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             }
         }
 
-        public new void Parsing(string filename, string solutionDir)
+        public void Parsing(string filename, string solutionDir)
         {
             // Start initializing the data
             source = null;

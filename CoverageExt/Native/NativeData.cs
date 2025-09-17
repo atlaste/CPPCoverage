@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-using Microsoft.VisualStudio.Utilities.Internal;
 using NubiloSoft.CoverageExt.Data;
-using static NubiloSoft.CoverageExt.Native.NativeV2Data;
 
 namespace NubiloSoft.CoverageExt.Native
 {
@@ -35,20 +30,21 @@ namespace NubiloSoft.CoverageExt.Native
 
             UInt32 IFileCoverageData.nbLines()
             {
-                return (UInt32)vector.Count; 
+                return (UInt32)vector.Count;
             }
 
             ProfileVector IFileCoverageData.profile()
             {
                 return profile;
             }
+
             public bool hasCounting()
             {
                 return false;
             }
         }
 
-        protected Dictionary<string, FileCoverageData> lookup = new Dictionary<string, FileCoverageData>();
+        private Dictionary<string, FileCoverageData> lookup = new Dictionary<string, FileCoverageData>();
 
         public IFileCoverageData GetData(string filename)
         {
@@ -77,7 +73,7 @@ namespace NubiloSoft.CoverageExt.Native
                 }
                 stats.lineOfCodeFile = (uint)kv.Value.vector.Count;
                 stats.lineInsideFile = stats.lineOfCodeFile;
-                
+
                 yield return new Tuple<string, FileCoverageStats>(kv.Key, stats);
             }
         }
