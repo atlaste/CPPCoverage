@@ -11,12 +11,10 @@ namespace NubiloSoft.CoverageExt.Cobertura
         public class FileCoverageData : IFileCoverageData
         {
             public BitVector vector;
-            public ProfileVector profile;
 
-            public FileCoverageData(BitVector vector, ProfileVector profile)
+            public FileCoverageData(BitVector vector)
             {
                 this.vector = vector;
-                this.profile = profile;
             }
 
             uint IFileCoverageData.count(uint idLine)
@@ -36,7 +34,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
             ProfileVector IFileCoverageData.profile()
             {
-                return profile;
+                return null;
             }
 
             public bool hasCounting()
