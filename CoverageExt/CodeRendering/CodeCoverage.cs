@@ -12,6 +12,7 @@ using System.Drawing.Printing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Markup.Localizer;
 using System.Windows.Media;
 
 namespace NubiloSoft.CoverageExt.CodeRendering
@@ -30,6 +31,10 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal SolidColorBrush coveredPenBrush;
         internal SolidColorBrush classicPenBrush;
         internal Pen coveredPen;
+
+        internal SolidColorBrush partialCoveredBrush;
+        internal SolidColorBrush partialCoveredPenBrush;
+        internal Pen partialCoveredPen;
 
         private EnvDTE.DTE dte;
         private OutputWindow outputWindow;
@@ -173,7 +178,9 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 colors = new[] { Settings.Instance.UncoveredBrushColor,
                                  Settings.Instance.UncoveredPenColor,
                                  Settings.Instance.CoveredBrushColor,
-                                 Settings.Instance.CoveredPenColor
+                                 Settings.Instance.CoveredPenColor,
+                                 Settings.Instance.PartialCoveredBrushColor,
+                                 Settings.Instance.PartialCoveredPenColor,
                 };
             }
             else
@@ -181,7 +188,9 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 colors = new[] { Settings.Instance.UncoveredDarkBrushColor,
                                  Settings.Instance.UncoveredDarkPenColor,
                                  Settings.Instance.CoveredDarkBrushColor,
-                                 Settings.Instance.CoveredDarkPenColor
+                                 Settings.Instance.CoveredDarkPenColor,
+                                 Settings.Instance.PartialCoveredDarkBrushColor,
+                                 Settings.Instance.PartialCoveredDarkPenColor
                 };
             }
 
@@ -213,6 +222,21 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 coveredPenBrush.Freeze();
                 coveredPen = new Pen(coveredPenBrush, 0.5);
                 coveredPen.Freeze();
+            }
+
+            // Color for partial covered code:
+            if (partialCoveredBrush?.Color != colors[4])
+            {
+                partialCoveredBrush = new SolidColorBrush(colors[4]);
+                partialCoveredBrush.Freeze();
+            }
+
+            if (partialCoveredPenBrush?.Color != colors[2])
+            {
+                partialCoveredPenBrush = new SolidColorBrush(colors[5]);
+                partialCoveredPenBrush.Freeze();
+                partialCoveredPen = new Pen(partialCoveredPenBrush, 0.5);
+                partialCoveredPen.Freeze();
             }
 
             var penMediaColor = VSColorTheme.GetThemedColor(EnvironmentColors.SystemWindowTextColorKey);
@@ -415,10 +439,19 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 {
                     var rectG = new RectangleGeometry(new Rect(g.Bounds.X, g.Bounds.Y, view.ViewportWidth, g.Bounds.Height));
 
-                    GeometryDrawing drawing = (covered == CoverageState.Covered) ?
-                        new GeometryDrawing(coveredBrush, coveredPen, rectG) :
-                        new GeometryDrawing(uncoveredBrush, uncoveredPen, rectG);
-
+                    GeometryDrawing drawing;
+                    switch(covered)
+                    {
+                        case CoverageState.Covered:
+                            drawing = new GeometryDrawing(coveredBrush, coveredPen, rectG);
+                            break;
+                        case CoverageState.Partially:
+                            drawing = new GeometryDrawing(partialCoveredBrush, partialCoveredPen, rectG);
+                            break;
+                        default:
+                            drawing = new GeometryDrawing(uncoveredBrush, uncoveredPen, rectG);
+                            break;
+                    }
                     drawing.Freeze();
 
                     DrawingImage drawingImage = new DrawingImage(drawing);
