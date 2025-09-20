@@ -58,7 +58,7 @@ namespace NubiloSoft.CoverageExt
 
         static public (string, string) CoverageReportPaths( string solutionFolder )
         {
-            string ext = !Settings.Instance.UseOpenCppCoverageRunner ? ".cov" : ".xml";
+            string ext = !Settings.Instance.UseOpenCppCoverageRunner && Settings.Instance.Format != CoverageFormat.Cobertura ? ".cov" : ".xml";
             string resPathBase = Path.Combine(solutionFolder, "CodeCoverage" + ext);
             string tmpPathBase = Path.Combine(solutionFolder, "CodeCoverage.tmp" + ext);
             return (resPathBase, tmpPathBase);
@@ -180,10 +180,13 @@ namespace NubiloSoft.CoverageExt
                 switch(Settings.Instance.Format)
                 {
                     default:
-                        argumentBuilder.Append(" native");
+                        argumentBuilder.Append("native");
                         break;
                     case CoverageFormat.NativeV2:
-                        argumentBuilder.Append(" nativeV2");
+                        argumentBuilder.Append("nativeV2");
+                        break;
+                    case CoverageFormat.Cobertura:
+                        argumentBuilder.Append("cobertura");
                         break;
                 }
             }
