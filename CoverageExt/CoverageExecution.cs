@@ -43,7 +43,9 @@ namespace NubiloSoft.CoverageExt
             // We want 1 thread to do this; never more.
             if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
-                
+                // Allocate Report before enter to thread
+                Data.ReportManagerSingleton.Instance(dte);
+
                 Thread t = new Thread(() => StartImpl(solutionFolder, platform, dllFolder, dllFilename, workingDirectory, commandline, merge))
                 {
                     IsBackground = true,
