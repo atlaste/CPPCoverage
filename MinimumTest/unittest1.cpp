@@ -2,6 +2,8 @@
 #include <SDKDDKVer.h>
 
 #include <iostream>
+#include <format>
+#include <vector>
 
 #include <Windows.h>
 
@@ -185,6 +187,71 @@ namespace MinimumTest
 			{
 				std::cout << "We do NOT have a debugger!" << std::endl;
 			}
+		}
+		
+		template<typename Type>
+		struct MyTemplate
+		{
+			Type add(Type a)
+			{
+				return a + 42;
+			}
+
+			Type remove(Type a)
+			{
+				return a - 42;
+			}
+		};
+		// Defined but never use
+		using MyTemplateDouble = MyTemplate<double>;
+
+		TEST_METHOD(TestTemplatePartial)
+		{
+			// Full used
+			MyTemplate<int> i;
+			Assert::AreEqual(52, i.add(10));
+			Assert::AreEqual(-32, i.remove(10));
+
+			// For this template: missing remove()
+			MyTemplate<float> f;
+			Assert::AreEqual(50.0f, f.add(8.0f));
+		}
+
+		TEST_METHOD(TestLoopCount)
+		{
+			const std::vector<int> a{ 1,2,3,4,5,6,7,8,9 };
+
+			std::cout << "My list: " << std::endl;
+			int count = 0;
+			for (const int& i : a)
+			{
+				std::cout << std::format("{0}", i) << std::endl;
+				count += i;
+			}
+			Assert::AreEqual(45, count);
+		}
+
+#define MACRO_TEST(condition)							\
+		if(condition) {									\
+			std::cout << "Is true" << std::endl;		\
+		} else {										\
+			std::cout << "Is False" << std::endl;		\
+		}
+
+#define MACRO_EXPECT_TEST(instruction)					\
+		try{											\
+			instruction;								\
+		} catch(...) {		   							\
+			std::cout << "Exception" << std::endl;		\
+		}
+
+		TEST_METHOD(TestMacroPartial)
+		{
+			int a = 5;
+			MACRO_EXPECT_TEST(a = a + 5);
+			Assert::AreEqual(10, a);
+
+			MACRO_TEST(a == 12);
 		}
 	};
 }

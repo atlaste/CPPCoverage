@@ -36,14 +36,13 @@ struct FileCoverageV2
 			{
 				code |= FileCoverageV2::maskIsCode;
 				_nbLinesCode += 1;
-
-			}
-			if (line.DebugCount != line.HitCount)
-			{
-				code |= FileCoverageV2::maskIsPartial;
-			}
+			}			
 			if (line.HitCount > 0)
 			{
+                if (line.DebugCount != line.HitCount)
+                {
+                    code |= FileCoverageV2::maskIsPartial;
+                }
 				_nbLinesCovered += 1;
 			}
 			code |= std::min<FileCoverageV2::LineArray::value_type>(line.HitCount, FileCoverageV2::maskCount);

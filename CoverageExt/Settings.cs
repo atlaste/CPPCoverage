@@ -126,6 +126,20 @@ namespace NubiloSoft.CoverageExt
             get => this.coveredPenColor;
             set => SetField(ref coveredPenColor, value);
         }
+
+        private Color partialCoveredBrushColor;
+        public Color PartialCoveredBrushColor
+        {
+            get => this.partialCoveredBrushColor;
+            set => SetField(ref partialCoveredBrushColor, value);
+        }
+
+        private Color partialCoveredPenColor = Color.FromArgb(0xD0, 0xBD, 0xFC, 0xBF);
+        public Color PartialCoveredPenColor
+        {
+            get => this.partialCoveredPenColor;
+            set => SetField(ref partialCoveredPenColor, value);
+        }
         #endregion
 
         #region Dark color definitions
@@ -155,6 +169,20 @@ namespace NubiloSoft.CoverageExt
         {
             get => this.coveredDarkPenColor;
             set => SetField(ref coveredDarkPenColor, value);
+        }
+
+        private Color partialCoveredDarkBrushColor;
+        public Color PartialCoveredDarkBrushColor
+        {
+            get => this.partialCoveredDarkBrushColor;
+            set => SetField(ref partialCoveredDarkBrushColor, value);
+        }
+
+        private Color partialCoveredDarkPenColor;
+        public Color PartialCoveredDarkPenColor
+        {
+            get => this.partialCoveredDarkPenColor;
+            set => SetField(ref partialCoveredDarkPenColor, value);
         }
         #endregion
 

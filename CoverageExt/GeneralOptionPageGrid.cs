@@ -74,6 +74,18 @@ namespace NubiloSoft.CoverageExt
         [TypeConverter(typeof(CustomColorConverter))]
         public Color CoveredPen { get; set; } = Color.FromArgb(0xD0, 0xBD, 0xFC, 0xBF);
 
+        [Category("Bright Colors")]
+        [DisplayName("Partial Covered Brush")]
+        [Description("Partial Covered Brush")]
+        [TypeConverter(typeof(CustomColorConverter))]
+        public Color PartialCoveredBrush { get; set; } = Color.FromArgb(0xFF, 0xF0, 0x9B, 0x59);
+
+        [Category("Bright Colors")]
+        [DisplayName("Partial Covered Pen")]
+        [Description("Partial Covered Pen")]
+        [TypeConverter(typeof(CustomColorConverter))]
+        public Color PartialCoveredPen { get; set; } = Color.FromArgb(0x00, 0xF0, 0x9B, 0x59);
+
         [Category("Dark Colors")]
         [DisplayName("Uncovered Brush")]
         [Description("Uncovered Brush")]
@@ -98,6 +110,18 @@ namespace NubiloSoft.CoverageExt
         [TypeConverter(typeof(CustomColorConverter))]
         public Color CoveredDarkPen { get; set; } = Color.FromArgb(0x00, 0x05, 0x30, 0x05);
 
+        [Category("Dark Colors")]
+        [DisplayName("Partial Covered Brush")]
+        [Description("Partial Covered Brush")]
+        [TypeConverter(typeof(CustomColorConverter))]
+        public Color PartialCoveredDarkBrush { get; set; } = Color.FromArgb(0xFF, 0x50, 0x3C, 0x05);
+
+        [Category("Dark Colors")]
+        [DisplayName("Partial Covered Pen")]
+        [Description("Partial Covered Pen")]
+        [TypeConverter(typeof(CustomColorConverter))]
+        public Color PartialCoveredDarkPen { get; set; } = Color.FromArgb(0x00, 0x50, 0x3C, 0x05);
+
         protected override void OnApply( PageApplyEventArgs e )
         {
             base.OnApply(e);
@@ -111,19 +135,25 @@ namespace NubiloSoft.CoverageExt
                 return System.Windows.Media.Color.FromArgb(input.A, input.R, input.G, input.B);
             };
 
-            Settings.Instance.ShowCodeCoverage = ShowCodeCoverage;
-            Settings.Instance.CompileBeforeRunning = CompileBeforeRunning;
-            Settings.Instance.Format = Format;
-            Settings.Instance.UseOpenCppCoverageRunner = OpenCppCoverage;
-            Settings.Instance.UncoveredBrushColor   = convert(UncoveredBrush);
-            Settings.Instance.UncoveredPenColor     = convert(UncoveredPen);
-            Settings.Instance.CoveredBrushColor     = convert(CoveredBrush);
-            Settings.Instance.CoveredPenColor       = convert(CoveredPen);
+            Settings.Instance.ShowCodeCoverage              = ShowCodeCoverage;
+            Settings.Instance.CompileBeforeRunning          = CompileBeforeRunning;
+            Settings.Instance.Format                        = Format;
+            Settings.Instance.UseOpenCppCoverageRunner      = OpenCppCoverage;
+            
+            Settings.Instance.UncoveredBrushColor           = convert(UncoveredBrush);
+            Settings.Instance.UncoveredPenColor             = convert(UncoveredPen);
+            Settings.Instance.CoveredBrushColor             = convert(CoveredBrush);
+            Settings.Instance.CoveredPenColor               = convert(CoveredPen);
+            Settings.Instance.PartialCoveredBrushColor      = convert(PartialCoveredBrush);
+            Settings.Instance.PartialCoveredPenColor        = convert(PartialCoveredPen);
 
-            Settings.Instance.UncoveredDarkBrushColor   = convert(UncoveredDarkBrush);
-            Settings.Instance.UncoveredDarkPenColor     = convert(UncoveredDarkPen);
-            Settings.Instance.CoveredDarkBrushColor     = convert(CoveredDarkBrush);
-            Settings.Instance.CoveredDarkPenColor       = convert(CoveredDarkPen);
+            Settings.Instance.UncoveredDarkBrushColor       = convert(UncoveredDarkBrush);
+            Settings.Instance.UncoveredDarkPenColor         = convert(UncoveredDarkPen);
+            Settings.Instance.CoveredDarkBrushColor         = convert(CoveredDarkBrush);
+            Settings.Instance.CoveredDarkPenColor           = convert(CoveredDarkPen);
+            Settings.Instance.PartialCoveredDarkBrushColor  = convert(PartialCoveredDarkBrush);
+            Settings.Instance.PartialCoveredDarkPenColor    = convert(PartialCoveredDarkPen);
+
             Settings.Instance.TriggerSettingsChanged();
         }
     }
