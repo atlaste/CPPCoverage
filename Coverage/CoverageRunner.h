@@ -279,7 +279,7 @@ struct CoverageRunner
 					IMAGEHLP_SYMBOL img;
 #endif
 
-					if (SymGetSymFromName(proc->Handle, "PassToCPPCoverage", &img))
+					if (SymGetSymFromName(proc->Handle, "PassToCPPCoverage", &img) && (coverageContext.filename == filename))
 					{
 						auto size = ReachabilityAnalysis::FirstInstructionSize(proc->Handle, img.Address);
 
