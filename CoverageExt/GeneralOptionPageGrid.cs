@@ -137,6 +137,9 @@ namespace NubiloSoft.CoverageExt
 
             Settings.Instance.ShowCodeCoverage              = ShowCodeCoverage;
             Settings.Instance.CompileBeforeRunning          = CompileBeforeRunning;
+            Settings.Instance.Format                        = Format;
+            Settings.Instance.UseOpenCppCoverageRunner      = OpenCppCoverage;
+            
             Settings.Instance.UncoveredBrushColor           = convert(UncoveredBrush);
             Settings.Instance.UncoveredPenColor             = convert(UncoveredPen);
             Settings.Instance.CoveredBrushColor             = convert(CoveredBrush);
@@ -150,6 +153,7 @@ namespace NubiloSoft.CoverageExt
             Settings.Instance.CoveredDarkPenColor           = convert(CoveredDarkPen);
             Settings.Instance.PartialCoveredDarkBrushColor  = convert(PartialCoveredDarkBrush);
             Settings.Instance.PartialCoveredDarkPenColor    = convert(PartialCoveredDarkPen);
+
             Settings.Instance.TriggerSettingsChanged();
         }
     }

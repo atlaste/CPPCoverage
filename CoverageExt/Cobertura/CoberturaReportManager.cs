@@ -1,9 +1,7 @@
 ﻿extern alias EnvDTE;
 using System;
 using System.IO;
-using EnvDTE;
 using NubiloSoft.CoverageExt.Data;
-using NubiloSoft.CoverageExt.Native;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
@@ -28,7 +26,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
         public bool IsValid(Settings instance)
         {
-            return instance.UseOpenCppCoverageRunner;
+            return instance.Format == CoverageFormat.Cobertura;
         }
 
         public ICoverageData UpdateData()

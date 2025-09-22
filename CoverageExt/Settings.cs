@@ -9,7 +9,7 @@ namespace NubiloSoft.CoverageExt
     {
         Native,
         NativeV2,
-        //Cobertura,
+        Cobertura,
         //Clover
     }
 

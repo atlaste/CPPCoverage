@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EnvDTE;
-using NubiloSoft.CoverageExt.Native;
+﻿using EnvDTE;
 
 namespace NubiloSoft.CoverageExt.Data
 {
@@ -29,11 +23,14 @@ namespace NubiloSoft.CoverageExt.Data
                             switch (Settings.Instance.Format)
                             {
                                 case CoverageFormat.Native:
-                                instance = new Native.NativeReportManager(dte);
-                                break;
+                                    instance = new Native.NativeReportManager(dte);
+                                    break;
                                 case CoverageFormat.NativeV2:
-                                instance = new Native.NativeV2ReportManager(dte);
-                                break;
+                                    instance = new Native.NativeV2ReportManager(dte);
+                                    break;
+                                case CoverageFormat.Cobertura:
+                                    instance = new Cobertura.CoberturaReportManager(dte);
+                                    break;
                             }
                         }
                         else
