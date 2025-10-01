@@ -97,48 +97,44 @@ struct RuntimeNotifications
 		{
 			return s;
 		}
-		else if (s[0] == '\\')
+
+		auto cp = RuntimeOptions::Instance().SolutionPath;
+		if (cp.empty()) { return s; }
+
+		while (s.size() > 3 && s.substr(s.size() - 3, 3) == "..\\")
 		{
-			auto cp = RuntimeOptions::Instance().CodePath;
-			if (cp.size() > 1 && cp[1] == ':')
+			if (cp[cp.size() - 1] == '\\')
 			{
-				return cp.substr(0, 2) + s;
+				cp = cp.substr(0, cp.size() - 1);
 			}
-			else
+			auto idx = cp.find_last_of('\\');
+			if (idx == std::string::npos)
 			{
 				return s;
 			}
+			else
+			{
+				cp = cp.substr(0, idx);
+				s = s.substr(0, s.size() - 3);
+			}
 		}
-		else
+
+		if (!cp.empty() && cp[cp.size() - 1] != '\\')
 		{
-			auto cp = RuntimeOptions::Instance().SourcePath();
-			if (cp.empty()) { return s; }
-
-			while (s.size() > 3 && s.substr(s.size() - 3, 3) == "..\\")
-			{
-				if (cp[cp.size() - 1] == '\\')
-				{
-					cp = cp.substr(0, cp.size() - 1);
-				}
-				auto idx = cp.find_last_of('\\');
-				if (idx == std::string::npos)
-				{
-					return s;
-				}
-				else
-				{
-					cp = cp.substr(0, idx);
-					s = s.substr(0, s.size() - 3);
-				}
-			}
-
-			if (cp.size() > 0 && cp[cp.size() - 1] != '\\')
-			{
-				cp += "\\";
-			}
-
-			return cp + s;
+			cp += "\\";
 		}
+
+		if (!s.empty() && (s[0] == '\\'))
+		{
+			return cp + s.substr(1);
+		}
+
+		return cp + s;
+	}
+
+	void PrintInvalidNotification(const std::string& notification, const std::string_view information)
+	{
+		std::cout << "WARNING: Invalid path " << notification << ". " << information << std::endl;
 	}
 
 	void Handle(const char* data, const size_t size)
@@ -146,22 +142,49 @@ struct RuntimeNotifications
 		static constexpr std::string_view IGNORE_FOLDER = "IGNORE FOLDER:";
 		static constexpr std::string_view IGNORE_FILE = "IGNORE FILE:";
 
+		static constexpr std::string_view FOLDER_NOT_EXIST = "The folder is not exist!";
+		static constexpr std::string_view PATH_IS_NOT_FOLDER = "The path is not the folder!";
+		static constexpr std::string_view FILE_NOT_EXIST = "The file is not exist!";
+		static constexpr std::string_view PATH_IS_NOT_FILE = "The path is not a regular file!";
+
 		std::string s(data, data + size);
 		if (s.substr(0, IGNORE_FOLDER.size()) == IGNORE_FOLDER)
 		{
 			auto folder = Trim(s.substr(IGNORE_FOLDER.size()));
 			auto fullname = GetFQN(folder);
 
-			std::cout << "Ignoring folder: " << fullname << std::endl;
-			postProcessing.emplace_back(std::make_unique<RuntimeFolderFilter>(fullname));
+			if (!std::filesystem::exists(fullname))
+			{
+				PrintInvalidNotification(fullname, FOLDER_NOT_EXIST);
+			}
+			else if (!std::filesystem::is_directory(fullname))
+			{
+				PrintInvalidNotification(fullname, PATH_IS_NOT_FOLDER);
+			}
+			else
+			{
+				std::cout << "Ignoring folder: " << fullname << std::endl;
+				postProcessing.emplace_back(std::make_unique<RuntimeFolderFilter>(fullname));
+			}
 		}
 		else if (s.substr(0, IGNORE_FILE.size()) == IGNORE_FILE)
 		{
 			auto file = Trim(s.substr(IGNORE_FILE.size()));
 			auto fullname = GetFQN(file);
 
-			std::cout << "Ignoring file: " << file << std::endl;
-			postProcessing.emplace_back(std::make_unique<RuntimeFileFilter>(fullname));
+			if (!std::filesystem::exists(fullname))
+			{
+				PrintInvalidNotification(fullname, FILE_NOT_EXIST);
+			}
+			else if (!std::filesystem::is_regular_file(fullname))
+			{
+				PrintInvalidNotification(fullname, PATH_IS_NOT_FILE);
+			}
+			else
+			{
+				std::cout << "Ignoring file: " << file << std::endl;
+				postProcessing.emplace_back(std::make_unique<RuntimeFileFilter>(fullname));
+			}
 		}
 		else if (s == "ENABLE CODE ANALYSIS")
 		{
