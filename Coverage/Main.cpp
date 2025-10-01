@@ -27,10 +27,10 @@ void ShowHelp()
     std::cout << "  -codeanalysis:" << std::endl;
     std::cout << "  -- [name]:          Run coverage on the given executable filename" << std::endl;
     std::cout << "Return code:" << std::endl;
-	std::cout << "  0:                  Success run" << std::endl;
-	std::cout << "  1:                  Executable missing" << std::endl;
-	std::cout << "  2:                  Coverage failure" << std::endl;
-	std::cout << "  3:                  Merge failure" << std::endl;
+    std::cout << "  0:                  Success run" << std::endl;
+    std::cout << "  1:                  Executable missing" << std::endl;
+    std::cout << "  2:                  Coverage failure" << std::endl;
+    std::cout << "  3:                  Merge failure" << std::endl;
     std::cout << "  4:                  Application return error code" << std::endl;
     std::cout << "Example:" << std::endl;
     std::cout << "  coverage.exe -- myProgram.exe -param 1" << std::endl;
@@ -95,14 +95,14 @@ void ParseCommandLine(int argc, const char **argv)
         }
         else if (s == "-solution")
         {
-			++i;
-			if (i == argc)
-			{
-				throw std::exception("Unexpected end of parameters. Expected output file name.");
-			}
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected output file name.");
+            }
 
-			std::string t(argv[i]);
-			opts.SolutionPath = t;
+            std::string t(argv[i]);
+            opts.SolutionPath = t;
             if( !std::filesystem::exists(opts.SolutionPath) )
                 throw std::exception("The solution path provide is not existing.");
         }
@@ -119,10 +119,10 @@ void ParseCommandLine(int argc, const char **argv)
             {
                 opts.ExportFormat = RuntimeOptions::Native;
             }
-			else if (t == "nativeV2")
-			{
-				opts.ExportFormat = RuntimeOptions::NativeV2;
-			}
+            else if (t == "nativeV2")
+            {
+                opts.ExportFormat = RuntimeOptions::NativeV2;
+            }
             else if (t == "cobertura")
             {
                 opts.ExportFormat = RuntimeOptions::Cobertura;

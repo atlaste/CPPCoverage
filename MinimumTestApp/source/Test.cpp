@@ -3,6 +3,9 @@
 
 #include <Windows.h>
 
+#include "IgnoreFileTest.hpp"
+#include "IgnoreFolder/FileTest.hpp"
+
 extern "C" { __declspec(noinline) static void __stdcall PassToCPPCoverage(size_t count, const char* data) { __noop(); } }
 
 typedef int(__cdecl *InvokeMethodSignature)();
@@ -66,19 +69,24 @@ void TestFoo(int d)
 
 int main()
 {
-	std::string opts2 = "IGNORE FOLDER: MinimumTest";
+	std::string opts2 = "IGNORE FOLDER: MinimumTestApp\\source\\IgnoreFolder";
 	PassToCPPCoverage(opts2.size(), opts2.data());
 
-	std::string opts = "IGNORE FOLDER: MinimumTestApp";
+	std::string opts = "IGNORE FILE: MinimumTestApp\\source\\IgnoreFileTest.cpp";
 	PassToCPPCoverage(opts.size(), opts.data());
 
 	TestNamespace::Foo::Test();
-	
+
 	TestDLL();
 	for (int i = 0; i < 10; ++i)
 	{
 		TestFoo(0);
 	}
+
+	IgnoreFileTest::TestPrintDigitCpp(4);
+	IgnoreFileTest::TestPrintDigitHpp(8);
+	IgnoreFolder::FileTest::TestPrintStringCpp("FOO");
+	IgnoreFolder::FileTest::TestPrintStringHpp("BAR");
 
 	return 0;
 }
