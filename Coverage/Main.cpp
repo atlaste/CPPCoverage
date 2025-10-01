@@ -24,6 +24,7 @@ void ShowHelp()
   std::cout << "  -help:              Show help" << std::endl;
   std::cout << "  -solution [name]:   Convert only file under this path (the path to file will be in relative format)." << std::endl;
   std::cout << "                      Typical usage is to give sln path of project." << std::endl;
+  std::cout << "                      The flag used to ignore code coverage for directories or files (by the PassToCPPCoverage method)." << std::endl;
   std::cout << "  -codeanalysis:" << std::endl;
   std::cout << "  -- [name]:          Run coverage on the given executable filename" << std::endl;
   std::cout << "Return code:" << std::endl;
@@ -256,14 +257,14 @@ void ParseCommandLine(int argc, const char** argv)
 
 class UTF8CodePage {
 public:
-    UTF8CodePage() : oldCodePage(::GetConsoleOutputCP())
-    {
-        ::SetConsoleOutputCP(GetACP());
-    }
-    ~UTF8CodePage()
-    {
-        ::SetConsoleOutputCP(oldCodePage);
-    }
+  UTF8CodePage() : oldCodePage(::GetConsoleOutputCP())
+  {
+    ::SetConsoleOutputCP(GetACP());
+  }
+  ~UTF8CodePage()
+  {
+    ::SetConsoleOutputCP(oldCodePage);
+  }
 
 private:
   UINT oldCodePage;
@@ -271,7 +272,7 @@ private:
 
 int main(int argc, const char** argv)
 {
-    UTF8CodePage codePage;
+  UTF8CodePage codePage;
 
 #ifdef _DEBUG
   int parsing = 0;
