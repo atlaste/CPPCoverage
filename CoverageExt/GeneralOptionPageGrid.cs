@@ -45,6 +45,13 @@ namespace NubiloSoft.CoverageExt
         public CoverageFormat Format { get; set; } = CoverageFormat.NativeV2;
 
         [Category("General")]
+        [DisplayName("Verbosity")]
+        [Description("Define the level min of verbosity")]
+        [DefaultValue(CoverageVerbosity.Info)]
+        [TypeConverter(typeof(CoverageVerbosity))]
+        public CoverageVerbosity Verbosity { get; set; } = CoverageVerbosity.Info;
+
+        [Category("General")]
         [DisplayName("Use OpenCppCoverage")]
         [Description("Replace native coverage system by OpenCppCoverage. Must be into C:\\Program files\\")]
         [DefaultValue(false)]
@@ -139,7 +146,8 @@ namespace NubiloSoft.CoverageExt
             Settings.Instance.CompileBeforeRunning          = CompileBeforeRunning;
             Settings.Instance.Format                        = Format;
             Settings.Instance.UseOpenCppCoverageRunner      = OpenCppCoverage;
-            
+            Settings.Instance.Verbosity                     = Verbosity;
+
             Settings.Instance.UncoveredBrushColor           = convert(UncoveredBrush);
             Settings.Instance.UncoveredPenColor             = convert(UncoveredPen);
             Settings.Instance.CoveredBrushColor             = convert(CoveredBrush);

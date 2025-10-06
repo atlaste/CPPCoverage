@@ -3,16 +3,18 @@
 #include "MergeRunner.h"
 
 #include <algorithm>
-#include <string>
-#include <sstream>
 #include <iostream>
+#include <format>
+#include <sstream>
+#include <string>
 
 void ShowHelp()
 {
     std::cout << "Usage: coverage.exe [opts] -- [executable] [optional args]" << std::endl;
     std::cout << std::endl;
     std::cout << "Options:" << std::endl;
-    std::cout << "  -quiet:             Suppress output information from coverage tool" << std::endl;
+    std::cout << "  -quiet:             Suppress output information from coverage tool. Equivalent to -verbose=none" << std::endl;
+    std::cout << "  -verbose [level]:   Allow to show a level of log. The accepted level flags are: error / warning / info / trace / none. By default is setup to 'trace'" << std::endl;
     std::cout << "  -format [fmt]:      Specify 'native', 'nativeV2' for native coverage format or 'cobertura' for cobertura XML or 'clover' for Clover" << std::endl;
     std::cout << "  -o [name]:          Write output information to the given filename" << std::endl;
     std::cout << "  -p [name]:          Assume source code can be found in the given path name" << std::endl;
@@ -52,7 +54,40 @@ void ParseCommandLine(int argc, const char **argv)
 
         if (s == "-quiet" || s == "--quiet")
         {
-            opts.Quiet = true;
+            opts._verboseLevel = VerboseLevel::None;
+        }
+        else if(s == "-verbose" || s == "--verbose")
+        {
+            ++i;
+            if (i == argc)
+            {
+                throw std::exception("Unexpected end of parameters. Expected level of verbose.");
+            }
+            std::string lvl(argv[i]);
+            if( lvl == "none" )
+            {
+                opts._verboseLevel = VerboseLevel::None;
+            }
+            else if (lvl == "error")
+            {
+                opts._verboseLevel = VerboseLevel::Error;
+            }
+            else if (lvl == "warning")
+            {
+                opts._verboseLevel = VerboseLevel::Warning;
+            }
+            else if (lvl == "info")
+            {
+                opts._verboseLevel = VerboseLevel::Info;
+            }
+            else if (lvl == "trace")
+            {
+                opts._verboseLevel = VerboseLevel::Trace;
+            }
+            else
+            {
+                throw std::exception(std::format("Unsupported verbose level: {0}.", lvl).c_str());
+            }
         }
         else if (s == "-codeanalysis")
         {
@@ -211,8 +246,11 @@ void ParseCommandLine(int argc, const char **argv)
         opts.ExecutableArguments = opts.ExecutableArguments.substr(1);
     */
 #ifdef _DEBUG
-    std::cout << "Executable: " << opts.Executable << std::endl;
-    std::cout << "Arguments: "  << opts.ExecutableArguments << std::endl;
+    if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Trace))
+    {
+        std::cout << "Executable: " << opts.Executable << std::endl;
+        std::cout << "Arguments: " << opts.ExecutableArguments << std::endl;
+    }
 #endif
 }
 
@@ -221,7 +259,7 @@ int main(int argc, const char** argv)
 #ifdef _DEBUG
     int parsing = 0;
     std::cout << "--- Arguments --- " << std::endl;
-    while(parsing < argc)
+    while (parsing < argc)
     {
         std::cout << parsing << ": " << argv[parsing] << std::endl;
         ++parsing;
@@ -236,7 +274,10 @@ int main(int argc, const char** argv)
     }
     catch(const std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+        {
+            std::cerr << "Error: " << e.what() << std::endl;
+        }
         
         // When you miss --, exception is throw SO your need syntax help !
         ShowHelp();
@@ -247,7 +288,10 @@ int main(int argc, const char** argv)
     {
         if(opts.Executable.empty())
         {
-            std::cerr << "Error: Missing executable file" << std::endl;
+            if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+            {
+                std::cerr << "Error: Missing executable file" << std::endl;
+            }
             ShowHelp();
             return 1; // Command error
         }
@@ -272,14 +316,20 @@ int main(int argc, const char** argv)
     {
         if(!opts.MergedOutput.empty())
         {
-            std::cout << "Merge into " << opts.MergedOutput << std::endl;
+            if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+            {
+                std::cout << "Merge into " << opts.MergedOutput << std::endl;
+            }
             auto merge = MergeRunner::createMergeRunner(opts);
             merge->execute();
         }
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+        {
+            std::cerr << "Error: " << e.what() << std::endl;
+        }
         return 3; // Coverage error
     }
     return 0;
