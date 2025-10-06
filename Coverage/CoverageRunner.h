@@ -26,14 +26,12 @@
 
 struct CoverageRunner
 {
-	CoverageRunner(RuntimeOptions& opts) : options(opts),
+	CoverageRunner(const RuntimeOptions& opts) : options(opts),
 		debugInfoAvailable(false),
 		debuggerPresentPatched(false),
 		coverageContext(opts.Executable),
 		profileInfo()
-	{
-		quiet = opts.Quiet;
-	}
+	{}
 
 	static BOOL CALLBACK SymEnumLinesCallback(PSRCCODEINFO lineInfo, PVOID userContext)
 	{
@@ -46,7 +44,7 @@ struct CoverageRunner
 			if( !std::filesystem::exists(file) )
 			{
 #ifndef NDEBUG
-				if (!RuntimeOptions::Instance().Quiet)
+				if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error) )
 				{
 					std::cerr << std::format("Impossible to find file : {0}", file) << std::endl;
 				}
@@ -90,9 +88,8 @@ struct CoverageRunner
 		return TRUE;
 	}
 
-	RuntimeOptions& options;
+	const RuntimeOptions& options;
 	RuntimeNotifications notifications;
-	bool quiet;
 	bool debugInfoAvailable;
 	bool debuggerPresentPatched;
 	std::unordered_set<std::string> loadedFiles;
@@ -186,7 +183,7 @@ struct CoverageRunner
 		debugInfoAvailable = (initSuccess == TRUE);
 		if (!debugInfoAvailable)
 		{
-			if (!quiet)
+			if (options.isAtLeastLevel(VerboseLevel::Error))
 			{
 				std::cout << "Cannot calculate code coverage: debug info is not available." << std::endl;
 			}
@@ -203,7 +200,7 @@ struct CoverageRunner
 
 		if (Util::InvariantEquals(filename, "KernelBase.dll"))
 		{
-			if (!quiet)
+			if (options.isAtLeastLevel(VerboseLevel::Trace))
 			{
 				std::cout << "Patching IsDebuggerPresent() in KernelBase.dll" << std::endl;
 			}
@@ -283,7 +280,7 @@ struct CoverageRunner
 					{
 						auto size = ReachabilityAnalysis::FirstInstructionSize(proc->Handle, img.Address);
 
-						if (!quiet)
+						if (options.isAtLeastLevel(VerboseLevel::Trace))
 						{
 							std::cout << "Found pass method at 0x" << std::hex << img.Address << std::dec << " with next breakpoint at +" << size << std::endl;
 						}
@@ -305,7 +302,7 @@ struct CoverageRunner
 							!SymEnumSymbols(proc->Handle, dllBase, NULL, SymEnumSymbolsCallback, &ci) || ci.reachableCode.empty())
 						{
 							auto err = Util::GetLastErrorAsString();
-							if (!quiet)
+							if (options.isAtLeastLevel(VerboseLevel::Info))
 							{
 								if (!options.UseStaticCodeAnalysis)
 								{
@@ -321,7 +318,7 @@ struct CoverageRunner
 						}
 						else
 						{
-							if (!quiet)
+							if (options.isAtLeastLevel(VerboseLevel::Info))
 							{
 								std::cout << "[Symbols loaded]" << std::endl;
 							}
@@ -356,7 +353,10 @@ struct CoverageRunner
 								}
 							}
 
-							std::cout << "[" << ci.breakpointsToSet.size() << " breakpoints total, " << breakpointsToSet.size() << " are reachable]" << std::endl;
+							if( options.isAtLeastLevel(VerboseLevel::Trace) ) 
+							{
+								std::cout << "[" << ci.breakpointsToSet.size() << " breakpoints total, " << breakpointsToSet.size() << " are reachable]" << std::endl;
+							}
 							swap(ci.breakpointsToSet, breakpointsToSet);
 
 							ci.SetBreakpoints(basePtr, proc->Handle);
@@ -364,7 +364,7 @@ struct CoverageRunner
 					}
 					else
 					{
-						if (!quiet)
+						if (options.isAtLeastLevel(VerboseLevel::Trace))
 						{
 							std::cout << "[No symbols available: " << Util::GetLastErrorAsString() << "]" << std::endl;
 						}
@@ -372,7 +372,7 @@ struct CoverageRunner
 				}
 				else
 				{
-					if (!quiet)
+					if (options.isAtLeastLevel(VerboseLevel::Trace))
 					{
 						std::cout << "[No symbol info found: " << Util::GetLastErrorAsString() << "]" << std::endl;
 					}
@@ -380,7 +380,7 @@ struct CoverageRunner
 			}
 			else
 			{
-				if (!quiet)
+				if (options.isAtLeastLevel(VerboseLevel::Trace))
 				{
 					std::cout << "[PDB not loaded: " << Util::GetLastErrorAsString() << "]" << std::endl;
 				}
@@ -388,7 +388,7 @@ struct CoverageRunner
 		}
 		else
 		{
-			if (!quiet)
+			if (options.isAtLeastLevel(VerboseLevel::Trace))
 			{
 				std::cout << std::endl;
 			}
@@ -413,10 +413,10 @@ struct CoverageRunner
 		si.cb = sizeof(si);
 		ZeroMemory(&pi, sizeof(pi));
 
-		LPSTR args = NULL;
+		std::string arguments;
 		if (!options.ExecutableArguments.empty())
 		{
-			args = &*options.ExecutableArguments.begin();
+			arguments = options.ExecutableArguments;
 		}
 
 		// Read working directory (if empty need to set NULL)
@@ -426,12 +426,12 @@ struct CoverageRunner
 			workingDirectory = options.WorkingDirectory.c_str();
 		}
 
-		auto result = CreateProcess(NULL, args, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, workingDirectory, &si, &pi);
+		auto result = CreateProcess(NULL, arguments.data(), NULL, NULL, FALSE, DEBUG_PROCESS, NULL, workingDirectory, &si, &pi);
 		if (result == 0)
 		{
 			if (pi.dwProcessId == 0)
 			{
-				if (!quiet)
+				if (options.isAtLeastLevel(VerboseLevel::Error))
 				{
 					const std::string msg = "Error running process; the most likely cause of this is a x86/x64 mix-up. Message " + Util::GetLastErrorAsString();
 					throw std::exception(msg.c_str());
@@ -439,7 +439,7 @@ struct CoverageRunner
 			}
 			else
 			{
-				if (!quiet)
+				if (options.isAtLeastLevel(VerboseLevel::Error))
 				{
 					const std::string msg = "Error running process: " + Util::GetLastErrorAsString();
 					throw std::exception(msg.c_str());
@@ -518,7 +518,7 @@ struct CoverageRunner
 					processMap[debugEvent.dwProcessId] = std::unique_ptr<ProcessInfo>(pinfo);
 
 					auto filename = GetFileNameFromHandle(debugEvent.u.CreateProcessInfo.hFile);
-					if (!quiet)
+					if (options.isAtLeastLevel(VerboseLevel::Info))
 					{
 						std::cout << "Loading process: " << filename << "... ";
 					}
@@ -557,7 +557,7 @@ struct CoverageRunner
 
 				case EXIT_PROCESS_DEBUG_EVENT:
 				{
-					if (!quiet)
+					if (options.isAtLeastLevel(VerboseLevel::Info))
 					{
 						std::cout << "Process exited with code: " << debugEvent.u.ExitProcess.dwExitCode << "." << std::endl;
 					}
@@ -573,7 +573,7 @@ struct CoverageRunner
 				case LOAD_DLL_DEBUG_EVENT:
 				{
 					auto name = GetFileNameFromHandle(debugEvent.u.LoadDll.hFile);
-					if (!quiet)
+					if (options.isAtLeastLevel(VerboseLevel::Info))
 					{
 						std::cout << "Loading: " << name << "... " << std::endl;
 					}
@@ -593,7 +593,7 @@ struct CoverageRunner
 					auto idx = dllNameMap.find(basePtr);
 					if (idx != dllNameMap.end())
 					{
-						if (!quiet)
+						if (options.isAtLeastLevel(VerboseLevel::Info))
 						{
 							std::cout << "Unloading: " << idx->second << std::endl;
 						}
@@ -606,7 +606,7 @@ struct CoverageRunner
 							BOOL result = SymUnloadModule64(process->Handle, mod->second);
 							if (!result)
 							{
-								if (!quiet)
+								if (options.isAtLeastLevel(VerboseLevel::Info))
 								{
 									std::cout << "Unloading module failed: " << Util::GetLastErrorAsString() << std::endl;
 								}
@@ -620,7 +620,7 @@ struct CoverageRunner
 					}
 					else
 					{
-						if (!quiet)
+						if (options.isAtLeastLevel(VerboseLevel::Trace))
 						{
 							std::cout << "Unloading: ???." << std::endl;
 						}
@@ -685,7 +685,7 @@ struct CoverageRunner
 										ReadProcessMemory(process->Handle, reinterpret_cast<LPVOID>(pointer), data.get(), numberBytes, &numberBytesRead);
 										data[numberBytesRead] = 0;
 
-										if (!quiet)
+										if (options.isAtLeastLevel(VerboseLevel::Trace))
 										{
 											std::cout << "Child process notification: " << data << std::endl;
 
@@ -897,7 +897,10 @@ struct CoverageRunner
 		}
 
 		// Group profile data together:
-		std::cout << "Gathering profile data of " << profileInfo.size() << " sources..." << std::endl;
+		if(options.isAtLeastLevel(VerboseLevel::Trace))
+		{
+			std::cout << "Gathering profile data of " << profileInfo.size() << " sources..." << std::endl;
+		}
 		std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>> mergedInfo;
 
 		float totalDeep = 0;
@@ -963,14 +966,14 @@ struct CoverageRunner
 			}
 		}
 
-		if (!quiet)
+		if (options.isAtLeastLevel(VerboseLevel::Trace))
 		{
 			std::cout << "Filtering post-process notifications..." << std::endl;
 		}
 
 		coverageContext.Filter(notifications);
 
-		if (!quiet)
+		if (options.isAtLeastLevel(VerboseLevel::Trace))
 		{
 			std::cout << "Writing coverage report..." << std::flush;
 		}
@@ -984,7 +987,7 @@ struct CoverageRunner
 		// Write report of current execution
 		coverageContext.WriteReport(options.ExportFormat, mergedInfo, outputFile);
 
-		if (!quiet)
+		if (options.isAtLeastLevel(VerboseLevel::Info))
 		{
 			std::cout << "done." << std::endl;
 		}

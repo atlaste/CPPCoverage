@@ -70,7 +70,7 @@ struct FileCallbackInfo
 				std::swap(tmp, it.second);
 				newLineData[it.first] = std::move(tmp);
 			}
-			else
+			else if(RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Trace))
 			{
 				std::cout << "Removing file " << it.first << std::endl;
 			}
@@ -375,7 +375,7 @@ struct FileCallbackInfo
 				if (relativeFile.empty() || relativeFile.native().front() == '.')
 				{
 #ifndef NDEBUG
-					if (!RuntimeOptions::Instance().Quiet)
+					if( RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error) )
 					{
 						std::cerr << std::format("Refuse coverage on file {0} because not relative to {1}", filepath, RuntimeOptions::Instance().SolutionPath) << std::endl;
 					}

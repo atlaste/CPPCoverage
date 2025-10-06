@@ -107,7 +107,7 @@ FileLineInfo* FileInfo::LineInfo(size_t lineNumber)
 		if (lineNumber < 0xf00000 - 1 &&
 			lineNumber != numberLines)
 		{
-			if (!RuntimeOptions::Instance().Quiet)
+			if( RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning) )
 			{
 				std::cout << "Warning: line number out of bounds: " << lineNumber << " >= " << numberLines << std::endl;
 			}

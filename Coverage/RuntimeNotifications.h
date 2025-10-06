@@ -152,7 +152,10 @@ struct RuntimeNotifications
 			auto folder = Trim(s.substr(IGNORE_FOLDER.size()));
 			auto fullname = GetFQN(folder);
 
-			std::cout << "Ignoring folder: " << fullname << std::endl;
+            if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+            {
+				std::cout << "Ignoring folder: " << fullname << std::endl;
+			}
 			postProcessing.emplace_back(std::make_unique<RuntimeFolderFilter>(fullname));
 		}
 		else if (s.substr(0, IGNORE_FILE.size()) == IGNORE_FILE)
@@ -160,7 +163,10 @@ struct RuntimeNotifications
 			auto file = Trim(s.substr(IGNORE_FILE.size()));
 			auto fullname = GetFQN(file);
 
-			std::cout << "Ignoring file: " << file << std::endl;
+			if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+			{
+				std::cout << "Ignoring file: " << file << std::endl;
+			}
 			postProcessing.emplace_back(std::make_unique<RuntimeFileFilter>(fullname));
 		}
 		else if (s == "ENABLE CODE ANALYSIS")
@@ -171,7 +177,7 @@ struct RuntimeNotifications
 		{
 			RuntimeOptions::Instance().UseStaticCodeAnalysis = false;
 		}
-		else
+        else if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
 		{
 			std::cout << "Unknown option passed to coverage: " << s << std::endl;
 		}

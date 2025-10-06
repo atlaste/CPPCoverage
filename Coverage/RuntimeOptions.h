@@ -2,11 +2,19 @@
 
 #include <string>
 
+enum class VerboseLevel
+{
+    Error   = 0x01,
+	Warning = 0x03,
+	Info    = 0x07,
+	Trace   = 0x0F,
+	None    = 0
+}; 
+
 struct RuntimeOptions
 {
 private:
 	RuntimeOptions() :
-		Quiet(false),
 		UseStaticCodeAnalysis(false),
 		ExportFormat(Native)
 	{}
@@ -20,7 +28,8 @@ public:
 		return instance;
 	}
 
-	bool Quiet;
+    VerboseLevel _verboseLevel = VerboseLevel::Trace;
+
 	bool UseStaticCodeAnalysis;
 
 	enum ExportFormatType
@@ -29,7 +38,7 @@ public:
 		NativeV2,
 		Cobertura,
 		Clover
-	} ExportFormat;
+	} ExportFormat = Native;
 
 
 	std::string OutputFile;
@@ -42,6 +51,7 @@ public:
 	std::string PackageName = "Program.exe";
 	std::string SolutionPath;
 
+	bool isAtLeastLevel(const VerboseLevel& level) const { return (static_cast<int>(_verboseLevel) & static_cast<int>(level)) == static_cast<int>(level);}
 	std::string SourcePath()
 	{
 		if (sourcePath.empty() && !CodePath.empty())
