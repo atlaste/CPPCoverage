@@ -191,6 +191,26 @@ namespace NubiloSoft.CoverageExt
                         argumentBuilder.Append("cobertura");
                         break;
                 }
+
+                argumentBuilder.Append(" -verbose ");
+                switch (Settings.Instance.Verbosity)
+                {
+                    case CoverageVerbosity.Info:
+                        argumentBuilder.Append("info");
+                        break;
+                    case CoverageVerbosity.Error:
+                        argumentBuilder.Append("error");
+                        break;
+                    case CoverageVerbosity.Warning:
+                        argumentBuilder.Append("warning");
+                        break;
+                    case CoverageVerbosity.Trace:
+                        argumentBuilder.Append("trace");
+                        break;
+                    case CoverageVerbosity.None:
+                        argumentBuilder.Append("none");
+                        break;
+                }
             }
             else
             {
