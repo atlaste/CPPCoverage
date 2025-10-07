@@ -62,7 +62,8 @@ namespace NubiloSoft.CoverageExt
         public event EventHandler OnSettingsChanged;
         public void TriggerSettingsChanged()
         {
-            if (propertyChanged) {
+            if (propertyChanged)
+            {
                 OnSettingsChanged?.Invoke(this, EventArgs.Empty);
                 propertyChanged = false;
             }
@@ -112,7 +113,7 @@ namespace NubiloSoft.CoverageExt
             get => this.verbosity;
             set => SetField(ref verbosity, value);
         }
-        
+
         #endregion
 
         #region Bright color definitions

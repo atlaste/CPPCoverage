@@ -1,18 +1,15 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Threading;
+using Microsoft.VisualStudio.VCProjectEngine;
+using NubiloSoft.CoverageExt.Data;
+using System;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using EnvDTE;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Threading;
-using Microsoft.VisualStudio.VCProjectEngine;
-using NubiloSoft.CoverageExt.Data;
-using static Microsoft.VisualStudio.Threading.AsyncReaderWriterLock;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -57,7 +54,7 @@ namespace NubiloSoft.CoverageExt
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initialization code that rely on services provided by VisualStudio.
         /// </summary>
-        protected override async Task InitializeAsync( CancellationToken cancellationToken, IProgress<ServiceProgressData> progress )
+        protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering Initialize() of: {0}", this.ToString()));
 
@@ -65,7 +62,7 @@ namespace NubiloSoft.CoverageExt
 
             await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
             await base.InitializeAsync(cancellationToken, progress);
-            
+
             InitializeDTE();
 
             // this forces the options to be loaded, since it call the Load function on the OptionPageGrid
@@ -242,7 +239,7 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private void RunCoverage( EnvDTE.DTE dte, OutputWindow outputWindow, VCProject vcproj, bool merge )
+        private void RunCoverage(EnvDTE.DTE dte, OutputWindow outputWindow, VCProject vcproj, bool merge)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             try
@@ -359,7 +356,7 @@ namespace NubiloSoft.CoverageExt
                 menuCommand.Enabled = CoverageExecution.HaveCoverageReport(solutionFolder);
             }
         }
-        
+
 
         /// <summary>
         /// Remove current code coverage files.
@@ -374,10 +371,10 @@ namespace NubiloSoft.CoverageExt
             if (menuCommand != null)
             {
                 var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
-                
+
                 // Clean data
                 ReportManagerSingleton.Instance(dte).ResetData();
-                
+
                 // Remove files
                 CoverageExecution.CleanCoverageFrom(solutionFolder);
 

@@ -1,9 +1,9 @@
-﻿using System;
+﻿using NubiloSoft.CoverageExt.Data;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Xml;
-using NubiloSoft.CoverageExt.Data;
 
 namespace NubiloSoft.CoverageExt.Native
 {
@@ -11,8 +11,8 @@ namespace NubiloSoft.CoverageExt.Native
     {
         public class NativeV2CoverageData : IFileCoverageData
         {
-            static UInt16 maskCount     = 0x3FFF;       ///< Count access of this line
-            static UInt16 maskIsCode    = 0x8000;
+            static UInt16 maskCount = 0x3FFF;       ///< Count access of this line
+            static UInt16 maskIsCode = 0x8000;
             static UInt16 maskIsPartial = 0x4000;
 
             public FileCoverageStats stats;
@@ -23,11 +23,11 @@ namespace NubiloSoft.CoverageExt.Native
                 byte[] data = Convert.FromBase64String(encodedString);
                 Debug.Assert(data.Length % 2 == 0);
 
-                _lines = new ushort[data.Length/2];
+                _lines = new ushort[data.Length / 2];
                 for (UInt32 objIndex = 0; objIndex < _lines.Length; ++objIndex)
                 {
                     UInt32 id = objIndex * sizeof(UInt16);
-                    _lines[objIndex] = (ushort)((data[id+1] << 8) + data[id]);
+                    _lines[objIndex] = (ushort)((data[id + 1] << 8) + data[id]);
                 }
             }
             // Check FileCoverageV2.h : it's must be the same
@@ -43,7 +43,7 @@ namespace NubiloSoft.CoverageExt.Native
             CoverageState IFileCoverageData.state(uint idLine)
             {
                 Debug.Assert(idLine < _lines.Count());
-                if( (_lines[idLine] & maskIsCode) == 0)
+                if ((_lines[idLine] & maskIsCode) == 0)
                 {
                     return CoverageState.Irrelevant;
                 }
@@ -130,8 +130,8 @@ namespace NubiloSoft.CoverageExt.Native
                                 //Read stat : <stats nbLinesInFile="67" nbLinesOfCode="22" nbLinesCovered="0"/>
                                 if (fileItem.LocalName == "stats")
                                 {
-                                    coverage.stats.lineInsideFile  = UInt32.Parse(fileItem.Attributes["nbLinesInFile"].InnerText);
-                                    coverage.stats.lineOfCodeFile  = UInt32.Parse(fileItem.Attributes["nbLinesOfCode"].InnerText);
+                                    coverage.stats.lineInsideFile = UInt32.Parse(fileItem.Attributes["nbLinesInFile"].InnerText);
+                                    coverage.stats.lineOfCodeFile = UInt32.Parse(fileItem.Attributes["nbLinesOfCode"].InnerText);
                                     coverage.stats.lineCoveredFile = UInt32.Parse(fileItem.Attributes["nbLinesCovered"].InnerText);
                                 }
                                 //Read coverage :

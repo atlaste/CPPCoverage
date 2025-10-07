@@ -1,14 +1,13 @@
-﻿using System;
-using System.IO;
-using EnvDTE;
+﻿using EnvDTE;
 using NubiloSoft.CoverageExt.Data;
+using System;
 
 namespace NubiloSoft.CoverageExt.Native
 {
     public class NativeV2ReportManager : NativeReportManager
     {
         public NativeV2ReportManager(DTE dte) : base(dte)
-        {}
+        { }
 
         public override bool IsValid(Settings instance)
         {

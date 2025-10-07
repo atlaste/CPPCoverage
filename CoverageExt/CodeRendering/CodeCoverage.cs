@@ -6,18 +6,14 @@ using Microsoft.VisualStudio.Text.Formatting;
 using NubiloSoft.CoverageExt.Data;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Drawing.Drawing2D;
-using System.Drawing.Printing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Markup.Localizer;
 using System.Windows.Media;
 
 namespace NubiloSoft.CoverageExt.CodeRendering
 {
-    
+
 
     public class CodeCoverage : IDisposable
     {
@@ -46,7 +42,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private IFileCoverageData activeReport;
 
-        public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte, ITextDocumentFactoryService textDocumentFactory )
+        public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte, ITextDocumentFactoryService textDocumentFactory)
         {
             this.dte = dte;
             this.outputWindow = new OutputWindow(dte);
@@ -111,12 +107,12 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void Instance_OnClean()
         {
-            ThreadHelper.JoinableTaskFactory.Run( async delegate ()
+            ThreadHelper.JoinableTaskFactory.Run(async delegate ()
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                
+
                 currentProfile = null;
-                activeReport   = null;
+                activeReport = null;
                 currentReportDate = DateTime.MinValue;
                 layer.RemoveAllAdornments();
 
@@ -173,7 +169,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             var backgroundColor = VSColorTheme.GetThemedColor(EnvironmentColors.SystemWindowTextColorKey);
 
             System.Windows.Media.Color[] colors;
-            if( (backgroundColor.R + backgroundColor.G + backgroundColor.B) / 3 < 127 )
+            if ((backgroundColor.R + backgroundColor.G + backgroundColor.B) / 3 < 127)
             {
                 colors = new[] { Settings.Instance.UncoveredBrushColor,
                                  Settings.Instance.UncoveredPenColor,
@@ -276,18 +272,19 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         private bool InitCurrent()
         {
             string activeFilename = GetActiveFilename();
-            if ( activeFilename == null ) return false;
+            if (activeFilename == null) return false;
 
             var dataProvider = ReportManagerSingleton.Instance(dte);
-            if ( dataProvider == null ) return false;
+            if (dataProvider == null) return false;
 
             var coverageData = dataProvider.UpdateData();
-            if ( coverageData == null ) return false;
+            if (coverageData == null) return false;
 
             DateTime activeFileLastWrite = File.GetLastWriteTimeUtc(activeFilename);
-            if ( coverageData.FileDate < activeFileLastWrite ) return false;
+            if (coverageData.FileDate < activeFileLastWrite) return false;
 
-            if ( currentReportDate == coverageData.FileDate ) {
+            if (currentReportDate == coverageData.FileDate)
+            {
                 return true;
             }
 
@@ -336,7 +333,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                         currentReportDate = DateTime.MinValue;
                         layer.RemoveAllAdornments();
                     }
-                }   
+                }
             }
             else
             {
@@ -440,7 +437,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                     var rectG = new RectangleGeometry(new Rect(g.Bounds.X, g.Bounds.Y, view.ViewportWidth, g.Bounds.Height));
 
                     GeometryDrawing drawing;
-                    switch(covered)
+                    switch (covered)
                     {
                         case CoverageState.Covered:
                             drawing = new GeometryDrawing(coveredBrush, coveredPen, rectG);
@@ -495,7 +492,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                 }
             }
 
-            if(currentProfile != null)
+            if (currentProfile != null)
             {
                 var profile = currentProfile.Get(lineno);
                 if (profile != null && profile.Item1 != 0 || profile.Item2 != 0)

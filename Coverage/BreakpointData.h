@@ -6,12 +6,12 @@
 
 struct BreakpointData
 {
-	BreakpointData() {}
-	BreakpointData(char originalData, FileLineInfo* lineInfo) :
-		originalData(originalData),
-		lineInfo(lineInfo)
-	{}
+  BreakpointData() {}
+  BreakpointData(char originalData, FileLineInfo* lineInfo) :
+    originalData(originalData),
+    lineInfo(lineInfo)
+  {}
 
-	BYTE originalData;
-	FileLineInfo* lineInfo;
+  BYTE originalData;
+  FileLineInfo* lineInfo;
 };
