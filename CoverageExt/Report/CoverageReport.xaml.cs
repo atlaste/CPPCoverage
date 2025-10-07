@@ -202,8 +202,7 @@ namespace NubiloSoft.CoverageExt.Report
             if (sender != null)
             {
                 DataGrid grid = sender as DataGrid;
-                var fc = grid.SelectedItem as FileCoverage;
-                if (fc != null && fc.Filename != null)
+                if (grid.SelectedItem is FileCoverage fc && fc.Filename != null)
                 {
                     string filename = fc.Filename;
 
