@@ -235,10 +235,7 @@ namespace NubiloSoft.CoverageExt
             }
             catch (Exception ex)
             {
-                if (outputWindow != null)
-                {
-                    outputWindow.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
-                }
+                outputWindow?.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
             }
         }
 
@@ -263,7 +260,7 @@ namespace NubiloSoft.CoverageExt
 
                 VCPlatform currentPlatform = (VCPlatform)cfg.Platform;
 
-                string platform = currentPlatform == null ? null : currentPlatform.Name;
+                string platform = currentPlatform?.Name;
                 if (platform != null)
                 {
                     platform = platform.ToLower();
@@ -311,17 +308,11 @@ namespace NubiloSoft.CoverageExt
             }
             catch (NotSupportedException ex)
             {
-                if (outputWindow != null)
-                {
-                    outputWindow.WriteLine("Error running coverage: {0}", ex.Message);
-                }
+                outputWindow?.WriteLine("Error running coverage: {0}", ex.Message);
             }
             catch (Exception ex)
             {
-                if (outputWindow != null)
-                {
-                    outputWindow.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
-                }
+                outputWindow?.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
             }
         }
 
