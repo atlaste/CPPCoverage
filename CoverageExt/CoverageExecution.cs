@@ -68,7 +68,7 @@ namespace NubiloSoft.CoverageExt
 
         static public bool HaveCoverageReport(string solutionFolder)
         {
-            (string resultFile, string tempFile) = CoverageExecution.CoverageReportPaths(solutionFolder);
+            (string resultFile, _) = CoverageReportPaths(solutionFolder);
             return System.IO.File.Exists(resultFile);
         }
 

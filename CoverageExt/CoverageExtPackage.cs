@@ -186,16 +186,16 @@ namespace NubiloSoft.CoverageExt
         private void ProjectContextMenuItemCallback(object sender, EventArgs e)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-            ContextMenuRunCoverage(sender, e, false);
+            ContextMenuRunCoverage(sender, false);
         }
 
         private void RunCoverageMergeItemCallback(object sender, EventArgs e)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-            ContextMenuRunCoverage(sender, e, true);
+            ContextMenuRunCoverage(sender, true);
         }
 
-        private void ContextMenuRunCoverage(object sender, EventArgs e, bool merge)
+        private void ContextMenuRunCoverage(object sender, bool merge)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
