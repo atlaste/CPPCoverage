@@ -17,8 +17,6 @@ using System.Windows.Media;
 
 namespace NubiloSoft.CoverageExt.CodeRendering
 {
-    
-
     public class CodeCoverage : IDisposable
     {
         internal IAdornmentLayer layer;
@@ -36,8 +34,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal SolidColorBrush partialCoveredPenBrush;
         internal Pen partialCoveredPen;
 
-        private EnvDTE.DTE dte;
-        private OutputWindow outputWindow;
+        private readonly EnvDTE.DTE dte;
+        private readonly OutputWindow outputWindow;
 
         private readonly ITextDocumentFactoryService textDocumentFactory;
         private ITextDocument TextDocument;

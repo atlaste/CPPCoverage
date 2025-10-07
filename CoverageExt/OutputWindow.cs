@@ -41,8 +41,8 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private OutputWindowPane window;
-        private static object windowLock = new object();
+        private readonly OutputWindowPane window;
+        private static readonly object windowLock = new object();
 
         public void Clear()
         {
