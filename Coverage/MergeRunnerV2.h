@@ -5,7 +5,7 @@
 #include "MergeRunner.h"
 
 #include <filesystem>
-#include <fstream>
+#include <sstream>
 #include <map>
 #include <regex>
 
@@ -28,6 +28,64 @@ private:
     return  std::regex_replace(content, PatternClean, "");
   }
 
+  void parseFile(const std::string& filename, std::istream& stream, DictCoverage& codeCoverage, const std::string& fileline) const
+  {
+    try
+    {
+      // read whole data about file
+      std::string filedata = fileline;
+      std::string line;
+      while (std::getline(stream, line))
+      {
+        static constexpr std::string_view END_FILE = "</file>";
+        const auto pos = line.find(END_FILE);
+        if (pos == std::string::npos)
+        {
+          filedata += clean(line);
+        }
+        else
+        {
+          filedata += clean(line.substr(0, pos + END_FILE.size()));
+          break;
+        }
+      }
+
+      std::regex pattern(R"(<file path=\"([^\"]*)\" md5=\"(\w{32})\"><stats nbLinesInFile=\"(\d*)\" nbLinesOfCode=\"(\d*)\" nbLinesCovered=\"(\d*)\"\/><coverage>([^<]*)<)",
+                         std::regex_constants::ECMAScript | std::regex_constants::icase);
+      std::smatch regex_result;
+      std::regex_search(filedata, regex_result, pattern);
+      if (!regex_result.ready())
+      {
+        return;
+      }
+
+      const auto filename = regex_result.str(1);
+      const auto md5Code = regex_result.str(2);
+
+      std::string values;
+      Base64::Decode(regex_result.str(6), values);
+      assert(values.size() % 2 == 0);
+
+      FileCoverageV2 profile(values.size() / sizeof(FileCoverageV2::LineArray::value_type));
+      profile._nbLinesFile = std::stoi(regex_result.str(3));
+      profile._nbLinesCode = std::stoi(regex_result.str(4));
+      profile._nbLinesCovered = std::stoi(regex_result.str(5));
+
+      profile.md5Code = regex_result.str(2);
+      std::memcpy(profile._code.data(), values.data(), values.size());
+
+      codeCoverage[filename] = profile;
+    }
+    catch (const std::regex_error& e)
+    {
+      std::cerr << "Bad regexp: " << e.what() << std::endl;
+    }
+    catch (const std::runtime_error& e)
+    {
+      std::cerr << "Bad data into " << filename << " with error: " << e.what() << std::endl;
+    }
+  }
+
   DictCoverage makeDictionary(const std::string& filename) const
   {
     std::ifstream outputFile(filename.c_str(), std::fstream::in);
@@ -37,66 +95,25 @@ private:
       throw std::exception(msg.c_str());
     }
 
-    // Read file in one shot (not giga file)
-    const auto size = std::filesystem::file_size(filename);
-    std::string content(size, '\0');
-    std::ifstream in(filename);
-    in.read(content.data(), size);
-
-    // Need to remove return line (not supported by regex)
-    auto contentClean = clean(content);
-    content.clear();
-
-    return createDictionnary(filename, contentClean);
+    return createDictionary(filename, outputFile);
   }
 
-  DictCoverage createDictionnary(const std::string& filename, const std::string& contentClean) const
+  DictCoverage createDictionary(const std::string& filename, std::istream& stream) const
   {
     DictCoverage dictOutput;
-    try
+
+    std::string line;
+    while (std::getline(stream, line))
     {
-      // Parse each regexp 
-      std::regex Pattern(R"(<file path=\"([^\"]*)\" md5=\"(\w{32})\"><stats nbLinesInFile=\"(\d*)\" nbLinesOfCode=\"(\d*)\" nbLinesCovered=\"(\d*)\"\/><coverage>([^<]*)<)",
-                         std::regex_constants::ECMAScript | std::regex_constants::icase);
+      std::string lineClean = clean(line);
+      line.clear();
 
-      const std::vector<std::smatch> matches{
-        std::sregex_iterator{contentClean.begin(), contentClean.end(), Pattern},
-        std::sregex_iterator{}
-      };
-
-      for (const auto& match : matches)
+      if (lineClean.starts_with("<file"))
       {
-        if (match.ready())
-        {
-          try
-          {
-            const auto filename = match.str(1);
-
-            std::string values;
-            Base64::Decode(match.str(6), values);
-            assert(values.size() % 2 == 0);
-
-            FileCoverageV2 profile(values.size() / sizeof(FileCoverageV2::LineArray::value_type));
-            profile._nbLinesFile = std::stoi(match.str(3));
-            profile._nbLinesCode = std::stoi(match.str(4));
-            profile._nbLinesCovered = std::stoi(match.str(5));
-
-            profile.md5Code = match.str(2);
-            std::memcpy(profile._code.data(), values.data(), values.size());
-
-            dictOutput[filename] = profile;
-          }
-          catch (const std::runtime_error& e)
-          {
-            std::cerr << "Bad data into " << filename << " with error: " << e.what() << std::endl;
-          }
-        }
+        parseFile(filename, stream, dictOutput, lineClean);
       }
     }
-    catch (const std::regex_error& e)
-    {
-      std::cerr << "Bad regexp: " << e.what() << std::endl;
-    }
+
     return dictOutput;
   }
 
