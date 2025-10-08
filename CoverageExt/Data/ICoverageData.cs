@@ -38,6 +38,6 @@ namespace NubiloSoft.CoverageExt.Data
 
         UInt32 nbEntries();
 
-        void Parsing(string filename, string solutionDir);
+        void Parsing( string filename );
     }
 }

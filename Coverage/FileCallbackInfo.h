@@ -365,20 +365,26 @@ struct FileCallbackInfo
 
     FileCoverageV2::writeHeader(ofs);
 
+    const std::string codePath = RuntimeOptions::Instance().CodePath;
+    if (!codePath.empty())
+    {
+      FileCoverageV2::openDirectory(ofs, codePath);
+    }
+
     for (auto& it : lineData)
     {
       auto filepath = it.first;
-      // if SolutionPath, Avoid to dump coverage on external file
-      if (!RuntimeOptions::Instance().SolutionPath.empty())
+      // if CodePath, Avoid to dump coverage on external file
+      if (!codePath.empty())
       {
         // Check if it's a subpath
-        auto relativeFile = std::filesystem::relative(filepath, RuntimeOptions::Instance().SolutionPath);
+        auto relativeFile = std::filesystem::relative(filepath, codePath);
         if (relativeFile.empty() || relativeFile.native().front() == '.')
         {
 #ifndef NDEBUG
           if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
           {
-            std::cerr << std::format("Refuse coverage on file {0} because not relative to {1}", filepath, RuntimeOptions::Instance().SolutionPath) << std::endl;
+            std::cerr << std::format("Refuse coverage on file {0} because not relative to {1}", filepath, codePath) << std::endl;
           }
 #endif
           continue; // Skip this item
@@ -391,6 +397,12 @@ struct FileCallbackInfo
 
       coverage.write(filepath, ofs);
     }
+
+    if (!codePath.empty())
+    {
+      FileCoverageV2::closeDirectory(ofs);
+    }
+
     FileCoverageV2::writeFooter(ofs);
     ofs.close();
   }
