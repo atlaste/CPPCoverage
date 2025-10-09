@@ -254,8 +254,25 @@ void ParseCommandLine(int argc, const char** argv)
 #endif
 }
 
+class UTF8CodePage {
+public:
+    UTF8CodePage() : oldCodePage(::GetConsoleOutputCP())
+    {
+        ::SetConsoleOutputCP(GetACP());
+    }
+    ~UTF8CodePage()
+    {
+        ::SetConsoleOutputCP(oldCodePage);
+    }
+
+private:
+  UINT oldCodePage;
+};
+
 int main(int argc, const char** argv)
 {
+    UTF8CodePage codePage;
+
 #ifdef _DEBUG
   int parsing = 0;
   std::cout << "--- Arguments --- " << std::endl;
