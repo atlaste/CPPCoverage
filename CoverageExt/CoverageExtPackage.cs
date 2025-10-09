@@ -164,8 +164,7 @@ namespace NubiloSoft.CoverageExt
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            OleMenuCommand menuCommand = sender as OleMenuCommand;
-            if (menuCommand != null && dte != null)
+            if (sender is OleMenuCommand menuCommand && dte != null)
             {
                 menuCommand.Visible = false;  // default to not visible
                 Array selectedProjects = (Array)dte.ActiveSolutionProjects;
@@ -187,16 +186,16 @@ namespace NubiloSoft.CoverageExt
         private void ProjectContextMenuItemCallback(object sender, EventArgs e)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-            ContextMenuRunCoverage(sender, e, false);
+            ContextMenuRunCoverage(sender, false);
         }
 
         private void RunCoverageMergeItemCallback(object sender, EventArgs e)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-            ContextMenuRunCoverage(sender, e, true);
+            ContextMenuRunCoverage(sender, true);
         }
 
-        private void ContextMenuRunCoverage(object sender, EventArgs e, bool merge)
+        private void ContextMenuRunCoverage(object sender, bool merge)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -206,8 +205,7 @@ namespace NubiloSoft.CoverageExt
             {
                 outputWindow = new OutputWindow(dte);
 
-                OleMenuCommand menuCommand = sender as OleMenuCommand;
-                if (menuCommand != null && dte != null)
+                if (sender is OleMenuCommand menuCommand && dte != null)
                 {
                     outputWindow.Clear();
                     Array selectedProjects = (Array)dte.ActiveSolutionProjects;
@@ -215,8 +213,7 @@ namespace NubiloSoft.CoverageExt
                     if (selectedProjects.Length == 1)
                     {
                         EnvDTE.Project project = (EnvDTE.Project)selectedProjects.GetValue(0);
-                        var vcproj = project.Object as VCProject;
-                        if (vcproj != null)
+                        if (project.Object is VCProject vcproj)
                         {
                             if (Settings.Instance.CompileBeforeRunning)
                             {
@@ -235,10 +232,7 @@ namespace NubiloSoft.CoverageExt
             }
             catch (Exception ex)
             {
-                if (outputWindow != null)
-                {
-                    outputWindow.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
-                }
+                outputWindow?.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
             }
         }
 
@@ -263,7 +257,7 @@ namespace NubiloSoft.CoverageExt
 
                 VCPlatform currentPlatform = (VCPlatform)cfg.Platform;
 
-                string platform = currentPlatform == null ? null : currentPlatform.Name;
+                string platform = currentPlatform?.Name;
                 if (platform != null)
                 {
                     platform = platform.ToLower();
@@ -311,17 +305,11 @@ namespace NubiloSoft.CoverageExt
             }
             catch (NotSupportedException ex)
             {
-                if (outputWindow != null)
-                {
-                    outputWindow.WriteLine("Error running coverage: {0}", ex.Message);
-                }
+                outputWindow?.WriteLine("Error running coverage: {0}", ex.Message);
             }
             catch (Exception ex)
             {
-                if (outputWindow != null)
-                {
-                    outputWindow.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
-                }
+                outputWindow?.WriteLine("Unexpected code coverage failure; error: {0}", ex.ToString());
             }
         }
 
@@ -329,8 +317,7 @@ namespace NubiloSoft.CoverageExt
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            OleMenuCommand menuCommand = sender as OleMenuCommand;
-            if (menuCommand != null && dte != null)
+            if (sender is OleMenuCommand menuCommand && dte != null)
             {
                 menuCommand.Visible = dte.ActiveSolutionProjects != null;
                 menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
@@ -339,8 +326,7 @@ namespace NubiloSoft.CoverageExt
 
         private void FileContextMenuItemCallback(object sender, EventArgs e)
         {
-            OleMenuCommand menuCommand = sender as OleMenuCommand;
-            if (menuCommand != null)
+            if (sender is OleMenuCommand menuCommand)
             {
                 Settings.Instance.ToggleShowCodeCoverage();
                 menuCommand.Checked = Settings.Instance.ShowCodeCoverage;
@@ -351,8 +337,7 @@ namespace NubiloSoft.CoverageExt
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            OleMenuCommand menuCommand = sender as OleMenuCommand;
-            if (menuCommand != null && dte != null)
+            if (sender is OleMenuCommand menuCommand && dte != null)
             {
                 // Enable button only if exists
                 var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
@@ -370,8 +355,7 @@ namespace NubiloSoft.CoverageExt
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            OleMenuCommand menuCommand = sender as OleMenuCommand;
-            if (menuCommand != null)
+            if (sender is OleMenuCommand)
             {
                 var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
                 

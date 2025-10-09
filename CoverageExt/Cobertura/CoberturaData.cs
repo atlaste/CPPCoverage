@@ -55,8 +55,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             int idx = filename.IndexOf('\\');
             string filenameWithoutDriveLetter = (idx >= 0) ? filename.Substring(idx) : filename;
 
-            FileCoverageData result = null;
-            lookup.TryGetValue(filenameWithoutDriveLetter, out result);
+            lookup.TryGetValue(filenameWithoutDriveLetter, out FileCoverageData result);
             return result;
         }
 

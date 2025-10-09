@@ -23,11 +23,11 @@ namespace NubiloSoft.CoverageExt
         private static readonly string ProgramFilesX86Path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
         private static readonly string ProgramFilesX64Path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
-        private StringBuilder tb = new StringBuilder();
+        private readonly StringBuilder tb = new StringBuilder();
         private DateTime lastEvent = DateTime.UtcNow;
 
-        private DTE dte;
-        private OutputWindow output;
+        private readonly DTE dte;
+        private readonly OutputWindow output;
 
         private int running = 0;
 
@@ -68,7 +68,7 @@ namespace NubiloSoft.CoverageExt
 
         static public bool HaveCoverageReport(string solutionFolder)
         {
-            (string resultFile, string tempFile) = CoverageExecution.CoverageReportPaths(solutionFolder);
+            (string resultFile, _) = CoverageReportPaths(solutionFolder);
             return System.IO.File.Exists(resultFile);
         }
 
