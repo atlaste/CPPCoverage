@@ -1,14 +1,10 @@
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Utilities.Internal;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using DTE = EnvDTE.DTE;
 using System.Windows.Forms;
+using DTE = EnvDTE.DTE;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -31,7 +27,7 @@ namespace NubiloSoft.CoverageExt
 
         private int running = 0;
 
-        private static string PathWithQuotes( string path )
+        private static string PathWithQuotes(string path)
         {
             return @"""" + path + @"""";
         }
@@ -58,7 +54,7 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        static public (string, string) CoverageReportPaths( string solutionFolder )
+        static public (string, string) CoverageReportPaths(string solutionFolder)
         {
             string ext = !Settings.Instance.UseOpenCppCoverageRunner && Settings.Instance.Format != CoverageFormat.Cobertura ? ".cov" : ".xml";
             string resPathBase = Path.Combine(solutionFolder, "CodeCoverage" + ext);
@@ -72,7 +68,7 @@ namespace NubiloSoft.CoverageExt
             return System.IO.File.Exists(resultFile);
         }
 
-        private string CoverageExePath( string platform )
+        private string CoverageExePath(string platform)
         {
             if (!Settings.Instance.UseOpenCppCoverageRunner)
             {
@@ -163,7 +159,7 @@ namespace NubiloSoft.CoverageExt
                 argumentBuilder.Append(PathWithQuotes(reportFile));
                 argumentBuilder.Append(" -p ");
                 argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
-                if( !String.IsNullOrEmpty(mergeFile) )
+                if (!String.IsNullOrEmpty(mergeFile))
                 {
                     argumentBuilder.Append(" -m ");
                     argumentBuilder.Append(PathWithQuotes(mergeFile.TrimEnd('\\', '/')));
@@ -179,7 +175,7 @@ namespace NubiloSoft.CoverageExt
                 }
 
                 argumentBuilder.Append(" -format ");
-                switch(Settings.Instance.Format)
+                switch (Settings.Instance.Format)
                 {
                     default:
                         argumentBuilder.Append("native");
@@ -287,7 +283,7 @@ namespace NubiloSoft.CoverageExt
                     throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                 }
 
-                string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile, merge ? resultFile: String.Empty);
+                string arguments = PrepareArguments(solutionFolder, platform, Path.Combine(dllFolder, dllFilename), workingDirectory, commandline, tempFile, merge ? resultFile : String.Empty);
                 output.WriteLine("Execute coverage: {0}", arguments);
 
                 process.StartInfo.WorkingDirectory = !Settings.Instance.UseOpenCppCoverageRunner ? dllFolder : Path.GetDirectoryName(tempFile);
@@ -295,10 +291,10 @@ namespace NubiloSoft.CoverageExt
                 process.StartInfo.CreateNoWindow = true;
                 process.StartInfo.UseShellExecute = false;
                 process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError  = true;
+                process.StartInfo.RedirectStandardError = true;
 
                 process.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
-                process.ErrorDataReceived  += new DataReceivedEventHandler(OutputHandler);
+                process.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
 
                 process.Start();
 
@@ -317,17 +313,17 @@ namespace NubiloSoft.CoverageExt
                     process.Kill();
                     throw new Exception("Creating code coverage timed out (more than 15min).");
                 }
-                else if(process.ExitCode != 0)
+                else if (process.ExitCode != 0)
                 {
                     string message = "";
                     switch (process.ExitCode)
                     {
                         case 4:
                             message = String.Format("Coverage may failed.\n\r{0} is not finished with rc=0.", filename);
-                        break;
+                            break;
                         default:
                             message = String.Format("Coverage application returns code {0}", process.ExitCode);
-                        break;
+                            break;
                     }
                     MessageBox.Show(message, "Coverage Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -346,7 +342,7 @@ namespace NubiloSoft.CoverageExt
 
                 if (File.Exists(tempFile))
                 {
-                    if(!merge)
+                    if (!merge)
                     {
                         // All fine, update file:
                         if (File.Exists(resultFile))

@@ -1,19 +1,13 @@
-﻿using System;
+﻿using EnvDTE;
+using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using EnvDTE;
-using System.Collections.ObjectModel;
 
 namespace NubiloSoft.CoverageExt.Report
 {
@@ -178,7 +172,7 @@ namespace NubiloSoft.CoverageExt.Report
                 }
 
                 foreach (var item in dict.
-                    OrderBy((a)=>a.Key).
+                    OrderBy((a) => a.Key).
                     Where((a) => a.Value.Filename.IndexOf(".test", StringComparison.InvariantCultureIgnoreCase) < 0 && a.Value.Total > 0).
                     Select((a) => a.Value))
                 {

@@ -1,7 +1,7 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using EnvDTE;
+﻿using EnvDTE;
 using Microsoft.VisualStudio.Shell;
+using System;
+using System.Runtime.InteropServices;
 
 namespace NubiloSoft.CoverageExt.Report
 {

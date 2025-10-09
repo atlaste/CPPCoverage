@@ -154,6 +154,7 @@
     <ClCompile Include="..\Coverage\MergeRunner.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Coverage\.editorconfig" />
     <None Include="..\Coverage\Disassembler\X86GenDisassemblerTables.inc" />
     <None Include="..\Coverage\Disassembler\X86GenInstrInfo.inc" />
   </ItemGroup>

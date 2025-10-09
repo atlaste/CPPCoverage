@@ -167,6 +167,7 @@
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".editorconfig" />
     <None Include="Disassembler\X86GenDisassemblerTables.inc" />
     <None Include="Disassembler\X86GenInstrInfo.inc" />
   </ItemGroup>

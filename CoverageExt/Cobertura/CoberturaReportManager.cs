@@ -1,7 +1,7 @@
 ﻿extern alias EnvDTE;
+using NubiloSoft.CoverageExt.Data;
 using System;
 using System.IO;
-using NubiloSoft.CoverageExt.Data;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {

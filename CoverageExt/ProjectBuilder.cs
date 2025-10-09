@@ -11,7 +11,7 @@ namespace NubiloSoft.CoverageExt
         private readonly string configName;
         private readonly Action onSuccessAction;
 
-        public ProjectBuilder( EnvDTE.DTE dte, OutputWindow outputWindow, string projectName, string configName, Action onSuccessAction )
+        public ProjectBuilder(EnvDTE.DTE dte, OutputWindow outputWindow, string projectName, string configName, Action onSuccessAction)
         {
             this.dte = dte;
             this.outputWindow = outputWindow;
@@ -29,7 +29,7 @@ namespace NubiloSoft.CoverageExt
             dte.Solution.SolutionBuild.BuildProject(configName, projectName, false);
         }
 
-        private void OnBuildDone( string project, string projectConfig, string platform, string solutionConfig, bool success )
+        private void OnBuildDone(string project, string projectConfig, string platform, string solutionConfig, bool success)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 

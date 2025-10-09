@@ -5,8 +5,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{a31dc53d-2887-4f57-a1e5-ed293a4c68e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\IgnoreFolder">
+      <UniqueIdentifier>{891fa1cf-bfea-498b-8a39-58bed24f7464}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="source\IgnoreFileTest.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\Test.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\IgnoreFolder\FileTest.cpp">
+      <Filter>Source\IgnoreFolder</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\IgnoreFileTest.hpp">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\IgnoreFolder\FileTest.hpp">
+      <Filter>Source\IgnoreFolder</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

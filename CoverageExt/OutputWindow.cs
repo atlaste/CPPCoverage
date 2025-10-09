@@ -1,8 +1,6 @@
 ﻿using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Threading;
-using System.Windows.Forms;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -68,7 +66,7 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private async System.Threading.Tasks.Task WriteLineAsync(string message) 
+        private async System.Threading.Tasks.Task WriteLineAsync(string message)
         {
             await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
