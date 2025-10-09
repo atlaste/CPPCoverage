@@ -32,9 +32,9 @@ namespace NubiloSoft.CoverageExt.Report
             }
         }
 
-        private Func<EnvDTE.DTE> dte;
+        private readonly Func<EnvDTE.DTE> dte;
 
-        private static object lockObject = new object();
+        private static readonly object lockObject = new object();
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
@@ -49,7 +49,7 @@ namespace NubiloSoft.CoverageExt.Report
             BindingOperations.EnableCollectionSynchronization(this.loaded, lockObject);
         }
 
-        private List<FileCoverage> loaded = new List<FileCoverage>();
+        private readonly List<FileCoverage> loaded = new List<FileCoverage>();
 
         public List<FileCoverage> LoadedData { get { return loaded; } }
 
@@ -196,8 +196,7 @@ namespace NubiloSoft.CoverageExt.Report
             if (sender != null)
             {
                 DataGrid grid = sender as DataGrid;
-                var fc = grid.SelectedItem as FileCoverage;
-                if (fc != null && fc.Filename != null)
+                if (grid.SelectedItem is FileCoverage fc && fc.Filename != null)
                 {
                     string filename = fc.Filename;
 

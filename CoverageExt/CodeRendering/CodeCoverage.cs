@@ -13,8 +13,6 @@ using System.Windows.Media;
 
 namespace NubiloSoft.CoverageExt.CodeRendering
 {
-
-
     public class CodeCoverage : IDisposable
     {
         internal IAdornmentLayer layer;
@@ -32,8 +30,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal SolidColorBrush partialCoveredPenBrush;
         internal Pen partialCoveredPen;
 
-        private EnvDTE.DTE dte;
-        private OutputWindow outputWindow;
+        private readonly EnvDTE.DTE dte;
+        private readonly OutputWindow outputWindow;
 
         private readonly ITextDocumentFactoryService textDocumentFactory;
         private ITextDocument TextDocument;
@@ -454,8 +452,10 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                     DrawingImage drawingImage = new DrawingImage(drawing);
                     drawingImage.Freeze();
 
-                    Image image = new Image();
-                    image.Source = drawingImage;
+                    Image image = new Image
+                    {
+                        Source = drawingImage
+                    };
 
                     //Align the image with the top of the bounds of the text geometry
                     Canvas.SetLeft(image, rectG.Bounds.Left);
@@ -476,13 +476,15 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                         //if (x < view.ViewportWidth / 2) { x = view.ViewportWidth / 2; }
                         var rectCountG = new RectangleGeometry(new Rect(x, g.Bounds.Y, widthCount, g.Bounds.Height));
 
-                        Label lbl = new Label();
-                        lbl.FontSize = 8;
-                        lbl.Foreground = classicPenBrush;
-                        lbl.Background = Brushes.Transparent;
-                        lbl.FontFamily = new FontFamily("Verdana");
-                        lbl.FontWeight = FontWeights.Bold;
-                        lbl.Content = sb.ToString();
+                        Label lbl = new Label
+                        {
+                            FontSize = 8,
+                            Foreground = classicPenBrush,
+                            Background = Brushes.Transparent,
+                            FontFamily = new FontFamily("Verdana"),
+                            FontWeight = FontWeights.Bold,
+                            Content = sb.ToString()
+                        };
 
                         Canvas.SetLeft(lbl, rectCountG.Bounds.Left);
                         Canvas.SetTop(lbl, rectCountG.Bounds.Top);
@@ -512,12 +514,14 @@ namespace NubiloSoft.CoverageExt.CodeRendering
                         if (x < view.ViewportWidth / 2) { x = view.ViewportWidth / 2; }
                         g = new RectangleGeometry(new Rect(x, g.Bounds.Y, 30, g.Bounds.Height));
 
-                        Label lbl = new Label();
-                        lbl.FontSize = 7;
-                        lbl.Foreground = Brushes.Black;
-                        lbl.Background = Brushes.Transparent;
-                        lbl.FontFamily = new FontFamily("Verdana");
-                        lbl.Content = sb.ToString();
+                        Label lbl = new Label
+                        {
+                            FontSize = 7,
+                            Foreground = Brushes.Black,
+                            Background = Brushes.Transparent,
+                            FontFamily = new FontFamily("Verdana"),
+                            Content = sb.ToString()
+                        };
 
                         Canvas.SetLeft(lbl, g.Bounds.Left);
                         Canvas.SetTop(lbl, g.Bounds.Top);

@@ -16,13 +16,13 @@ namespace NubiloSoft.CoverageExt.Cobertura
             this.activeCoverageFilename = null;
         }
 
-        private EnvDTE.DTE dte;
-        private OutputWindow output;
+        private readonly EnvDTE.DTE dte;
+        private readonly OutputWindow output;
 
         private Data.ICoverageData activeCoverageReport;
         private string activeCoverageFilename;
 
-        private object lockObject = new object();
+        private readonly object lockObject = new object();
 
         public bool IsValid(Settings instance)
         {
