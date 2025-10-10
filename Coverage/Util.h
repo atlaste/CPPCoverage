@@ -44,4 +44,13 @@ struct Util
     }
     return false;
   }
+
+  static int IsSpace(int c)
+  {
+    if ((c < 0) || (c > 255))
+    {
+      return 1;
+    }
+    return std::isspace(c);
+  }
 };
