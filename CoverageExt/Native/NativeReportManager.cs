@@ -84,7 +84,7 @@ namespace NubiloSoft.CoverageExt.Native
                         output.WriteLine("------ Start update Coverage ------");
                         output.WriteLine("Updating coverage results from: {0}", coverageFile);
                         var watch = System.Diagnostics.Stopwatch.StartNew();
-                        activeCoverageReport = Load(coverageFile, folder);
+                        activeCoverageReport = Load(coverageFile);
                         activeCoverageFilename = coverageFile;
                         watch.Stop();
                         output.WriteLine("========== Done in {0} ms with {1} entries ==========", watch.ElapsedMilliseconds, activeCoverageReport.nbEntries());
@@ -101,7 +101,7 @@ namespace NubiloSoft.CoverageExt.Native
             throw new NotImplementedException();
         }
 
-        virtual public ICoverageData Load(string filename, string solution)
+        virtual public ICoverageData Load(string filename)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -111,7 +111,7 @@ namespace NubiloSoft.CoverageExt.Native
                 try
                 {
                     report = new Native.NativeData();
-                    report.Parsing(filename, solution);
+                    report.Parsing(filename);
                 }
                 catch (Exception e)
                 {

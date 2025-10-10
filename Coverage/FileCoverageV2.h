@@ -89,7 +89,7 @@ struct FileCoverageV2
     return true;
   }
 
-  static void writeHeader(std::ofstream& ofs)
+  static void writeHeader(std::ostream& ofs)
   {
     const std::string version("2.0");
 
@@ -97,16 +97,26 @@ struct FileCoverageV2
     ofs << std::format(R"(<CppCoverage version="{0}">)", version) << std::endl;
   }
 
-  static void writeFooter(std::ofstream& ofs)
+  static void openDirectory(std::ostream& ofs, const std::string& aDir)
+  {
+    ofs << std::format(R"(	<directory path="{0}">)", aDir) << std::endl;
+  }
+
+  static void closeDirectory(std::ostream& ofs)
+  {
+    ofs << "	</directory>" << std::endl;
+  }
+
+  static void writeFooter(std::ostream& ofs)
   {
     ofs << "</CppCoverage>" << std::endl;
   }
 
   void write(const std::string& filepath, std::ostream& ofs) const
   {
-    ofs << std::format(R"(	<file path="{0}" md5="{1}">)", filepath, md5Code) << std::endl;
-    ofs << std::format(R"(		<stats nbLinesInFile="{0}" nbLinesOfCode="{1}" nbLinesCovered="{2}"/>)", _nbLinesFile, _nbLinesCode, _nbLinesCovered) << std::endl;
-    ofs << R"(		<coverage>)" << Base64::Encode(std::string(reinterpret_cast<const char*>(_code.data()), _code.size() * sizeof(LineArray::value_type))) << "</coverage>" << std::endl;
-    ofs << R"(	</file>)" << std::endl;
+    ofs << std::format(R"(		<file path="{0}" md5="{1}">)", filepath, md5Code) << std::endl;
+    ofs << std::format(R"(			<stats nbLinesInFile="{0}" nbLinesOfCode="{1}" nbLinesCovered="{2}"/>)", _nbLinesFile, _nbLinesCode, _nbLinesCovered) << std::endl;
+    ofs << R"(			<coverage>)" << Base64::Encode(std::string(reinterpret_cast<const char*>(_code.data()), _code.size() * sizeof(LineArray::value_type))) << "</coverage>" << std::endl;
+    ofs << R"(		</file>)" << std::endl;
   }
 };

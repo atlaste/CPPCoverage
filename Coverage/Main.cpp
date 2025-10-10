@@ -18,12 +18,12 @@ void ShowHelp()
   std::cout << "  -format [fmt]:      Specify 'native', 'nativeV2' for native coverage format or 'cobertura' for cobertura XML or 'clover' for Clover" << std::endl;
   std::cout << "  -o [name]:          Write output information to the given filename" << std::endl;
   std::cout << "  -p [name]:          Assume source code can be found in the given path name" << std::endl;
+  std::cout << "                      Convert only file under this path (the path to file will be in relative format)." << std::endl;
   std::cout << "  -w [name]:          Working directory where we execute the given executable filename" << std::endl;
   std::cout << "  -m [name]:          Merge current output to given path name or copy output if not existing" << std::endl;
   std::cout << "  -pkg [name]:        Name of package under test (executable or dll)" << std::endl;
   std::cout << "  -help:              Show help" << std::endl;
-  std::cout << "  -solution [name]:   Convert only file under this path (the path to file will be in relative format)." << std::endl;
-  std::cout << "                      Typical usage is to give sln path of project." << std::endl;
+  std::cout << "  -solution [name]:   Typical usage is to give sln path of project." << std::endl;
   std::cout << "  -codeanalysis:" << std::endl;
   std::cout << "  -- [name]:          Run coverage on the given executable filename" << std::endl;
   std::cout << "Return code:" << std::endl;
