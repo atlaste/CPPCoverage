@@ -49,13 +49,10 @@ struct FileCallbackInfo
     {
       sourcePath = opts.CodePath;
     }
-
-    packageName = opts.PackageName;
   }
 
   std::string filename;
   std::string sourcePath;
-  std::string packageName;
 
   std::unordered_map<std::string, std::unique_ptr<FileInfo>> lineData;
 
@@ -157,7 +154,7 @@ struct FileCallbackInfo
     // ofs << "coveredstatements=\"300\" statements=\"500\" coveredmethods=\"50\" methods=\"80\" ";
     // ofs << "coveredconditionals=\"100\" conditionals=\"120\" coveredelements=\"900\" elements=\"1000\" ";
     ofs << "complexity=\"0\" />" << std::endl;
-    ofs << "<package name=\"" << packageName << "\">" << std::endl;
+    ofs << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\">" << std::endl;
     for (auto& it : lineData)
     {
       auto ptr = it.second.get();
@@ -219,7 +216,7 @@ struct FileCallbackInfo
     ofs << "<coverage line-rate=\"" << lineRate << "\"" << " " << "version=\"\">" << std::endl;
     ofs << "\t" << "<packages>" << std::endl;
 
-    ofs << "\t\t" << "<package name=\"" << packageName << "\" line-rate=\"" << lineRate << "\">" << std::endl;
+    ofs << "\t\t" << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\" line-rate=\"" << lineRate << "\">" << std::endl;
     ofs << "\t\t\t" << "<classes>" << std::endl;
     for (auto& it : lineData)
     {
