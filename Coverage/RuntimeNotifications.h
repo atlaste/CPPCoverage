@@ -12,6 +12,7 @@
 #include <Windows.h>
 
 #include "RuntimeOptions.h"
+#include "Util.h"
 
 struct RuntimeCoverageFilter
 {
@@ -81,10 +82,10 @@ struct RuntimeNotifications
   {
     std::string s = t;
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int c) {
-      return !std::isspace(c); }
+      return !Util::IsSpace(c); }
     ));
     s.erase(std::find_if(s.rbegin(), s.rend(), [](int(c)) {
-      return !std::isspace(c);
+      return !Util::IsSpace(c);
     }).base(), s.end());
     return s;
   }

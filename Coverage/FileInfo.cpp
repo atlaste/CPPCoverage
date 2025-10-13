@@ -1,5 +1,6 @@
 #include "FileInfo.h"
 #include "RuntimeOptions.h"
+#include "Util.h"
 
 #include <algorithm>
 #include <fstream>
@@ -47,10 +48,10 @@ bool FileInfo::StringStartsWith(const std::string::const_iterator& start, const 
 std::string::const_iterator FileInfo::GetBeginCoverageFlag(const std::string& line)
 {
   // try to find #pragma (before pragma may be only whitespace)
-  std::string::const_iterator idx = std::find_if_not(line.begin(), line.end(), std::isspace);
+  std::string::const_iterator idx = std::find_if_not(line.begin(), line.end(), Util::IsSpace);
   if (StringStartsWith(idx, line.end(), PRAGMA_LINE))
   {
-    std::string::const_iterator jdx = std::find_if_not(idx + PRAGMA_LINE.length(), line.end(), std::isspace);
+    std::string::const_iterator jdx = std::find_if_not(idx + PRAGMA_LINE.length(), line.end(), Util::IsSpace);
     return jdx;
   }
 
@@ -58,7 +59,7 @@ std::string::const_iterator FileInfo::GetBeginCoverageFlag(const std::string& li
   size_t commentIdx = line.find(DOUBLE_FORWARD_SLASH_LINE);
   if (commentIdx != std::string::npos)
   {
-    std::string::const_iterator jdx = std::find_if_not(line.begin() + commentIdx + DOUBLE_FORWARD_SLASH_LINE.length(), line.end(), std::isspace);
+    std::string::const_iterator jdx = std::find_if_not(line.begin() + commentIdx + DOUBLE_FORWARD_SLASH_LINE.length(), line.end(), Util::IsSpace);
     return jdx;
   }
 
@@ -71,7 +72,7 @@ FileInfo::LineType FileInfo::GetLineType(const std::string& line)
   std::string::const_iterator coverageBeginValue = GetBeginCoverageFlag(line);
   if (coverageBeginValue != line.end())
   {
-    std::string::const_iterator coverageEndValue = std::find_if(coverageBeginValue, line.end(), std::isspace);
+    std::string::const_iterator coverageEndValue = std::find_if(coverageBeginValue, line.end(), Util::IsSpace);
     const ptrdiff_t size = coverageEndValue - coverageBeginValue;
     if (IsCoverageFlag(coverageBeginValue, size, DISABLE_COVERAGE))
     {
