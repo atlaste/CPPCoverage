@@ -184,8 +184,14 @@ namespace NubiloSoft.CoverageExt
                         argumentBuilder.Append("nativeV2");
                         break;
                     case CoverageFormat.Cobertura:
+                    {
                         argumentBuilder.Append("cobertura");
+
+                        // also add information about package
+                        argumentBuilder.Append(" -pkg ");
+                        argumentBuilder.Append(PathWithQuotes(dllPath));
                         break;
+                    }
                 }
 
                 argumentBuilder.Append(" -verbose ");
