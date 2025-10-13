@@ -19,7 +19,8 @@ class MergeRunnerV2 : public MergeRunner
 public:
   friend class TestFormat::TestNativeV2;
 private:
-  using DictCoverage = std::unordered_map<std::string, FileCoverageV2>;
+  using CodeCoverage = std::unordered_map<std::string, FileCoverageV2>;
+  using DictCoverage = std::unordered_map<std::string, CodeCoverage>;
 
   std::string clean(const std::string& content) const
   {
@@ -28,7 +29,20 @@ private:
     return  std::regex_replace(content, PatternClean, "");
   }
 
-  void parseFile(const std::string& filename, std::istream& stream, DictCoverage& codeCoverage, const std::string& fileline) const
+  std::string getDir(const std::string& line) const
+  {
+    std::regex pattern(R"(<directory path=\"([^\"]*)\")", std::regex_constants::ECMAScript | std::regex_constants::icase);
+    std::smatch regex_result;
+    std::regex_search(line, regex_result, pattern);
+    if (!regex_result.ready())
+    {
+      return "";
+    }
+
+    return regex_result.str(1);
+  }
+
+  void parseFile(const std::string& filename, std::istream& stream, CodeCoverage& codeCoverage, const std::string& fileline) const
   {
     try
     {
@@ -101,6 +115,8 @@ private:
   DictCoverage createDictionary(const std::string& filename, std::istream& stream) const
   {
     DictCoverage dictOutput;
+    CodeCoverage codeCoverage;
+    std::string currentDir;
 
     std::string line;
     while (std::getline(stream, line))
@@ -108,10 +124,29 @@ private:
       std::string lineClean = clean(line);
       line.clear();
 
-      if (lineClean.starts_with("<file"))
+      if (lineClean.starts_with("<directory"))
       {
-        parseFile(filename, stream, dictOutput, lineClean);
+        currentDir = getDir(lineClean);
       }
+      else if (lineClean.starts_with("<file"))
+      {
+        parseFile(filename, stream, codeCoverage, lineClean);
+      }
+      else if (lineClean.starts_with("</directory>"))
+      {
+        if (!codeCoverage.empty())
+        {
+          dictOutput[currentDir] = codeCoverage;
+        }
+
+        codeCoverage.clear();
+        currentDir.clear();
+      }
+    }
+
+    if (!codeCoverage.empty())
+    {
+      dictOutput[""] = codeCoverage;
     }
 
     return dictOutput;
@@ -119,24 +154,30 @@ private:
 
   void merge(const DictCoverage& dictOutput, DictCoverage& dictMerge)
   {
-    auto itOutput = dictOutput.cbegin();
-    while (itOutput != dictOutput.cend())
+    auto itDirOutput = dictOutput.cbegin();
+    while (itDirOutput != dictOutput.cend())
     {
-      auto itMerge = dictMerge.find(itOutput->first);
-      if (itMerge != dictMerge.end())
+      auto itDirMerge = dictMerge.find(itDirOutput->first);
+      if (itDirMerge != dictMerge.end())
       {
-        if (!itMerge->second.merge(itOutput->second))
+        auto itFileOutput = itDirOutput->second.cbegin();
+        while (itFileOutput != itDirOutput->second.cend())
         {
-          // Source is different from both version ?
-          std::cerr << "Merge warning: impossible to merge " << itMerge->first << ": size between src/dst is not same." << std::endl;
+          auto fileMerge = itDirMerge->second.find(itFileOutput->first);
+          if (!fileMerge->second.merge(itFileOutput->second))
+          {
+            // Source is different from both version ?
+            std::cerr << "Merge warning: impossible to merge " << fileMerge->first << ": size between src/dst is not same." << std::endl;
+          }
+          ++itFileOutput;
         }
       }
       else
       {
-        dictMerge[itOutput->first] = itOutput->second;
+        dictMerge[itDirOutput->first] = itDirOutput->second;
       }
 
-      ++itOutput;
+      ++itDirOutput;
     }
   }
 
@@ -182,9 +223,21 @@ public:
 
     FileCoverageV2::writeHeader(ofs);
 
-    for (const auto& cover : dictMerge)
+    for (const auto& directories : dictMerge)
     {
-      cover.second.write(cover.first, ofs);
+      const auto& dirName = directories.first;
+      if (!dirName.empty())
+      {
+        FileCoverageV2::openDirectory(ofs, dirName);
+      }
+      for (const auto& cover : directories.second)
+      {
+        cover.second.write(cover.first, ofs);
+      }
+      if (!dirName.empty())
+      {
+        FileCoverageV2::closeDirectory(ofs);
+      }
     }
 
     FileCoverageV2::writeFooter(ofs);

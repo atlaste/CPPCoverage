@@ -99,7 +99,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             }
         }
 
-        public void Parsing(string filename, string solutionDir)
+        public void Parsing(string filename)
         {
             // Start initializing the data
             source = null;
