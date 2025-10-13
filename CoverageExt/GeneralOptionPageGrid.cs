@@ -10,15 +10,16 @@ namespace NubiloSoft.CoverageExt
     /// Dumbfounded why we need this, since it effectievely shouldn't do anything else but even 
     /// using [TypeConverter(typeof(ColorConverter))] doesn't work.
     /// </summary>
-    class CustomColorConverter : ColorConverter {
-        public override object ConvertFrom( ITypeDescriptorContext context, CultureInfo culture, object value )
+    class CustomColorConverter : ColorConverter
+    {
+        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
             return base.ConvertFrom(context, CultureInfo.InvariantCulture, value);
         }
 
-        public override object ConvertTo( ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType )
+        public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            return base.ConvertTo( context, CultureInfo.InvariantCulture, value, destinationType );
+            return base.ConvertTo(context, CultureInfo.InvariantCulture, value, destinationType);
         }
     }
 
@@ -43,6 +44,13 @@ namespace NubiloSoft.CoverageExt
         [DefaultValue(CoverageFormat.NativeV2)]
         [TypeConverter(typeof(CoverageFormat))]
         public CoverageFormat Format { get; set; } = CoverageFormat.NativeV2;
+
+        [Category("General")]
+        [DisplayName("Verbosity")]
+        [Description("Define the level min of verbosity")]
+        [DefaultValue(CoverageVerbosity.Info)]
+        [TypeConverter(typeof(CoverageVerbosity))]
+        public CoverageVerbosity Verbosity { get; set; } = CoverageVerbosity.Info;
 
         [Category("General")]
         [DisplayName("Use OpenCppCoverage")]
@@ -122,7 +130,7 @@ namespace NubiloSoft.CoverageExt
         [TypeConverter(typeof(CustomColorConverter))]
         public Color PartialCoveredDarkPen { get; set; } = Color.FromArgb(0x00, 0x50, 0x3C, 0x05);
 
-        protected override void OnApply( PageApplyEventArgs e )
+        protected override void OnApply(PageApplyEventArgs e)
         {
             base.OnApply(e);
             UpdateSettings();
@@ -130,29 +138,29 @@ namespace NubiloSoft.CoverageExt
 
         public void UpdateSettings()
         {
-            Func<Color, System.Windows.Media.Color> convert = (Color input) =>
-            {
+            Func<Color, System.Windows.Media.Color> convert = (Color input) => {
                 return System.Windows.Media.Color.FromArgb(input.A, input.R, input.G, input.B);
             };
 
-            Settings.Instance.ShowCodeCoverage              = ShowCodeCoverage;
-            Settings.Instance.CompileBeforeRunning          = CompileBeforeRunning;
-            Settings.Instance.Format                        = Format;
-            Settings.Instance.UseOpenCppCoverageRunner      = OpenCppCoverage;
-            
-            Settings.Instance.UncoveredBrushColor           = convert(UncoveredBrush);
-            Settings.Instance.UncoveredPenColor             = convert(UncoveredPen);
-            Settings.Instance.CoveredBrushColor             = convert(CoveredBrush);
-            Settings.Instance.CoveredPenColor               = convert(CoveredPen);
-            Settings.Instance.PartialCoveredBrushColor      = convert(PartialCoveredBrush);
-            Settings.Instance.PartialCoveredPenColor        = convert(PartialCoveredPen);
+            Settings.Instance.ShowCodeCoverage = ShowCodeCoverage;
+            Settings.Instance.CompileBeforeRunning = CompileBeforeRunning;
+            Settings.Instance.Format = Format;
+            Settings.Instance.UseOpenCppCoverageRunner = OpenCppCoverage;
+            Settings.Instance.Verbosity = Verbosity;
 
-            Settings.Instance.UncoveredDarkBrushColor       = convert(UncoveredDarkBrush);
-            Settings.Instance.UncoveredDarkPenColor         = convert(UncoveredDarkPen);
-            Settings.Instance.CoveredDarkBrushColor         = convert(CoveredDarkBrush);
-            Settings.Instance.CoveredDarkPenColor           = convert(CoveredDarkPen);
-            Settings.Instance.PartialCoveredDarkBrushColor  = convert(PartialCoveredDarkBrush);
-            Settings.Instance.PartialCoveredDarkPenColor    = convert(PartialCoveredDarkPen);
+            Settings.Instance.UncoveredBrushColor = convert(UncoveredBrush);
+            Settings.Instance.UncoveredPenColor = convert(UncoveredPen);
+            Settings.Instance.CoveredBrushColor = convert(CoveredBrush);
+            Settings.Instance.CoveredPenColor = convert(CoveredPen);
+            Settings.Instance.PartialCoveredBrushColor = convert(PartialCoveredBrush);
+            Settings.Instance.PartialCoveredPenColor = convert(PartialCoveredPen);
+
+            Settings.Instance.UncoveredDarkBrushColor = convert(UncoveredDarkBrush);
+            Settings.Instance.UncoveredDarkPenColor = convert(UncoveredDarkPen);
+            Settings.Instance.CoveredDarkBrushColor = convert(CoveredDarkBrush);
+            Settings.Instance.CoveredDarkPenColor = convert(CoveredDarkPen);
+            Settings.Instance.PartialCoveredDarkBrushColor = convert(PartialCoveredDarkBrush);
+            Settings.Instance.PartialCoveredDarkPenColor = convert(PartialCoveredDarkPen);
 
             Settings.Instance.TriggerSettingsChanged();
         }

@@ -13,8 +13,8 @@ namespace NubiloSoft.CoverageExt.Data
 
     public class FileCoverageStats
     {
-        public UInt32 lineInsideFile  = 0;   // All lines
-        public UInt32 lineOfCodeFile  = 0;   // Lines where status coverage is possible
+        public UInt32 lineInsideFile = 0;   // All lines
+        public UInt32 lineOfCodeFile = 0;   // Lines where status coverage is possible
         public UInt32 lineCoveredFile = 0;   // Lines covered or partial
     }
 
@@ -38,6 +38,6 @@ namespace NubiloSoft.CoverageExt.Data
 
         UInt32 nbEntries();
 
-        void Parsing(string filename, string solutionDir);
+        void Parsing( string filename );
     }
 }

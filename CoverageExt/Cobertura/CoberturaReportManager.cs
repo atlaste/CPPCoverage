@@ -1,7 +1,7 @@
 ﻿extern alias EnvDTE;
+using NubiloSoft.CoverageExt.Data;
 using System;
 using System.IO;
-using NubiloSoft.CoverageExt.Data;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
@@ -16,13 +16,13 @@ namespace NubiloSoft.CoverageExt.Cobertura
             this.activeCoverageFilename = null;
         }
 
-        private EnvDTE.DTE dte;
-        private OutputWindow output;
+        private readonly EnvDTE.DTE dte;
+        private readonly OutputWindow output;
 
         private Data.ICoverageData activeCoverageReport;
         private string activeCoverageFilename;
 
-        private object lockObject = new object();
+        private readonly object lockObject = new object();
 
         public bool IsValid(Settings instance)
         {
@@ -82,7 +82,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                     if (activeCoverageReport == null)
                     {
                         output.WriteLine("Updating coverage results from: {0}", coverageFile);
-                        activeCoverageReport = Load(coverageFile, folder);
+                        activeCoverageReport = Load(coverageFile);
                         activeCoverageFilename = coverageFile;
                     }
                 }
@@ -92,7 +92,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             return activeCoverageReport;
         }
 
-        private ICoverageData Load(string filename, string solution)
+        private ICoverageData Load(string filename)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -102,7 +102,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 try
                 {
                     report = new Cobertura.CoberturaData();
-                    report.Parsing(filename, solution);
+                    report.Parsing(filename);
                 }
                 catch (Exception e)
                 {

@@ -1,8 +1,6 @@
 ﻿using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Threading;
-using System.Windows.Forms;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -15,8 +13,7 @@ namespace NubiloSoft.CoverageExt
             {
                 lock (windowLock)
                 {
-                    var d = dte as DTE2;
-                    if (d != null && d.ToolWindows != null && d.ToolWindows.OutputWindow != null)
+                    if (dte is DTE2 d && d.ToolWindows != null && d.ToolWindows.OutputWindow != null)
                     {
                         var o = d.ToolWindows.OutputWindow;
                         for (int i = 1; i <= o.OutputWindowPanes.Count; ++i)
@@ -41,8 +38,8 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private OutputWindowPane window;
-        private static object windowLock = new object();
+        private readonly OutputWindowPane window;
+        private static readonly object windowLock = new object();
 
         public void Clear()
         {
@@ -69,7 +66,7 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
-        private async System.Threading.Tasks.Task WriteLineAsync(string message) 
+        private async System.Threading.Tasks.Task WriteLineAsync(string message)
         {
             await Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 

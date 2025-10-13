@@ -1,10 +1,9 @@
-﻿using System;
-using System.ComponentModel.Composition;
-using EnvDTE;
-using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
+using System;
+using System.ComponentModel.Composition;
 using DTE = EnvDTE.DTE;
 
 

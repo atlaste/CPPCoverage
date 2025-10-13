@@ -33,7 +33,7 @@ namespace NubiloSoft.CoverageExt
                             }
                             mVsVersion = new Version(verName);
                         }
-                        catch (FileNotFoundException )
+                        catch (FileNotFoundException)
                         {
                             mVsVersion = new Version(0, 0); // Not running inside Visual Studio!
                         }

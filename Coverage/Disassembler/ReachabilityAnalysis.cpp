@@ -1,5 +1,6 @@
 #include "ReachabilityAnalysis.h"
 
+#include "../RuntimeOptions.h"
 #include "../Util.h"
 #include <iostream>
 #include "X86DisassemblerDecoder.h"
@@ -28,8 +29,11 @@ struct Helper
 		SIZE_T numberBytesRead;
 		if (!ReadProcessMemory(ptr, reinterpret_cast<LPVOID>(address + arg->offset), &result, 1, &numberBytesRead))
 		{
-			auto err = Util::GetLastErrorAsString();
-			std::cout << "Error reading memory from target process: " << err << std::endl;
+			if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+            {
+                auto err = Util::GetLastErrorAsString();
+                std::cout << "Error reading memory from target process: " << err << std::endl;
+            }
 			return -1;
 		}
 
@@ -174,8 +178,11 @@ ReachabilityAnalysis::ReachabilityAnalysis(HANDLE processHandle, DWORD64 methodS
 	SIZE_T numberBytesRead;
 	if (!ReadProcessMemory(processHandle, reinterpret_cast<LPVOID>(methodStart), data, numberBytes, &numberBytesRead))
 	{
-		auto err = Util::GetLastErrorAsString();
-		std::cout << "Error while reading symbol: " << err << std::endl;
+		if( RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error) )
+        {
+            auto err = Util::GetLastErrorAsString();
+            std::cout << "Error while reading symbol: " << err << std::endl;
+        }
 
 		delete[] data;
 		return;

@@ -12,153 +12,153 @@
 
 class MD5
 {
-	static const uint32_t MD5Length = 16;
+  static const uint32_t MD5Length = 16;
 
-	HCRYPTPROV _hProv = 0;
-	
-	struct Hash
-	{
-		HCRYPTHASH _handle = 0;
-		Hash(MD5& md5)
-		{
-			// Create Hash
-			if (!CryptCreateHash(md5._hProv, CALG_MD5, 0, 0, &_handle))
-			{
-				throw std::runtime_error(std::format("CryptCreateHash failed: {0}", GetLastError()));
-			}
-		}
+  HCRYPTPROV _hProv = 0;
 
-		void addData(const std::string& buffer, const std::streamsize readSize) const
-		{
-			assert( 0 < readSize && readSize <= static_cast<std::streamsize>(buffer.size()) );
-			if (!CryptHashData(_handle, reinterpret_cast<const BYTE*>(buffer.data()), static_cast<DWORD>(readSize), 0))
-			{
-				throw std::runtime_error(std::format("CryptHashData failed: {0}", GetLastError()));
-			}
-		}
+  struct Hash
+  {
+    HCRYPTHASH _handle = 0;
+    Hash(MD5& md5)
+    {
+      // Create Hash
+      if (!CryptCreateHash(md5._hProv, CALG_MD5, 0, 0, &_handle))
+      {
+        throw std::runtime_error(std::format("CryptCreateHash failed: {0}", GetLastError()));
+      }
+    }
 
-		std::string computeMd5() const
-		{
-			std::array<BYTE, MD5::MD5Length> encoding {{ 0 }};
+    void addData(const std::string& buffer, const std::streamsize readSize) const
+    {
+      assert(0 < readSize && readSize <= static_cast<std::streamsize>(buffer.size()));
+      if (!CryptHashData(_handle, reinterpret_cast<const BYTE*>(buffer.data()), static_cast<DWORD>(readSize), 0))
+      {
+        throw std::runtime_error(std::format("CryptHashData failed: {0}", GetLastError()));
+      }
+    }
 
-			std::string md5Hash;
-			md5Hash.reserve(MD5::MD5Length*2);
+    std::string computeMd5() const
+    {
+      std::array<BYTE, MD5::MD5Length> encoding{ { 0 } };
 
-			const std::string rgbDigits("0123456789abcdef");
-			DWORD cbHash = static_cast<DWORD>(encoding.size());
-			if (!CryptGetHashParam(_handle, HP_HASHVAL, encoding.data(), &cbHash, 0))
-			{
-				throw std::runtime_error(std::format("CryptHashData failed: {0}", GetLastError()));
-			}
-			assert(cbHash == encoding.size());
+      std::string md5Hash;
+      md5Hash.reserve(MD5::MD5Length * 2);
 
-			// To hex
-			for (const auto& c : encoding)
-			{
-				md5Hash.push_back(rgbDigits[c >> 4]);
-				md5Hash.push_back(rgbDigits[c & 0xf]);
-			}
+      const std::string rgbDigits("0123456789abcdef");
+      DWORD cbHash = static_cast<DWORD>(encoding.size());
+      if (!CryptGetHashParam(_handle, HP_HASHVAL, encoding.data(), &cbHash, 0))
+      {
+        throw std::runtime_error(std::format("CryptHashData failed: {0}", GetLastError()));
+      }
+      assert(cbHash == encoding.size());
 
-			return md5Hash;
-		}
+      // To hex
+      for (const auto& c : encoding)
+      {
+        md5Hash.push_back(rgbDigits[c >> 4]);
+        md5Hash.push_back(rgbDigits[c & 0xf]);
+      }
 
-		~Hash()
-		{
-			//Release Hash
-			CryptDestroyHash(_handle);
-		}
-	};
+      return md5Hash;
+    }
 
-// 	struct File
-// 	{
-// 		HANDLE _handle = nullptr;
-// 		File(const std::filesystem::path& filepath)
-// 		{
-// 			_handle = CreateFile(filepath.string().c_str(),
-// 				GENERIC_READ,
-// 				FILE_SHARE_READ,
-// 				NULL,
-// 				OPEN_EXISTING,
-// 				FILE_FLAG_SEQUENTIAL_SCAN,
-// 				NULL);
-// 			if (INVALID_HANDLE_VALUE == _handle)
-// 			{
-// 				throw std::runtime_error(std::format("Error opening file {0}\nError: {1}", filepath.string(), GetLastError()));
-// 			}
-// 		}
-// 
-// 		bool read(std::span<BYTE>& buffer, DWORD& readSize)
-// 		{
-// 			if (!ReadFile(_handle, buffer.data(), static_cast<DWORD>(buffer.size()), &readSize, nullptr))
-// 			{
-// 				throw std::runtime_error(std::format("ReadFile failed {0}", GetLastError()));
-// 			}
-// 			return readSize == 0;
-// 		}
-// 
-// 		~File()
-// 		{
-// 			CloseHandle(_handle);
-// 		}
-// 	};
+    ~Hash()
+    {
+      //Release Hash
+      CryptDestroyHash(_handle);
+    }
+  };
+
+  // 	struct File
+  // 	{
+  // 		HANDLE _handle = nullptr;
+  // 		File(const std::filesystem::path& filepath)
+  // 		{
+  // 			_handle = CreateFile(filepath.string().c_str(),
+  // 				GENERIC_READ,
+  // 				FILE_SHARE_READ,
+  // 				NULL,
+  // 				OPEN_EXISTING,
+  // 				FILE_FLAG_SEQUENTIAL_SCAN,
+  // 				NULL);
+  // 			if (INVALID_HANDLE_VALUE == _handle)
+  // 			{
+  // 				throw std::runtime_error(std::format("Error opening file {0}\nError: {1}", filepath.string(), GetLastError()));
+  // 			}
+  // 		}
+  // 
+  // 		bool read(std::span<BYTE>& buffer, DWORD& readSize)
+  // 		{
+  // 			if (!ReadFile(_handle, buffer.data(), static_cast<DWORD>(buffer.size()), &readSize, nullptr))
+  // 			{
+  // 				throw std::runtime_error(std::format("ReadFile failed {0}", GetLastError()));
+  // 			}
+  // 			return readSize == 0;
+  // 		}
+  // 
+  // 		~File()
+  // 		{
+  // 			CloseHandle(_handle);
+  // 		}
+  // 	};
 
 public:
 
-	MD5()
-	{
-		// Get handle to the crypto provider
-		if (!CryptAcquireContext(&_hProv,
-			NULL,
-			NULL,
-			PROV_RSA_FULL,
-			CRYPT_VERIFYCONTEXT))
-		{
-			throw std::runtime_error(std::format("CryptAcquireContext failed: {0}", GetLastError()) );
-		}
-	}
+  MD5()
+  {
+    // Get handle to the crypto provider
+    if (!CryptAcquireContext(&_hProv,
+                             NULL,
+                             NULL,
+                             PROV_RSA_FULL,
+                             CRYPT_VERIFYCONTEXT))
+    {
+      throw std::runtime_error(std::format("CryptAcquireContext failed: {0}", GetLastError()));
+    }
+  }
 
-	std::string encode(const std::filesystem::path& filepath)
-	{
-		//std::system(std::format("CertUtil -hashfile {0} MD5 > readMd5", filepath.string()).c_str());
-		//std::ostringstream ss;
-		//ss << std::ifstream("readMd5").rdbuf();
-		//return ss.str();
+  std::string encode(const std::filesystem::path& filepath)
+  {
+    //std::system(std::format("CertUtil -hashfile {0} MD5 > readMd5", filepath.string()).c_str());
+    //std::ostringstream ss;
+    //ss << std::ifstream("readMd5").rdbuf();
+    //return ss.str();
 
-		// Create hash system
-		Hash hash(*this);
+    // Create hash system
+    Hash hash(*this);
 
-		// Read Buffer of 1k
-		std::string buffer;
-		buffer.resize(1024 * 1024);
-		std::streamsize readBuffer = 0;
+    // Read Buffer of 1k
+    std::string buffer;
+    buffer.resize(1024 * 1024);
+    std::streamsize readBuffer = 0;
 
-		std::ifstream ifs;
-		ifs.open(filepath);
-		if (ifs.is_open())
-		{
-			while(ifs.read(buffer.data(), buffer.size()))
-			{
-				readBuffer = buffer.find('\0');
-				hash.addData(buffer, readBuffer == -1 ? buffer.size() : readBuffer);
-			}
-			
-			readBuffer = buffer.find('\0');
-			if(readBuffer > 0)
-			{
-				hash.addData(buffer, readBuffer);
-			}
+    std::ifstream ifs;
+    ifs.open(filepath);
+    if (ifs.is_open())
+    {
+      while (ifs.read(buffer.data(), buffer.size()))
+      {
+        readBuffer = buffer.find('\0');
+        hash.addData(buffer, readBuffer == -1 ? buffer.size() : readBuffer);
+      }
 
-			return hash.computeMd5();
-		}
-		else
-		{
-			return {};
-		}
-	}
+      readBuffer = buffer.find('\0');
+      if (readBuffer > 0)
+      {
+        hash.addData(buffer, readBuffer);
+      }
 
-	~MD5()
-	{
-		//Release context
-		CryptReleaseContext(_hProv, 0);
-	}
+      return hash.computeMd5();
+    }
+    else
+    {
+      return {};
+    }
+  }
+
+  ~MD5()
+  {
+    //Release context
+    CryptReleaseContext(_hProv, 0);
+  }
 };

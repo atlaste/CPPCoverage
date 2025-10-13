@@ -1,7 +1,7 @@
-﻿using System;
+﻿using NubiloSoft.CoverageExt.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using NubiloSoft.CoverageExt.Data;
 
 namespace NubiloSoft.CoverageExt.Native
 {
@@ -25,7 +25,8 @@ namespace NubiloSoft.CoverageExt.Native
 
             CoverageState IFileCoverageData.state(uint idLine)
             {
-                if (!vector.IsFound((int)idLine)) {
+                if (!vector.IsFound((int)idLine))
+                {
                     return CoverageState.Irrelevant;
                 }
                 return vector.IsSet((int)idLine) ? CoverageState.Covered : CoverageState.Uncovered;
@@ -81,7 +82,7 @@ namespace NubiloSoft.CoverageExt.Native
             }
         }
 
-        public void Parsing(string filename, string solutionDir)
+        public void Parsing( string filename )
         {
             // Get file date (for modified checks)
             FileDate = new System.IO.FileInfo(filename).LastWriteTimeUtc;

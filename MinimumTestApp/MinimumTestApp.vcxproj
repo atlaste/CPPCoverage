@@ -116,12 +116,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Test.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Library\Library.vcxproj">
       <Project>{1b468f45-09f6-4dce-8bdd-a831066f3175}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="source\IgnoreFileTest.cpp" />
+    <ClCompile Include="source\IgnoreFolder\FileTest.cpp" />
+    <ClCompile Include="source\Test.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\IgnoreFileTest.hpp" />
+    <ClInclude Include="source\IgnoreFolder\FileTest.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

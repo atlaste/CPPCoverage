@@ -1,19 +1,13 @@
-﻿using System;
+﻿using EnvDTE;
+using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using EnvDTE;
-using System.Collections.ObjectModel;
 
 namespace NubiloSoft.CoverageExt.Report
 {
@@ -38,9 +32,9 @@ namespace NubiloSoft.CoverageExt.Report
             }
         }
 
-        private Func<EnvDTE.DTE> dte;
+        private readonly Func<EnvDTE.DTE> dte;
 
-        private static object lockObject = new object();
+        private static readonly object lockObject = new object();
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
@@ -55,7 +49,7 @@ namespace NubiloSoft.CoverageExt.Report
             BindingOperations.EnableCollectionSynchronization(this.loaded, lockObject);
         }
 
-        private List<FileCoverage> loaded = new List<FileCoverage>();
+        private readonly List<FileCoverage> loaded = new List<FileCoverage>();
 
         public List<FileCoverage> LoadedData { get { return loaded; } }
 
@@ -178,7 +172,7 @@ namespace NubiloSoft.CoverageExt.Report
                 }
 
                 foreach (var item in dict.
-                    OrderBy((a)=>a.Key).
+                    OrderBy((a) => a.Key).
                     Where((a) => a.Value.Filename.IndexOf(".test", StringComparison.InvariantCultureIgnoreCase) < 0 && a.Value.Total > 0).
                     Select((a) => a.Value))
                 {
@@ -202,8 +196,7 @@ namespace NubiloSoft.CoverageExt.Report
             if (sender != null)
             {
                 DataGrid grid = sender as DataGrid;
-                var fc = grid.SelectedItem as FileCoverage;
-                if (fc != null && fc.Filename != null)
+                if (grid.SelectedItem is FileCoverage fc && fc.Filename != null)
                 {
                     string filename = fc.Filename;
 

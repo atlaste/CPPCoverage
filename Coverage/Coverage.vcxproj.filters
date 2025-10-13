@@ -56,5 +56,6 @@
     <None Include="Disassembler\X86GenInstrInfo.inc">
       <Filter>Disassembler</Filter>
     </None>
+    <None Include=".editorconfig" />
   </ItemGroup>
 </Project>

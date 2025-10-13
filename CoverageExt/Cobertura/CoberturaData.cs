@@ -1,8 +1,8 @@
-﻿using System;
+﻿using NubiloSoft.CoverageExt.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml;
-using NubiloSoft.CoverageExt.Data;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
@@ -24,7 +24,8 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
             CoverageState IFileCoverageData.state(uint idLine)
             {
-                if (!vector.IsFound((int)idLine)) {
+                if (!vector.IsFound((int)idLine))
+                {
                     return CoverageState.Irrelevant;
                 }
                 return vector.IsSet((int)idLine) ? CoverageState.Covered : CoverageState.Uncovered;
@@ -55,8 +56,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             int idx = filename.IndexOf('\\');
             string filenameWithoutDriveLetter = (idx >= 0) ? filename.Substring(idx) : filename;
 
-            FileCoverageData result = null;
-            lookup.TryGetValue(filenameWithoutDriveLetter, out result);
+            lookup.TryGetValue(filenameWithoutDriveLetter, out FileCoverageData result);
             return result;
         }
 
@@ -87,7 +87,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
         {
             filename = filename.Replace('/', '\\').ToLower();
             int idx = filename.IndexOf('\\');
-            string basefolder = (idx >= 0)?filename.Substring(0, idx+1):"\\";
+            string basefolder = (idx >= 0) ? filename.Substring(0, idx + 1) : "\\";
 
             foreach (var item in lookup)
             {
@@ -99,7 +99,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             }
         }
 
-        public void Parsing(string filename, string solutionDir)
+        public void Parsing(string filename)
         {
             // Start initializing the data
             source = null;

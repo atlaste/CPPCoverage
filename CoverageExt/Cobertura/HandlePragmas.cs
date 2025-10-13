@@ -25,7 +25,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             DISABLE_COVERAGE
         }
 
-        private static bool IsCoverageFlag( ReadOnlySpan<char> lineSpan, string coverageFlag )
+        private static bool IsCoverageFlag(ReadOnlySpan<char> lineSpan, string coverageFlag)
         {
             if (lineSpan.Length != coverageFlag.Length)
             {
@@ -35,21 +35,21 @@ namespace NubiloSoft.CoverageExt.Cobertura
             return lineSpan.StartsWith(coverageFlag.AsSpan());
         }
 
-        private static int FindNotWhitespaceIndex( ReadOnlySpan<char> lineSpan, int offset )
+        private static int FindNotWhitespaceIndex(ReadOnlySpan<char> lineSpan, int offset)
         {
             int idx = offset;
             while (idx < lineSpan.Length && char.IsWhiteSpace(lineSpan[idx])) idx++;
             return idx;
         }
 
-        private static int FindWhitespaceIndex( ReadOnlySpan<char> lineSpan )
+        private static int FindWhitespaceIndex(ReadOnlySpan<char> lineSpan)
         {
             int idx = 0;
             while (idx < lineSpan.Length && !char.IsWhiteSpace(lineSpan[idx])) idx++;
             return idx;
         }
 
-        private static ReadOnlySpan<char> GetBeginCoverageFlag( string line )
+        private static ReadOnlySpan<char> GetBeginCoverageFlag(string line)
         {
             // try to find #pragma (before pragma may be only whitespace)
             ReadOnlySpan<char> lineSpan = line.AsSpan().TrimStart();
@@ -72,7 +72,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             return ReadOnlySpan<char>.Empty;
         }
 
-        private static LineType GetLineType( string line )
+        private static LineType GetLineType(string line)
         {
             ReadOnlySpan<char> coverageBeginValue = GetBeginCoverageFlag(line);
             if (!coverageBeginValue.IsEmpty)
