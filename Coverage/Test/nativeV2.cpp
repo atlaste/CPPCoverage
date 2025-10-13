@@ -66,8 +66,7 @@ namespace TestFormat
 				options.OutputFile   = filename; /// Dummy valid value
 				options.ExportFormat = RuntimeOptions::ExportFormatType::NativeV2;
 				MergeRunnerV2 runner(options);
-				auto contentClean = runner.clean(ss.str());
-				auto dict = runner.createDictionnary(filename, contentClean);
+				auto dict = runner.createDictionary(filename, ss);
 				Assert::AreEqual(1ull, dict.size());
 
 				// Check dictionary
