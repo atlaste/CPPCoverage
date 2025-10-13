@@ -562,10 +562,17 @@ struct CoverageRunner
               std::cout << "Process exited with code: " << debugEvent.u.ExitProcess.dwExitCode << "." << std::endl;
             }
 
-            // Success application must return 0
-            executionSuccess &= (debugEvent.u.ExitProcess.dwExitCode == 0);
+            // Success application must return 0 --> Commented out per PR #97.
+            // executionSuccess &= (debugEvent.u.ExitProcess.dwExitCode == 0);
 
             processMap.erase(debugEvent.dwProcessId);
+            
+					  // Get only the latest RC code of latest process.
+					  // Here we consider all process depends of master process which must be released at the end.
+					  if( processMap.empty() )
+					  {
+						  executionSuccess = (debugEvent.u.ExitProcess.dwExitCode == 0);
+					  }
             continueDebugging = processMap.empty() ? false : true;
           }
           break;
