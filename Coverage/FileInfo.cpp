@@ -5,10 +5,8 @@
 #include <algorithm>
 #include <fstream>
 
-FileInfo::FileInfo(const std::string& filename)
+FileInfo::FileInfo(std::istream& ifs)
 {
-  std::ifstream ifs(filename);
-
   bool current = true;
 
   std::string line;
