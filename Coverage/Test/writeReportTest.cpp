@@ -90,6 +90,40 @@ namespace TestFormat
 			Assert::AreEqual(expectReport, ss.str());
 		}
 
+		TEST_METHOD(WriteReportNativeV2)
+		{
+			const std::string expectReport =
+				R"(<?xml version="1.0" encoding="utf-8"?>)""\n" \
+				R"(<CppCoverage version="2.0">)""\n" \
+				R"(	<directory path="C:\proj\src\">)""\n" \
+				R"(		<file path="srcFile.cpp" md5="a2bab6536c40355d0adbca65a76d94aa">)""\n" \
+				R"(			<stats nbLinesInFile="5" nbLinesOfCode="4" nbLinesCovered="3"/>)""\n" \
+				R"(			<coverage>BIACwAAAAIACwA==</coverage>)""\n" \
+				R"(		</file>)""\n" \
+				R"(		<file path="srcFile.h" md5="311f4a819681297456bb96840218f676">)""\n" \
+				R"(			<stats nbLinesInFile="2" nbLinesOfCode="2" nbLinesCovered="2"/>)""\n" \
+				R"(			<coverage>BoADgA==</coverage>)""\n" \
+				R"(		</file>)""\n" \
+				R"(	</directory>)""\n" \
+				R"(	<directory path="C:\proj\lib\">)""\n" \
+				R"(		<file path="libFile.cpp" md5="a4eabc0c3e65e7df3a3bb1ccc1adcd9f">)""\n" \
+				R"(			<stats nbLinesInFile="3" nbLinesOfCode="3" nbLinesCovered="0"/>)""\n" \
+				R"(			<coverage>AIAAgACA</coverage>)""\n" \
+				R"(		</file>)""\n" \
+				R"(		<file path="libFile.h" md5="67dec9250469e3c947656e54256e6a20">)""\n" \
+				R"(			<stats nbLinesInFile="3" nbLinesOfCode="3" nbLinesCovered="2"/>)""\n" \
+				R"(			<coverage>DMAHwACA</coverage>)""\n" \
+				R"(		</file>)""\n" \
+				R"(	</directory>)""\n" \
+				R"(</CppCoverage>)""\n";
+
+			FileCallbackInfo::MergedProfileInfoMap mergedProfileData;  // it doesn't matter, can be empty
+
+			std::stringstream ss;
+			fileCallbackInfo->WriteReport(RuntimeOptions::ExportFormatType::NativeV2, mergedProfileData, ss);
+			Assert::AreEqual(expectReport, ss.str());
+		}
+
 		TEST_METHOD(WriteReportCobertura)
 		{
 			const std::string expectReport =
