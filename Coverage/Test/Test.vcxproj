@@ -169,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="nativeV2.cpp" />
+    <ClCompile Include="writeReportTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".runsettings" />

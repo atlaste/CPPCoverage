@@ -38,7 +38,7 @@ private:
 
   LineType GetLineType(const std::string& line);
 public:
-  FileInfo(const std::string& filename);
+  FileInfo(std::istream& ifs);
 
   std::vector<bool> relevant;
   std::vector<FileLineInfo> lines;
