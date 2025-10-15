@@ -4,9 +4,11 @@ using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.VCProjectEngine;
 using NubiloSoft.CoverageExt.Data;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -233,6 +235,38 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
+        private List<string> GetCodePaths(VCProject vcproj)
+        {
+            var filePaths = new List<string>();
+            foreach (var file in vcproj.Files)
+            {
+                var dirName = Path.GetDirectoryName(file.FullPath);
+                if (!filePaths.Contains(dirName))
+                {
+                    filePaths.Add(dirName);
+                }
+            }
+
+            filePaths.Sort();
+
+            int index = 0;
+            string previousFolder = null;
+            while (index < filePaths.Count)
+            {
+                string folder = filePaths[index];
+
+                if (previousFolder != null && folder.StartsWith(previousFolder))
+                    filePaths.RemoveAt(index);
+                else
+                {
+                    previousFolder = folder;
+                    ++index;
+                }
+            }
+
+            return filePaths;
+        }
+
         private void RunCoverage(EnvDTE.DTE dte, OutputWindow outputWindow, VCProject vcproj, bool merge)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -287,11 +321,13 @@ namespace NubiloSoft.CoverageExt
 
                 if (command != null)
                 {
+                    var codePaths = GetCodePaths(vcproj);
                     var solutionFolder = System.IO.Path.GetDirectoryName(dte.Solution.FileName);
 
                     CoverageExecution executor = new CoverageExecution(dte, outputWindow);
                     executor.Start(
                         solutionFolder,
+                        codePaths,
                         platform,
                         System.IO.Path.GetDirectoryName(command),
                         System.IO.Path.GetFileName(command),
