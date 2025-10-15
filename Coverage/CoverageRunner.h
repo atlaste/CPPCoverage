@@ -992,7 +992,10 @@ struct CoverageRunner
     }
 
     // Write report of current execution
-    coverageContext.WriteReport(options.ExportFormat, mergedInfo, outputFile);
+    {
+      std::ofstream ofs(outputFile);
+      coverageContext.WriteReport(options.ExportFormat, mergedInfo, ofs);
+    }
 
     if (options.isAtLeastLevel(VerboseLevel::Info))
     {

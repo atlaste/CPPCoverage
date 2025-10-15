@@ -49,11 +49,14 @@ struct FileCallbackInfo
   std::string filename;
   std::string sourcePath;
 
-  std::unordered_map<std::string, std::unique_ptr<FileInfo>> lineData;
+  using MergedProfileInfoMap = std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>;
+  using FileInfoMap = std::unordered_map<std::string, std::unique_ptr<FileInfo>>;
+
+  FileInfoMap lineData;
 
   void Filter(RuntimeNotifications& notifications)
   {
-    std::unordered_map<std::string, std::unique_ptr<FileInfo>> newLineData;
+    FileInfoMap newLineData;
     for (auto& it : lineData)
     {
       if (!notifications.IgnoreFile(it.first))
@@ -110,7 +113,10 @@ struct FileCallbackInfo
     auto it = lineData.find(filename);
     if (it == lineData.end())
     {
-      auto newLineData = new FileInfo(filename);
+      std::ifstream ifs(filename);
+      auto newLineData = new FileInfo(ifs);
+      ifs.close();
+
       lineData[filename] = std::unique_ptr<FileInfo>(newLineData);
 
       return newLineData->LineInfo(size_t(lineNumber));
@@ -121,24 +127,21 @@ struct FileCallbackInfo
     }
   }
 
-  void WriteReport(RuntimeOptions::ExportFormatType exportFormat, std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>& mergedProfileInfo, const std::string& filename)
+  void WriteReport(RuntimeOptions::ExportFormatType exportFormat, const MergedProfileInfoMap& mergedProfileInfo, std::ostream& stream)
   {
     switch (exportFormat)
     {
-      case RuntimeOptions::Clover:    WriteClover(filename); break;
-      case RuntimeOptions::Cobertura: WriteCobertura(filename); break;
-      case RuntimeOptions::NativeV2:  WriteNativeV2(filename, mergedProfileInfo); break;
-      default: WriteNative(filename, mergedProfileInfo); break;
+      case RuntimeOptions::Clover:    WriteClover(stream); break;
+      case RuntimeOptions::Cobertura: WriteCobertura(stream); break;
+      case RuntimeOptions::NativeV2:  WriteNativeV2(stream); break;
+      default: WriteNative(stream, mergedProfileInfo); break;
     }
   }
 
 private:
 
-  void WriteClover(const std::string& filename)
+  void WriteClover(std::ostream& stream)
   {
-    std::string reportFilename = filename;
-    std::ofstream ofs(reportFilename);
-
     size_t totalFiles = 0;
     size_t coveredFiles = 0;
     size_t totalLines = 0;
@@ -163,19 +166,19 @@ private:
     }
 
     time_t t = time(0);   // get time now
-    ofs << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
-    ofs << "<clover generated=\"" << t << "\"  clover=\"3.1.5\">" << std::endl;
-    ofs << "<project timestamp=\"" << t << "\">" << std::endl;
-    ofs << "<metrics classes=\"0\" files=\"" << totalFiles << "\" packages=\"1\"  loc=\"" << totalLines << "\" ncloc = \"" << coveredLines << "\" ";
-    // ofs << "coveredstatements=\"300\" statements=\"500\" coveredmethods=\"50\" methods=\"80\" ";
-    // ofs << "coveredconditionals=\"100\" conditionals=\"120\" coveredelements=\"900\" elements=\"1000\" ";
-    ofs << "complexity=\"0\" />" << std::endl;
-    ofs << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\">" << std::endl;
+    stream << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
+    stream << "<clover generated=\"" << t << "\"  clover=\"3.1.5\">" << std::endl;
+    stream << "<project timestamp=\"" << t << "\">" << std::endl;
+    stream << "<metrics classes=\"0\" files=\"" << totalFiles << "\" packages=\"1\"  loc=\"" << totalLines << "\" ncloc = \"" << coveredLines << "\" ";
+    // stream << "coveredstatements=\"300\" statements=\"500\" coveredmethods=\"50\" methods=\"80\" ";
+    // stream << "coveredconditionals=\"100\" conditionals=\"120\" coveredelements=\"900\" elements=\"1000\" ";
+    stream << "complexity=\"0\" />" << std::endl;
+    stream << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\">" << std::endl;
     for (auto& it : lineData)
     {
       auto ptr = it.second.get();
 
-      ofs << "<file name=\"" << it.first << "\">" << std::endl;
+      stream << "<file name=\"" << it.first << "\">" << std::endl;
 
       for (size_t i = 0; i < ptr->numberLines; ++i)
       {
@@ -183,28 +186,25 @@ private:
         {
           if (ptr->lines[i].HitCount == ptr->lines[i].DebugCount)
           {
-            ofs << "<line num=\"" << i << "\" count=\"1\" type=\"stmt\"/>" << std::endl;
+            stream << "<line num=\"" << i << "\" count=\"1\" type=\"stmt\"/>" << std::endl;
           }
           else
           {
-            ofs << "<line num=\"" << i << "\" count=\"0\" type=\"stmt\"/>" << std::endl;
+            stream << "<line num=\"" << i << "\" count=\"0\" type=\"stmt\"/>" << std::endl;
           }
         }
       }
 
-      ofs << "</file>" << std::endl;
+      stream << "</file>" << std::endl;
     }
 
-    ofs << "</package>" << std::endl;
-    ofs << "</project>" << std::endl;
-    ofs << "</clover>" << std::endl;
+    stream << "</package>" << std::endl;
+    stream << "</project>" << std::endl;
+    stream << "</clover>" << std::endl;
   }
 
-  void WriteCobertura(const std::string& filename)
+  void WriteCobertura(std::ostream& stream)
   {
-    std::string reportFilename = filename;
-    std::ofstream ofs(reportFilename);
-
     std::unordered_set<char> sourceList;
 
     double total = 0;
@@ -228,12 +228,12 @@ private:
 
     double lineRate = covered / total;
 
-    ofs << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
-    ofs << "<coverage line-rate=\"" << lineRate << "\"" << " " << "version=\"\">" << std::endl;
-    ofs << "\t" << "<packages>" << std::endl;
+    stream << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
+    stream << "<coverage line-rate=\"" << lineRate << "\"" << " " << "version=\"\">" << std::endl;
+    stream << "\t" << "<packages>" << std::endl;
 
-    ofs << "\t\t" << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\" line-rate=\"" << lineRate << "\">" << std::endl;
-    ofs << "\t\t\t" << "<classes>" << std::endl;
+    stream << "\t\t" << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\" line-rate=\"" << lineRate << "\">" << std::endl;
+    stream << "\t\t\t" << "<classes>" << std::endl;
     for (auto& it : lineData)
     {
       auto ptr = it.second.get();
@@ -261,8 +261,8 @@ private:
 
       double lineRate = covered / total;
 
-      ofs << "\t\t\t\t" << "<class name=\"" << name << "\" filename=\"" << it.first.substr(2) << "\" line-rate=\"" << lineRate << "\">" << std::endl;
-      ofs << "\t\t\t\t\t" << "<lines>" << std::endl;
+      stream << "\t\t\t\t" << "<class name=\"" << name << "\" filename=\"" << it.first.substr(2) << "\" line-rate=\"" << lineRate << "\">" << std::endl;
+      stream << "\t\t\t\t\t" << "<lines>" << std::endl;
 
       for (size_t i = 0; i < ptr->numberLines; ++i)
       {
@@ -270,38 +270,36 @@ private:
         {
           if (ptr->lines[i].HitCount == ptr->lines[i].DebugCount)
           {
-            ofs << "\t\t\t\t\t\t" << "<line number=\"" << i + 1 << "\" hits=\"1\"/>" << std::endl;
+            stream << "\t\t\t\t\t\t" << "<line number=\"" << i + 1 << "\" hits=\"1\"/>" << std::endl;
           }
           else
           {
-            ofs << "\t\t\t\t\t\t" << "<line number=\"" << i + 1 << "\" hits=\"0\"/>" << std::endl;
+            stream << "\t\t\t\t\t\t" << "<line number=\"" << i + 1 << "\" hits=\"0\"/>" << std::endl;
           }
         }
       }
 
-      ofs << "\t\t\t\t\t" << "</lines>" << std::endl;
-      ofs << "\t\t\t\t" << "</class>" << std::endl;
+      stream << "\t\t\t\t\t" << "</lines>" << std::endl;
+      stream << "\t\t\t\t" << "</class>" << std::endl;
     }
 
-    ofs << "\t\t\t" << "</classes>" << std::endl;
-    ofs << "\t\t" << "</package>" << std::endl;
-    ofs << "\t" << "</packages>" << std::endl;
-    ofs << "\t<sources>" << std::endl;
+    stream << "\t\t\t" << "</classes>" << std::endl;
+    stream << "\t\t" << "</package>" << std::endl;
+    stream << "\t" << "</packages>" << std::endl;
+    stream << "\t<sources>" << std::endl;
     for (const auto& source : sourceList)
     {
-      ofs << "\t\t<source>" << source << ":</source>" << std::endl;
+      stream << "\t\t<source>" << source << ":</source>" << std::endl;
     }
-    ofs << "\t</sources>" << std::endl;
-    ofs << "</coverage>" << std::endl;
+    stream << "\t</sources>" << std::endl;
+    stream << "</coverage>" << std::endl;
   }
 
-  void WriteNative(const std::string& filename, std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>& mergedProfileInfo)
+  void WriteNative(std::ostream& stream, const MergedProfileInfoMap& mergedProfileInfo)
   {
-    std::ofstream ofs(filename);
-
     for (auto& it : lineData)
     {
-      ofs << "FILE: " << it.first << std::endl;
+      stream << "FILE: " << it.first << std::endl;
       auto ptr = it.second.get();
 
       std::string result;
@@ -333,27 +331,27 @@ private:
         result.push_back(state);
       }
 
-      ofs << "RES: " << result << std::endl;
+      stream << "RES: " << result << std::endl;
 
       auto profInfo = mergedProfileInfo.find(it.first);
 
       if (profInfo == mergedProfileInfo.end())
       {
-        ofs << "PROF: " << std::endl;
+        stream << "PROF: " << std::endl;
       }
       else
       {
-        ofs << "PROF: ";
+        stream << "PROF: ";
         for (auto& it : *(profInfo->second.get()))
         {
-          ofs << int(it.Deep) << ',' << int(it.Shallow) << ',';
+          stream << int(it.Deep) << ',' << int(it.Shallow) << ',';
         }
-        ofs << std::endl;
+        stream << std::endl;
       }
     }
   }
 
-  void WriteNativeV2(const std::string& filename, std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>& mergedProfileInfo)
+  void WriteNativeV2(std::ostream& stream)
   {
     const auto encodeCoverage = [](const FileInfo& info) -> FileCoverageV2
     {
@@ -372,11 +370,9 @@ private:
       return coverage;
     };
 
-    std::ofstream ofs(filename);
-
     MD5 md5;
 
-    FileCoverageV2::writeHeader(ofs);
+    FileCoverageV2::writeHeader(stream);
 
     std::vector<std::string> filepaths;
     filepaths.reserve(lineData.size());
@@ -408,19 +404,19 @@ private:
         if (!dirPartAdded && !dirPath.empty())
         {
           dirPartAdded = true;
-          FileCoverageV2::openDirectory(ofs, dirPath);
+          FileCoverageV2::openDirectory(stream, dirPath);
         }
 
         auto coverage = encodeCoverage(*it.second.get());
         coverage.md5Code = md5.encode(it.first);
-        coverage.write(filepath, ofs);
+        coverage.write(filepath, stream);
 
         filepaths.erase(std::remove(filepaths.begin(), filepaths.end(), it.first), filepaths.end());
       }
 
       if (dirPartAdded && !dirPath.empty())
       {
-        FileCoverageV2::closeDirectory(ofs);
+        FileCoverageV2::closeDirectory(stream);
       }
     }
 
@@ -441,7 +437,6 @@ private:
       }
     }
 
-    FileCoverageV2::writeFooter(ofs);
-    ofs.close();
+    FileCoverageV2::writeFooter(stream);
   }
 };
