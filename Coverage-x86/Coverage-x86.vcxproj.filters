@@ -5,53 +5,5 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Disassembler">
-      <UniqueIdentifier>{701ca765-1c95-4bb0-b030-4ba6c4a3640b}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\Coverage\FileLineInfo.h" />
-    <ClInclude Include="..\Coverage\RuntimeOptions.h" />
-    <ClInclude Include="..\Coverage\Util.h" />
-    <ClInclude Include="..\Coverage\BreakpointData.h" />
-    <ClInclude Include="..\Coverage\CoverageRunner.h" />
-    <ClInclude Include="..\Coverage\FileCallbackInfo.h" />
-    <ClInclude Include="..\Coverage\FileInfo.h" />
-    <ClInclude Include="..\Coverage\Disassembler\X86DisassemblerDecoder.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Coverage\Disassembler\X86DisassemblerDecoderCommon.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Coverage\Disassembler\ReachabilityAnalysis.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Coverage\RuntimeNotifications.h" />
-    <ClInclude Include="..\Coverage\MergeRunner.h" />
-    <ClInclude Include="..\Coverage\base64.h" />
-    <ClInclude Include="..\Coverage\FileCoverageV2.h" />
-    <ClInclude Include="..\Coverage\md5.h" />
-    <ClInclude Include="..\Coverage\MergeRunnerV1.h" />
-    <ClInclude Include="..\Coverage\MergeRunnerV2.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\Coverage\Main.cpp" />
-    <ClCompile Include="..\Coverage\Disassembler\ReachabilityAnalysis.cpp">
-      <Filter>Disassembler</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Coverage\Disassembler\X86DisassemblerDecoder.cpp">
-      <Filter>Disassembler</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Coverage\FileInfo.cpp" />
-    <ClCompile Include="..\Coverage\MergeRunner.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Coverage\Disassembler\X86GenDisassemblerTables.inc">
-      <Filter>Disassembler</Filter>
-    </None>
-    <None Include="..\Coverage\Disassembler\X86GenInstrInfo.inc">
-      <Filter>Disassembler</Filter>
-    </None>
-    <None Include="..\Coverage\.editorconfig" />
   </ItemGroup>
 </Project>

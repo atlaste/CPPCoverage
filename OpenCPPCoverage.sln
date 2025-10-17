@@ -36,7 +36,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Coverage\Test\Test.vcxproj", "{CC47FB0B-0F7B-4C92-A0EF-07C922A28D87}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shared", "Coverage\Shared\Shared.vcxitems", "{9D16D9C8-4C07-40CC-96DC-F0FEFC8C33B3}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Coverage\Shared\Shared.vcxitems*{70397440-c4f5-4091-8dbe-f2ffe6107d2d}*SharedItemsImports = 4
+		Coverage\Shared\Shared.vcxitems*{9d16d9c8-4c07-40cc-96dc-f0fefc8c33b3}*SharedItemsImports = 9
+		Coverage\Shared\Shared.vcxitems*{bab94fd2-1956-45b8-8d2f-904519d7ffa4}*SharedItemsImports = 4
+		Coverage\Shared\Shared.vcxitems*{cc47fb0b-0f7b-4c92-a0ef-07c922a28d87}*SharedItemsImports = 4
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -137,6 +145,7 @@ Global
 		{BAB94FD2-1956-45B8-8D2F-904519D7FFA4} = {8A6341B3-9141-4255-8C2B-38343873451F}
 		{BF2ED12B-E0FC-4FD1-8F95-CEC239453846} = {7A7E6ED9-8154-4643-A506-1E1714A42F13}
 		{CC47FB0B-0F7B-4C92-A0EF-07C922A28D87} = {8A6341B3-9141-4255-8C2B-38343873451F}
+		{9D16D9C8-4C07-40CC-96DC-F0FEFC8C33B3} = {8A6341B3-9141-4255-8C2B-38343873451F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B6F6F243-9A1D-4173-BE73-D10A344BA683}

@@ -5,57 +5,5 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Disassembler">
-      <UniqueIdentifier>{61466815-0264-4d18-81fc-e6f4620e6882}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Disassembler\X86DisassemblerDecoder.cpp">
-      <Filter>Disassembler</Filter>
-    </ClCompile>
-    <ClCompile Include="Disassembler\ReachabilityAnalysis.cpp">
-      <Filter>Disassembler</Filter>
-    </ClCompile>
-    <ClCompile Include="MergeRunner.cpp" />
-    <ClCompile Include="FileInfo.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Util.h" />
-    <ClInclude Include="FileLineInfo.h" />
-    <ClInclude Include="FileInfo.h" />
-    <ClInclude Include="BreakpointData.h" />
-    <ClInclude Include="FileCallbackInfo.h" />
-    <ClInclude Include="CoverageRunner.h" />
-    <ClInclude Include="RuntimeOptions.h" />
-    <ClInclude Include="ProcessInfo.h" />
-    <ClInclude Include="CallbackInfo.h" />
-    <ClInclude Include="StackTrace.h" />
-    <ClInclude Include="ProfileNode.h" />
-    <ClInclude Include="Disassembler\X86DisassemblerDecoderCommon.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
-    <ClInclude Include="Disassembler\X86DisassemblerDecoder.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
-    <ClInclude Include="Disassembler\ReachabilityAnalysis.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
-    <ClInclude Include="RuntimeNotifications.h" />
-    <ClInclude Include="MergeRunner.h" />
-    <ClInclude Include="MergeRunnerV2.h" />
-    <ClInclude Include="MergeRunnerV1.h" />
-    <ClInclude Include="md5.h" />
-    <ClInclude Include="base64.h" />
-    <ClInclude Include="FileCoverageV2.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Disassembler\X86GenDisassemblerTables.inc">
-      <Filter>Disassembler</Filter>
-    </None>
-    <None Include="Disassembler\X86GenInstrInfo.inc">
-      <Filter>Disassembler</Filter>
-    </None>
-    <None Include=".editorconfig" />
   </ItemGroup>
 </Project>

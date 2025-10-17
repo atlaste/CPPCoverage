@@ -55,6 +55,7 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
+    <Import Project="Shared\Shared.vcxitems" Label="Shared" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -136,41 +137,6 @@
       <AdditionalDependencies>dbghelp.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="Disassembler\ReachabilityAnalysis.cpp" />
-    <ClCompile Include="Disassembler\X86DisassemblerDecoder.cpp" />
-    <ClCompile Include="FileInfo.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MergeRunner.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="base64.h" />
-    <ClInclude Include="BreakpointData.h" />
-    <ClInclude Include="CallbackInfo.h" />
-    <ClInclude Include="CoverageRunner.h" />
-    <ClInclude Include="Disassembler\ReachabilityAnalysis.h" />
-    <ClInclude Include="Disassembler\X86DisassemblerDecoder.h" />
-    <ClInclude Include="Disassembler\X86DisassemblerDecoderCommon.h" />
-    <ClInclude Include="FileCallbackInfo.h" />
-    <ClInclude Include="FileCoverageV2.h" />
-    <ClInclude Include="FileInfo.h" />
-    <ClInclude Include="FileLineInfo.h" />
-    <ClInclude Include="md5.h" />
-    <ClInclude Include="MergeRunner.h" />
-    <ClInclude Include="MergeRunnerV1.h" />
-    <ClInclude Include="MergeRunnerV2.h" />
-    <ClInclude Include="ProcessInfo.h" />
-    <ClInclude Include="ProfileNode.h" />
-    <ClInclude Include="RuntimeNotifications.h" />
-    <ClInclude Include="RuntimeOptions.h" />
-    <ClInclude Include="StackTrace.h" />
-    <ClInclude Include="Util.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include=".editorconfig" />
-    <None Include="Disassembler\X86GenDisassemblerTables.inc" />
-    <None Include="Disassembler\X86GenInstrInfo.inc" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
