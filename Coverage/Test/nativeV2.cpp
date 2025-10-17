@@ -52,7 +52,8 @@ namespace TestFormat
 				Assert::AreEqual(reference, merge._code);
 				Assert::AreEqual(coverage._nbLinesFile, merge._nbLinesFile);
 				Assert::AreEqual(coverage._nbLinesCode, merge._nbLinesCode);
-				Assert::AreEqual(5ull, merge._nbLinesCovered);
+				const size_t EXPECT_LINES_COVERED = 5;
+				Assert::AreEqual(EXPECT_LINES_COVERED, merge._nbLinesCovered);
 
 				// Write data
 				const std::string filename("demo");
@@ -77,7 +78,8 @@ namespace TestFormat
 				options.ExportFormat = RuntimeOptions::ExportFormatType::NativeV2;
 				MergeRunnerV2 runner(options);
 				auto dict = runner.createDictionary(filename, ss);
-				Assert::AreEqual(1ull, dict.size());
+				const size_t EXPECT_DICT_SIZE = 1;
+				Assert::AreEqual(EXPECT_DICT_SIZE, dict.size());
 
 				// Check dictionary
 				const auto& saved = dict[dirName][filename];
