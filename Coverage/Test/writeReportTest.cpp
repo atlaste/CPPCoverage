@@ -96,6 +96,37 @@ namespace TestFormat
 			WriteReport(expectReport, RuntimeOptions::ExportFormatType::Native, mergedProfileData);
 		}
 
+		TEST_METHOD(WriteReportNativeV2)
+		{
+			const std::string expectReport =
+				R"(<?xml version="1.0" encoding="utf-8"?>)""\n" \
+				R"(<CppCoverage version="2.0">)""\n" \
+				R"(	<directory path="C:\proj\src\">)""\n" \
+				R"(		<file path="srcFile.cpp" md5="">)""\n" \
+				R"(			<stats nbLinesInFile="5" nbLinesOfCode="4" nbLinesCovered="3"/>)""\n" \
+				R"(			<coverage>BIACwAAAAIACwA==</coverage>)""\n" \
+				R"(		</file>)""\n" \
+				R"(		<file path="srcFile.h" md5="">)""\n" \
+				R"(			<stats nbLinesInFile="2" nbLinesOfCode="2" nbLinesCovered="2"/>)""\n" \
+				R"(			<coverage>BoADgA==</coverage>)""\n" \
+				R"(		</file>)""\n" \
+				R"(	</directory>)""\n" \
+				R"(	<directory path="C:\proj\lib\">)""\n" \
+				R"(		<file path="libFile.cpp" md5="">)""\n" \
+				R"(			<stats nbLinesInFile="3" nbLinesOfCode="3" nbLinesCovered="0"/>)""\n" \
+				R"(			<coverage>AIAAgACA</coverage>)""\n" \
+				R"(		</file>)""\n" \
+				R"(		<file path="libFile.h" md5="">)""\n" \
+				R"(			<stats nbLinesInFile="3" nbLinesOfCode="3" nbLinesCovered="2"/>)""\n" \
+				R"(			<coverage>DMAHwACA</coverage>)""\n" \
+				R"(		</file>)""\n" \
+				R"(	</directory>)""\n" \
+				R"(</CppCoverage>)""\n";
+
+			FileCallbackInfo::MergedProfileInfoMap mergedProfileData;  // it doesn't matter, can be empty
+			WriteReport(expectReport, RuntimeOptions::ExportFormatType::NativeV2, mergedProfileData);
+		}
+
 		TEST_METHOD(WriteReportCobertura)
 		{
 			const std::string expectReport =
