@@ -21,21 +21,9 @@ private:
     DISABLE_COVERAGE
   };
 
-  bool IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize,
-                      const std::string_view& coverageFlag)
-  {
-    if (iterSize != coverageFlag.size())
-    {
-      return false;
-    }
-
-    return std::equal(coverageFlag.begin(), coverageFlag.end(), iter);
-  }
-
+  bool IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize, const std::string_view& coverageFlag);
   bool StringStartsWith(const std::string::const_iterator& start, const std::string::const_iterator& end, const std::string_view& prefix);
-
   std::string::const_iterator GetBeginCoverageFlag(const std::string& line);
-
   LineType GetLineType(const std::string& line);
 public:
   FileInfo(std::istream& ifs);

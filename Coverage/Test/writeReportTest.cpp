@@ -1,17 +1,7 @@
 #include "CppUnitTest.h"
 #include <SDKDDKVer.h>
-#include <memory>
 
 #include "FileCallbackInfo.h"
-
-#ifndef NOMINMAX
-#	define NOMINMAX
-#	include <Windows.h>
-#endif
-
-#pragma warning(disable: 4091)
-#include <DbgHelp.h>
-#pragma warning(default: 4091)
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
