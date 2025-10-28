@@ -168,6 +168,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FileInfoTest.cpp" />
     <ClCompile Include="nativeV2.cpp" />
     <ClCompile Include="writeReportTest.cpp" />
   </ItemGroup>
