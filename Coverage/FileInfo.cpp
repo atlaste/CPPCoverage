@@ -35,6 +35,16 @@ FileInfo::FileInfo(std::istream& ifs)
   lines.resize(numberLines);
 }
 
+bool FileInfo::IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize, const std::string_view& coverageFlag)
+{
+  if (iterSize != coverageFlag.size())
+  {
+    return false;
+  }
+
+  return std::equal(coverageFlag.begin(), coverageFlag.end(), iter);
+}
+
 bool FileInfo::StringStartsWith(const std::string::const_iterator& start, const std::string::const_iterator& end, const std::string_view& prefix)
 {
   const auto distance = std::distance(start, end);
@@ -90,18 +100,7 @@ FileLineInfo* FileInfo::LineInfo(size_t lineNumber)
   // PDB lineNumbers are 1-based; we work 0-based.
   --lineNumber;
 
-  if (lineNumber < numberLines)
-  {
-    if (relevant[lineNumber])
-    {
-      return lines.data() + lineNumber;
-    }
-    else
-    {
-      return nullptr;
-    }
-  }
-  else
+  if (lineNumber >= numberLines)
   {
     // Check for the secret 0xFeeFee line number that hides stuff. Also, the lineNumber == numberLines happens 
     // a lot, but is actually out-of-bounds. We ignore both.
@@ -118,4 +117,6 @@ FileLineInfo* FileInfo::LineInfo(size_t lineNumber)
 
     return nullptr;
   }
+
+  return relevant[lineNumber] ? lines.data() + lineNumber : nullptr;
 }
