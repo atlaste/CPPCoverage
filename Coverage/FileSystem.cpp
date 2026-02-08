@@ -23,6 +23,15 @@ namespace FileSystem
       ifs.read(buffer.data(), buffer.size());
       return ifs.gcount();
     }
+
+    bool ReadLine(std::string& line) override
+    {
+      if (!ifs.good())
+        return false;
+
+      std::getline(ifs, line);
+      return true;
+    }
   private:
     std::ifstream ifs;
   };
@@ -84,6 +93,28 @@ namespace FileSystem
       memcpy(buffer.data(), contain.c_str() + offset, toRead);
       offset += toRead;
       return toRead;
+    }
+
+    bool ReadLine(std::string& line) override
+    {
+      if (!IsOpen())
+        return false;
+
+      const auto& contain = memory.value();
+      if (offset >= contain.size())
+        return false;
+
+      auto endLine = contain.find('\n', offset);
+      if (endLine == std::string::npos)
+      {
+        line.assign(contain.c_str() + offset);
+        offset = contain.size();
+        return true;
+      }
+
+      line.assign(contain.c_str() + offset, endLine - offset);
+      offset = endLine + 1;
+      return true;
     }
   private:
     std::optional<std::string> memory;

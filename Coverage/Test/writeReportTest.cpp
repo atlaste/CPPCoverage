@@ -42,10 +42,9 @@ namespace TestFormat
 				return arrayFileLineInfo;
 			};
 
-			auto addFile = [](FileCallbackInfo& fileCallbackInfo, const std::string filename, const std::vector<FileLineInfo>& lines)
+			auto addFile = [](FileCallbackInfo& fileCallbackInfo, const std::string& filename, const std::vector<FileLineInfo>& lines)
 			{
-				std::istringstream iss{};
-				auto fileInfo = new FileInfo(iss);
+				auto fileInfo = new FileInfo(filename);
 				fileInfo->relevant.assign(lines.size(), true);
 				fileInfo->numberLines = lines.size();
 				fileInfo->lines = lines;

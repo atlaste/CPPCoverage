@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "FileInfo.h"
+#include "FileSystem.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -32,9 +33,18 @@ namespace TestFile
 {
 	TEST_CLASS(TestFileInfo)
 	{
-		void DoTest(const std::vector<bool> expectRelevant, std::stringstream& fileContain)
+		static constexpr char TEST_FILENAME[] = "C:\\proj\\src\\file.cpp";
+	public:
+		TEST_CLASS_CLEANUP(CleanUp)
 		{
-			FileInfo fileInfo(fileContain);
+			FileSystem::DeleteTestFiles();
+		}
+
+		void DoTest(const std::vector<bool> expectRelevant, const std::stringstream& fileContain)
+		{
+			FileSystem::CreateTestFile(TEST_FILENAME, fileContain.str());
+
+			FileInfo fileInfo(TEST_FILENAME);
 			Assert::AreEqual(expectRelevant.size(), fileInfo.numberLines);
 			Assert::AreEqual(expectRelevant, fileInfo.relevant);
 

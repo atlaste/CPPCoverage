@@ -8,6 +8,7 @@ class IFile
 public:
   virtual bool IsOpen() const = 0;
   virtual std::streamsize Read(std::string& buffer) = 0;
+  virtual bool ReadLine(std::string& line) = 0;
 };
 
 using IFilePtr = std::shared_ptr<IFile>;
