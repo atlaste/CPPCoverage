@@ -100,11 +100,11 @@ public:
     {
       while (ifs.read(buffer.data(), buffer.size()))
       {
-        readBuffer = buffer.find('\0');
-        hash.addData(buffer, readBuffer == -1 ? buffer.size() : readBuffer);
+        readBuffer = ifs.gcount();
+        hash.addData(buffer, readBuffer);
       }
 
-      readBuffer = buffer.find('\0');
+      readBuffer = ifs.gcount();
       if (readBuffer > 0)
       {
         hash.addData(buffer, readBuffer);
