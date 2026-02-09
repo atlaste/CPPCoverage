@@ -2,6 +2,8 @@
 #include <windows.h>
 #include <Wincrypt.h>
 
+#include "FileSystem.h"
+
 #include <array>
 #include <cassert>
 #include <cstdio>
@@ -84,7 +86,7 @@ public:
     }
   }
 
-  std::string encode(const std::filesystem::path& filepath)
+  std::string encode(const std::string& filepath)
   {
     // Create hash system
     Hash hash(*this);
@@ -92,22 +94,15 @@ public:
     // Read Buffer of 1k
     std::string buffer;
     buffer.resize(1024 * 1024);
-    std::streamsize readBuffer = 0;
 
-    std::ifstream ifs;
-    ifs.open(filepath);
-    if (ifs.is_open())
+    auto ifs = FileSystem::OpenFile(filepath);
+    if (ifs->IsOpen())
     {
-      while (ifs.read(buffer.data(), buffer.size()))
+      while (true)
       {
-        readBuffer = ifs.gcount();
-        hash.addData(buffer, readBuffer);
-      }
-
-      readBuffer = ifs.gcount();
-      if (readBuffer > 0)
-      {
-        hash.addData(buffer, readBuffer);
+        const auto readBytes = ifs->Read(buffer);
+        if (readBytes == 0) break;
+        hash.addData(buffer, readBytes);
       }
 
       return hash.computeMd5();
