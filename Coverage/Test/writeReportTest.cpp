@@ -2,6 +2,7 @@
 #include <SDKDDKVer.h>
 
 #include "FileCallbackInfo.h"
+#include "FileSystem.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -9,7 +10,25 @@ namespace TestFormat
 {
 	TEST_CLASS(TestWriteReport)
 	{
-	public:
+		static inline FileCallbackInfo* fileCallbackInfo = nullptr;
+
+		static std::vector<FileLineInfo> createFileLineInfoArray(const std::vector<std::tuple<uint16_t, uint16_t>>& lineInfo)
+		{
+			std::vector<FileLineInfo> arrayFileLineInfo;
+			arrayFileLineInfo.resize(lineInfo.size());
+			for (unsigned i = 0; i < lineInfo.size(); i++)
+			{
+				arrayFileLineInfo[i].DebugCount = std::get<0>(lineInfo.at(i));
+				arrayFileLineInfo[i].HitCount = std::get<1>(lineInfo.at(i));
+			}
+			return arrayFileLineInfo;
+		}
+
+		static void addFile(FileCallbackInfo& fileCallbackInfo, const std::string& filename, const std::vector<FileLineInfo>& lines)
+		{
+			fileCallbackInfo.lineData[filename] = std::make_unique<FileInfo>(filename);
+			fileCallbackInfo.lineData[filename]->lines = lines;
+		}
 
 		TEST_CLASS_INITIALIZE(Init)
 		{
@@ -19,6 +38,22 @@ namespace TestFormat
 			options.CodePaths.push_back("C:\\proj\\lib\\");
 
 			options.PackageName = "MyPackage.exe";
+
+			// create test files
+			FileSystem::CreateTestFile("C:\\proj\\src\\srcFile.cpp", "first line\nsecond line\nthird line\nfourth line\nfifth line");
+			FileSystem::CreateTestFile("C:\\proj\\src\\srcFile.h", "first line\nsecond line");
+			FileSystem::CreateTestFile("C:\\proj\\lib\\libFile.cpp", "first line\nsecond line\nthird line");
+			FileSystem::CreateTestFile("C:\\proj\\lib\\libFile.h", "1st line\n2nd line\n3rd line");
+
+			// create instance of FileCallbackInfo
+			fileCallbackInfo = new FileCallbackInfo("report.txt");
+			Assert::IsNotNull(fileCallbackInfo);
+
+			// add informations about test files
+			addFile(*fileCallbackInfo, "C:\\proj\\src\\srcFile.cpp", createFileLineInfoArray({ {4, 4}, {4, 2}, {0, 0}, {4, 0}, {4, 2} }));
+			addFile(*fileCallbackInfo, "C:\\proj\\src\\srcFile.h", createFileLineInfoArray({ {6, 6}, {3, 3} }));
+			addFile(*fileCallbackInfo, "C:\\proj\\lib\\libFile.cpp", createFileLineInfoArray({ {7, 0}, {4, 0}, {2, 0} }));
+			addFile(*fileCallbackInfo, "C:\\proj\\lib\\libFile.h", createFileLineInfoArray({ {18, 12}, {14, 7}, {3, 0} }));
 		}
 
 		TEST_CLASS_CLEANUP(CleanUp)
@@ -26,43 +61,10 @@ namespace TestFormat
 			auto& options = RuntimeOptions::Instance();
 			options.CodePaths.clear();
 			options.PackageName.clear();
-		}
 
-		void WriteReport(const std::string& expectReport, RuntimeOptions::ExportFormatType exportFormat, const FileCallbackInfo::MergedProfileInfoMap& mergedProfileData)
-		{
-			auto createFileLineInfoArray = [](const std::vector<std::tuple<uint16_t, uint16_t>>& lineInfo) -> std::vector<FileLineInfo>
-			{
-				std::vector<FileLineInfo> arrayFileLineInfo;
-				arrayFileLineInfo.resize(lineInfo.size());
-				for (unsigned i = 0; i < lineInfo.size(); i++)
-				{
-					arrayFileLineInfo[i].DebugCount = std::get<0>(lineInfo.at(i));
-					arrayFileLineInfo[i].HitCount = std::get<1>(lineInfo.at(i));
-				}
-				return arrayFileLineInfo;
-			};
+			FileSystem::DeleteTestFiles();
 
-			auto addFile = [](FileCallbackInfo& fileCallbackInfo, const std::string& filename, const std::vector<FileLineInfo>& lines)
-			{
-				auto fileInfo = new FileInfo(filename);
-				fileInfo->relevant.assign(lines.size(), true);
-				fileInfo->numberLines = lines.size();
-				fileInfo->lines = lines;
-
-				fileCallbackInfo.lineData[filename] = std::unique_ptr<FileInfo>(fileInfo);
-			};
-
-			FileCallbackInfo fileCallbackInfo("report.txt");
-
-			addFile(fileCallbackInfo, "C:\\proj\\src\\srcFile.cpp", createFileLineInfoArray({ {4, 4}, {4, 2}, {0, 0}, {4, 0}, {4, 2} }));
-			addFile(fileCallbackInfo, "C:\\proj\\src\\srcFile.h", createFileLineInfoArray({ {6, 6}, {3, 3} }));
-			addFile(fileCallbackInfo, "C:\\proj\\lib\\libFile.cpp", createFileLineInfoArray({ {7, 0}, {4, 0}, {2, 0} }));
-			addFile(fileCallbackInfo, "C:\\proj\\lib\\libFile.h", createFileLineInfoArray({ {18, 12}, {14, 7}, {3, 0} }));
-
-			std::stringstream ss;
-			fileCallbackInfo.WriteReport(exportFormat, mergedProfileData, ss);
-
-			Assert::AreEqual(expectReport, ss.str());
+			delete fileCallbackInfo;
 		}
 
 		TEST_METHOD(WriteReportNativeWithoutProfileData)
@@ -82,7 +84,10 @@ namespace TestFormat
 				"PROF: \n";
 
 			FileCallbackInfo::MergedProfileInfoMap mergedProfileData;
-			WriteReport(expectReport, RuntimeOptions::ExportFormatType::Native, mergedProfileData);
+
+			std::stringstream ss;
+			fileCallbackInfo->WriteReport(RuntimeOptions::ExportFormatType::Native, mergedProfileData, ss);
+			Assert::AreEqual(expectReport, ss.str());
 		}
 
 		TEST_METHOD(WriteReportCobertura)
@@ -130,7 +135,10 @@ namespace TestFormat
 				R"(</coverage>)""\n";
 
 			FileCallbackInfo::MergedProfileInfoMap mergedProfileData;  // it doesn't matter, can be empty
-			WriteReport(expectReport, RuntimeOptions::ExportFormatType::Cobertura, mergedProfileData);
+
+			std::stringstream ss;
+			fileCallbackInfo->WriteReport(RuntimeOptions::ExportFormatType::Cobertura, mergedProfileData, ss);
+			Assert::AreEqual(expectReport, ss.str());
 		}
 	};
 }
