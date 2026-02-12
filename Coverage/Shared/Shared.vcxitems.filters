@@ -1,25 +1,36 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\FileInfo.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Main.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\MergeRunner.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Disassembler\ReachabilityAnalysis.cpp">
       <Filter>Disassembler</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Disassembler\X86DisassemblerDecoder.cpp">
       <Filter>Disassembler</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\FileInfo.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\FileSystem.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Main.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\MergeRunner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\base64.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\BreakpointData.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\CallbackInfo.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\CoverageRunner.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Disassembler\ReachabilityAnalysis.h">
+      <Filter>Disassembler</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Disassembler\X86DisassemblerDecoder.h">
+      <Filter>Disassembler</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\Disassembler\X86DisassemblerDecoderCommon.h">
+      <Filter>Disassembler</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\FileCallbackInfo.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\FileCoverageV2.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\FileInfo.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\FileLineInfo.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\FileSystem.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\md5.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\MergeRunner.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\MergeRunnerV1.h" />
@@ -30,15 +41,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\RuntimeOptions.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\StackTrace.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Util.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Disassembler\ReachabilityAnalysis.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Disassembler\X86DisassemblerDecoder.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\Disassembler\X86DisassemblerDecoderCommon.h">
-      <Filter>Disassembler</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\.editorconfig" />

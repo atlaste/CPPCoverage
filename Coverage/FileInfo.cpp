@@ -1,16 +1,18 @@
 #include "FileInfo.h"
+#include "FileSystem.h"
 #include "RuntimeOptions.h"
 #include "Util.h"
 
 #include <algorithm>
 #include <fstream>
 
-FileInfo::FileInfo(std::istream& ifs)
+FileInfo::FileInfo(const std::string& filename)
 {
   bool current = true;
 
   std::string line;
-  while (std::getline(ifs, line))
+  auto file = FileSystem::OpenFile(filename);
+  while (file->ReadLine(line))
   {
     // Process str
     LineType lineType = GetLineType(line);

@@ -2,6 +2,8 @@
 #include <windows.h>
 #include <Wincrypt.h>
 
+#include "FileSystem.h"
+
 #include <array>
 #include <cassert>
 #include <cstdio>
@@ -69,39 +71,6 @@ class MD5
     }
   };
 
-  // 	struct File
-  // 	{
-  // 		HANDLE _handle = nullptr;
-  // 		File(const std::filesystem::path& filepath)
-  // 		{
-  // 			_handle = CreateFile(filepath.string().c_str(),
-  // 				GENERIC_READ,
-  // 				FILE_SHARE_READ,
-  // 				NULL,
-  // 				OPEN_EXISTING,
-  // 				FILE_FLAG_SEQUENTIAL_SCAN,
-  // 				NULL);
-  // 			if (INVALID_HANDLE_VALUE == _handle)
-  // 			{
-  // 				throw std::runtime_error(std::format("Error opening file {0}\nError: {1}", filepath.string(), GetLastError()));
-  // 			}
-  // 		}
-  // 
-  // 		bool read(std::span<BYTE>& buffer, DWORD& readSize)
-  // 		{
-  // 			if (!ReadFile(_handle, buffer.data(), static_cast<DWORD>(buffer.size()), &readSize, nullptr))
-  // 			{
-  // 				throw std::runtime_error(std::format("ReadFile failed {0}", GetLastError()));
-  // 			}
-  // 			return readSize == 0;
-  // 		}
-  // 
-  // 		~File()
-  // 		{
-  // 			CloseHandle(_handle);
-  // 		}
-  // 	};
-
 public:
 
   MD5()
@@ -117,35 +86,23 @@ public:
     }
   }
 
-  std::string encode(const std::filesystem::path& filepath)
+  std::string encode(const std::string& filepath)
   {
-    //std::system(std::format("CertUtil -hashfile {0} MD5 > readMd5", filepath.string()).c_str());
-    //std::ostringstream ss;
-    //ss << std::ifstream("readMd5").rdbuf();
-    //return ss.str();
-
     // Create hash system
     Hash hash(*this);
 
     // Read Buffer of 1k
     std::string buffer;
     buffer.resize(1024 * 1024);
-    std::streamsize readBuffer = 0;
 
-    std::ifstream ifs;
-    ifs.open(filepath);
-    if (ifs.is_open())
+    auto ifs = FileSystem::OpenFile(filepath);
+    if (ifs->IsOpen())
     {
-      while (ifs.read(buffer.data(), buffer.size()))
+      while (true)
       {
-        readBuffer = buffer.find('\0');
-        hash.addData(buffer, readBuffer == -1 ? buffer.size() : readBuffer);
-      }
-
-      readBuffer = buffer.find('\0');
-      if (readBuffer > 0)
-      {
-        hash.addData(buffer, readBuffer);
+        const auto readBytes = ifs->Read(buffer);
+        if (readBytes == 0) break;
+        hash.addData(buffer, readBytes);
       }
 
       return hash.computeMd5();

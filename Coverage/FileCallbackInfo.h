@@ -113,10 +113,7 @@ struct FileCallbackInfo
     auto it = lineData.find(filename);
     if (it == lineData.end())
     {
-      std::ifstream ifs(filename);
-      auto newLineData = new FileInfo(ifs);
-      ifs.close();
-
+      auto newLineData = new FileInfo(filename);
       lineData[filename] = std::unique_ptr<FileInfo>(newLineData);
 
       return newLineData->LineInfo(size_t(lineNumber));

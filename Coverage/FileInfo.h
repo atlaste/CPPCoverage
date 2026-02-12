@@ -26,7 +26,7 @@ private:
   std::string::const_iterator GetBeginCoverageFlag(const std::string& line);
   LineType GetLineType(const std::string& line);
 public:
-  FileInfo(std::istream& ifs);
+  FileInfo(const std::string& filename);
 
   std::vector<bool> relevant;
   std::vector<FileLineInfo> lines;
