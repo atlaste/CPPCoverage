@@ -81,33 +81,39 @@ std::string RuntimeNotifications::GetFQN(std::string s)
     return s;
   }
 
+  static constexpr char BACKSLASH = '\\';
+  static constexpr std::string_view parentDir = "..\\";
+
   auto cp = RuntimeOptions::Instance().SolutionPath;
   if (cp.empty()) { return s; }
 
-  while (s.size() > 3 && s.substr(s.size() - 3, 3) == "..\\")
+  while (s.size() > parentDir.size() && s.starts_with(parentDir))
   {
-    if (cp[cp.size() - 1] == '\\')
+    if (cp[cp.size() - 1] == BACKSLASH)
     {
-      cp = cp.substr(0, cp.size() - 1);
+      cp.pop_back();
     }
-    auto idx = cp.find_last_of('\\');
+    auto idx = cp.find_last_of(BACKSLASH);
     if (idx == std::string::npos)
     {
       return s;
     }
-    else
-    {
-      cp = cp.substr(0, idx);
-      s = s.substr(0, s.size() - 3);
-    }
+
+    cp = cp.substr(0, idx);
+    s = s.substr(parentDir.size(), s.size());
   }
 
-  if (!cp.empty() && cp[cp.size() - 1] != '\\')
+  if (!cp.empty() && cp[cp.size() - 1] != BACKSLASH)
   {
-    cp += "\\";
+    cp.push_back(BACKSLASH);
   }
 
-  if (!s.empty() && (s[0] == '\\'))
+  if (s[s.size() - 1] == BACKSLASH)
+  {
+    s.pop_back();
+  }
+
+  if (!s.empty() && (s[0] == BACKSLASH))
   {
     return cp + s.substr(1);
   }
