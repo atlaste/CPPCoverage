@@ -1,8 +1,8 @@
 #include <iostream>
-#include <filesystem>
 
 #include "RuntimeNotifications.h"
 #include "RuntimeOptions.h"
+#include "FileSystem.h"
 #include "Util.h"
 
 struct RuntimeFileFilter : RuntimeCoverageFilter
@@ -139,11 +139,11 @@ void RuntimeNotifications::Handle(const char* data, const size_t size)
     auto folder = Trim(s.substr(IGNORE_FOLDER.size()));
     auto fullname = GetFQN(folder);
 
-    if (!std::filesystem::exists(fullname))
+    if (!FileSystem::PathExists(fullname))
     {
       PrintInvalidNotification(fullname, FOLDER_NOT_EXIST);
     }
-    else if (!std::filesystem::is_directory(fullname))
+    else if (!FileSystem::IsDirectory(fullname))
     {
       PrintInvalidNotification(fullname, PATH_IS_NOT_FOLDER);
     }
@@ -161,11 +161,11 @@ void RuntimeNotifications::Handle(const char* data, const size_t size)
     auto file = Trim(s.substr(IGNORE_FILE.size()));
     auto fullname = GetFQN(file);
 
-    if (!std::filesystem::exists(fullname))
+    if (!FileSystem::PathExists(fullname))
     {
       PrintInvalidNotification(fullname, FILE_NOT_EXIST);
     }
-    else if (!std::filesystem::is_regular_file(fullname))
+    else if (!FileSystem::IsFile(fullname))
     {
       PrintInvalidNotification(fullname, PATH_IS_NOT_FILE);
     }

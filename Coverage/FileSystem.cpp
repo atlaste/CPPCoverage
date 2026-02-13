@@ -1,4 +1,5 @@
 #include "FileSystem.h"
+#include <filesystem>
 #include <fstream>
 #include <optional>
 #include <unordered_map>
@@ -60,6 +61,21 @@ namespace FileSystem
     IFilePtr OpenFile(const std::string& filename)
     {
       return std::make_shared<RealFile>(filename);
+    }
+
+    bool PathExists(const std::string& path)
+    {
+      return std::filesystem::exists(path);
+    }
+
+    bool IsDirectory(const std::string& path)
+    {
+      return std::filesystem::is_directory(path);
+    }
+
+    bool IsFile(const std::string& path)
+    {
+      return std::filesystem::is_regular_file(path);
     }
   private:
     explicit RealFileSystemImpl() {}
@@ -155,6 +171,21 @@ namespace FileSystem
 
       return std::make_shared<MemoryFile>(files[filename]);
     }
+
+    bool PathExists(const std::string& path)
+    {
+      throw std::runtime_error("Not implemented yet");
+    }
+
+    bool IsDirectory(const std::string& path)
+    {
+      throw std::runtime_error("Not implemented yet");
+    }
+
+    bool IsFile(const std::string& path)
+    {
+      throw std::runtime_error("Not implemented yet");
+    }
   private:
     explicit MemoryFileSystemImpl() {}
     std::unordered_map<std::string, std::string> files;
@@ -170,6 +201,22 @@ namespace FileSystem
   {
     return FileSystemImpl::getInstance().OpenFile(filename);
   }
+
+  bool PathExists(const std::string& path)
+  {
+    return FileSystemImpl::getInstance().PathExists(path);
+  }
+
+  bool IsDirectory(const std::string& path)
+  {
+    return FileSystemImpl::getInstance().IsDirectory(path);
+  }
+
+  bool IsFile(const std::string& path)
+  {
+    return FileSystemImpl::getInstance().IsFile(path);
+  }
+
 
   void CreateTestFile(const std::string& filename, const std::string& contain)
   {
