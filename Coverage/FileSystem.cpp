@@ -174,17 +174,26 @@ namespace FileSystem
 
     bool PathExists(const std::string& path)
     {
-      throw std::runtime_error("Not implemented yet");
+      for (const auto& pathFile : files)
+      {
+        if (pathFile.first.starts_with(path))
+        {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     bool IsDirectory(const std::string& path)
     {
-      throw std::runtime_error("Not implemented yet");
+      return !IsFile(path);
     }
 
     bool IsFile(const std::string& path)
     {
-      throw std::runtime_error("Not implemented yet");
+      // just find last dot, for unittest is enough
+      return path.find_last_of('.') != -1;
     }
   private:
     explicit MemoryFileSystemImpl() {}
