@@ -1,4 +1,5 @@
 #include "FileSystem.h"
+#include <filesystem>
 #include <fstream>
 #include <optional>
 #include <unordered_map>
@@ -60,6 +61,21 @@ namespace FileSystem
     IFilePtr OpenFile(const std::string& filename)
     {
       return std::make_shared<RealFile>(filename);
+    }
+
+    bool PathExists(const std::string& path)
+    {
+      return std::filesystem::exists(path);
+    }
+
+    bool IsDirectory(const std::string& path)
+    {
+      return std::filesystem::is_directory(path);
+    }
+
+    bool IsFile(const std::string& path)
+    {
+      return std::filesystem::is_regular_file(path);
     }
   private:
     explicit RealFileSystemImpl() {}
@@ -155,6 +171,30 @@ namespace FileSystem
 
       return std::make_shared<MemoryFile>(files[filename]);
     }
+
+    bool PathExists(const std::string& path)
+    {
+      for (const auto& pathFile : files)
+      {
+        if (pathFile.first.starts_with(path))
+        {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    bool IsDirectory(const std::string& path)
+    {
+      return !IsFile(path);
+    }
+
+    bool IsFile(const std::string& path)
+    {
+      // just find last dot, for unittest is enough
+      return path.find_last_of('.') != -1;
+    }
   private:
     explicit MemoryFileSystemImpl() {}
     std::unordered_map<std::string, std::string> files;
@@ -170,6 +210,22 @@ namespace FileSystem
   {
     return FileSystemImpl::getInstance().OpenFile(filename);
   }
+
+  bool PathExists(const std::string& path)
+  {
+    return FileSystemImpl::getInstance().PathExists(path);
+  }
+
+  bool IsDirectory(const std::string& path)
+  {
+    return FileSystemImpl::getInstance().IsDirectory(path);
+  }
+
+  bool IsFile(const std::string& path)
+  {
+    return FileSystemImpl::getInstance().IsFile(path);
+  }
+
 
   void CreateTestFile(const std::string& filename, const std::string& contain)
   {
