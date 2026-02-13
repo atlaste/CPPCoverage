@@ -15,18 +15,7 @@ struct RuntimeFileFilter : RuntimeCoverageFilter
 
   bool IgnoreFile(const std::string& found) const override
   {
-    if (found.size() == file.size())
-    {
-      for (size_t i = 0; i < found.size(); ++i)
-      {
-        if (std::tolower(found[i]) != std::tolower(file[i]))
-        {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
+    return Util::InvariantEquals(found, file);
   }
 };
 
