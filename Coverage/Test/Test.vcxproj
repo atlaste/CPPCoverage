@@ -168,10 +168,10 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FileCallbackInfoTest.cpp" />
     <ClCompile Include="FileInfoTest.cpp" />
     <ClCompile Include="md5Test.cpp" />
     <ClCompile Include="nativeV2.cpp" />
-    <ClCompile Include="writeReportTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".runsettings" />
