@@ -6,8 +6,68 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace TestFormat
+namespace TestFileCallbackInfo
 {
+	TEST_CLASS(TestLineInfo)
+	{
+		TEST_CLASS_INITIALIZE(Init)
+		{
+			auto& options = RuntimeOptions::Instance();
+			options.CodePaths.push_back("C:\\proj\\src\\");
+
+			// create a test file
+			FileSystem::CreateTestFile("C:\\proj\\src\\srcFile.cpp", "Line_1\nLine_2\nLine_3\nLine_4");
+			FileSystem::CreateTestFile("C:\\proj\\src\\srcFile.hpp", "Line_1\nLine_2\n");
+		}
+
+		TEST_CLASS_CLEANUP(CleanUp)
+		{
+			auto& options = RuntimeOptions::Instance();
+			options.CodePaths.clear();
+
+			FileSystem::DeleteTestFiles();
+		}
+
+		TEST_METHOD(AddLineIfnoAndCreateNativeV1Report)
+		{
+			const std::string expectReport =
+				"FILE: C:\\proj\\src\\srcFile.cpp\n" \
+				"RES: c_uc\n" \
+				"PROF: \n" \
+				"FILE: C:\\proj\\src\\srcFile.hpp\n" \
+				"RES: u_\n" \
+				"PROF: \n";
+
+			FileCallbackInfo fileCallbackInfo("report.txt");
+			auto ptr = fileCallbackInfo.LineInfo("C:\\proj\\src\\srcFile.cpp", 1);
+			Assert::IsNotNull(ptr);
+			ptr->DebugCount = 1;
+			ptr->HitCount = 1;
+
+			ptr = fileCallbackInfo.LineInfo("C:\\proj\\src\\srcFile.cpp", 0xA);
+			Assert::IsNull(ptr);
+
+			ptr = fileCallbackInfo.LineInfo("C:\\proj\\src\\srcfile.cpp", 3);
+			Assert::IsNotNull(ptr);
+			ptr->DebugCount = 1;
+
+			ptr = fileCallbackInfo.LineInfo("C:\\proj\\src\\srcFile.hpp", 1);
+			Assert::IsNotNull(ptr);
+			ptr->DebugCount = 1;
+
+			ptr = fileCallbackInfo.LineInfo("C:\\proj\\src\\SRCFILE.cpp", 4);
+			Assert::IsNotNull(ptr);
+			ptr->DebugCount = 1;
+			ptr->HitCount = 1;
+
+			FileCallbackInfo::MergedProfileInfoMap mergedProfileData;
+
+			std::stringstream ss;
+			fileCallbackInfo.WriteReport(RuntimeOptions::ExportFormatType::Native, mergedProfileData, ss);
+			Assert::AreEqual(expectReport, ss.str());
+		}
+	};
+
 	TEST_CLASS(TestWriteReport)
 	{
 		static inline FileCallbackInfo* fileCallbackInfo = nullptr;
