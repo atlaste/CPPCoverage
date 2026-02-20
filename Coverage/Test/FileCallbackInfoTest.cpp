@@ -10,7 +10,8 @@ namespace TestFileCallbackInfo
 {
 	TEST_CLASS(TestLineInfo)
 	{
-		TEST_CLASS_INITIALIZE(Init)
+	public:
+		TestLineInfo()
 		{
 			auto& options = RuntimeOptions::Instance();
 			options.CodePaths.push_back("C:\\proj\\src\\");
@@ -20,7 +21,7 @@ namespace TestFileCallbackInfo
 			FileSystem::CreateTestFile("C:\\proj\\src\\srcFile.hpp", "Line_1\nLine_2\n");
 		}
 
-		TEST_CLASS_CLEANUP(CleanUp)
+		~TestLineInfo()
 		{
 			auto& options = RuntimeOptions::Instance();
 			options.CodePaths.clear();
@@ -70,9 +71,9 @@ namespace TestFileCallbackInfo
 
 	TEST_CLASS(TestWriteReport)
 	{
-		static inline FileCallbackInfo* fileCallbackInfo = nullptr;
+		FileCallbackInfo* fileCallbackInfo = nullptr;
 
-		static std::vector<FileLineInfo> createFileLineInfoArray(const std::vector<std::tuple<uint16_t, uint16_t>>& lineInfo)
+		std::vector<FileLineInfo> createFileLineInfoArray(const std::vector<std::tuple<uint16_t, uint16_t>>& lineInfo)
 		{
 			std::vector<FileLineInfo> arrayFileLineInfo;
 			arrayFileLineInfo.resize(lineInfo.size());
@@ -84,13 +85,14 @@ namespace TestFileCallbackInfo
 			return arrayFileLineInfo;
 		}
 
-		static void addFile(FileCallbackInfo& fileCallbackInfo, const std::string& filename, const std::vector<FileLineInfo>& lines)
+		void addFile(FileCallbackInfo& fileCallbackInfo, const std::string& filename, const std::vector<FileLineInfo>& lines)
 		{
 			fileCallbackInfo.lineData[filename] = std::make_unique<FileInfo>(filename);
 			fileCallbackInfo.lineData[filename]->lines = lines;
 		}
 
-		TEST_CLASS_INITIALIZE(Init)
+	public:
+		TestWriteReport()
 		{
 			auto& options = RuntimeOptions::Instance();
 			options.CodePaths.push_back("C:\\proj\\src\\");
@@ -116,7 +118,7 @@ namespace TestFileCallbackInfo
 			addFile(*fileCallbackInfo, "C:\\proj\\lib\\libFile.h", createFileLineInfoArray({ {18, 12}, {14, 7}, {3, 0} }));
 		}
 
-		TEST_CLASS_CLEANUP(CleanUp)
+		~TestWriteReport()
 		{
 			auto& options = RuntimeOptions::Instance();
 			options.CodePaths.clear();
