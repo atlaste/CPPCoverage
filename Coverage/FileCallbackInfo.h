@@ -110,18 +110,17 @@ struct FileCallbackInfo
 
   FileLineInfo* LineInfo(const std::string& filename, DWORD64 lineNumber)
   {
-    auto it = lineData.find(filename);
-    if (it == lineData.end())
+    for (const auto& [name, fileInfo] : lineData)
     {
-      auto newLineData = new FileInfo(filename);
-      lineData[filename] = std::unique_ptr<FileInfo>(newLineData);
+      if (Util::InvariantEquals(name, filename))
+      {
+        return fileInfo->LineInfo(size_t(lineNumber));
+      }
+    }
 
-      return newLineData->LineInfo(size_t(lineNumber));
-    }
-    else
-    {
-      return it->second->LineInfo(size_t(lineNumber));
-    }
+    auto newLineData = new FileInfo(filename);
+    lineData[filename] = std::unique_ptr<FileInfo>(newLineData);
+    return newLineData->LineInfo(size_t(lineNumber));
   }
 
   void WriteReport(RuntimeOptions::ExportFormatType exportFormat, const MergedProfileInfoMap& mergedProfileInfo, std::ostream& stream)

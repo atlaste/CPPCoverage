@@ -1,5 +1,6 @@
 #include "FileSystem.h"
 #include <filesystem>
+#include "Util.h"
 #include <fstream>
 #include <optional>
 #include <unordered_map>
@@ -105,7 +106,7 @@ namespace FileSystem
       if (remain == 0)
         return 0;
 
-      const auto toRead = std::min(remain, buffer.size());
+      const auto toRead = remain <= buffer.size() ? remain : buffer.size();
       memcpy(buffer.data(), contain.c_str() + offset, toRead);
       offset += toRead;
       return toRead;
@@ -164,12 +165,15 @@ namespace FileSystem
 
     IFilePtr OpenFile(const std::string& filename)
     {
-      if (!files.contains(filename))
+      for (const auto& [name, contain] : files)
       {
-        return std::make_shared<MemoryFile>(std::nullopt);
+        if (Util::InvariantEquals(name, filename))
+        {
+          return std::make_shared<MemoryFile>(contain);
+        }
       }
 
-      return std::make_shared<MemoryFile>(files[filename]);
+      return std::make_shared<MemoryFile>(std::nullopt);
     }
 
     bool PathExists(const std::string& path)
