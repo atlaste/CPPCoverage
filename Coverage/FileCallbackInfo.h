@@ -5,6 +5,7 @@
 #include "BreakpointData.h"
 #include "RuntimeOptions.h"
 #include "CallbackInfo.h"
+#include "Util.h"
 #include "md5.h"
 #include "ProfileNode.h"
 #include "RuntimeNotifications.h"

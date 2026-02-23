@@ -173,7 +173,6 @@
     <ClCompile Include="md5Test.cpp" />
     <ClCompile Include="nativeV2.cpp" />
     <ClCompile Include="RuntimeNotificationsTest.cpp" />
-    <ClCompile Include="writeReportTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".runsettings" />
