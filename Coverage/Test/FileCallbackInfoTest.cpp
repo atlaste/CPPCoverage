@@ -13,7 +13,7 @@ namespace TestFileCallbackInfo
 	public:
 		TestLineInfo()
 		{
-			auto& options = RuntimeOptions::Instance();
+			auto& options = RuntimeOptionsSingleton::Instance();
 			options.CodePaths.push_back("C:\\proj\\src\\");
 
 			// create a test file
@@ -23,7 +23,7 @@ namespace TestFileCallbackInfo
 
 		~TestLineInfo()
 		{
-			auto& options = RuntimeOptions::Instance();
+			auto& options = RuntimeOptionsSingleton::Instance();
 			options.CodePaths.clear();
 
 			FileSystem::DeleteTestFiles();
@@ -94,7 +94,7 @@ namespace TestFileCallbackInfo
 	public:
 		TestWriteReport()
 		{
-			auto& options = RuntimeOptions::Instance();
+			auto& options = RuntimeOptionsSingleton::Instance();
 			options.CodePaths.push_back("C:\\proj\\src\\");
 			options.CodePaths.push_back("C:\\proj\\empty\\");
 			options.CodePaths.push_back("C:\\proj\\lib\\");
@@ -120,7 +120,7 @@ namespace TestFileCallbackInfo
 
 		~TestWriteReport()
 		{
-			auto& options = RuntimeOptions::Instance();
+			auto& options = RuntimeOptionsSingleton::Instance();
 			options.CodePaths.clear();
 			options.PackageName.clear();
 

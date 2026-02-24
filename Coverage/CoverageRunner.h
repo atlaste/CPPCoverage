@@ -13,6 +13,7 @@
 #include <format>
 #include <iostream>
 #include <filesystem>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -24,8 +25,33 @@
 #include <DbgHelp.h>
 #pragma warning(default : 4091)
 
+/// <summary>
+/// Allow to keep real path between PDB info and real path.
+/// </summary>
+struct SourceManager 
+{
+  std::map<std::filesystem::path, std::filesystem::path> _conversion;
+
+  SourceManager() noexcept = default;
+
+  /// <summary>
+  /// Search if PDB file exists (search into pdb path and inside CodePath).
+  /// Then save it into map to not compute it again.
+  /// </summary>
+  /// <param name="lineInfo"></param>
+  /// <param name="fileInfo"></param>
+  /// <param name="finalPath"></param>
+  /// <returns></returns>
+  bool searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath) const;
+};
+
 struct CoverageRunner
 {
+  /// <summary>
+  /// Keep met source file (can be remap if PDB have another path)
+  /// </summary>
+  static SourceManager _sources;
+
   CoverageRunner(const RuntimeOptions& opts) : options(opts),
     debugInfoAvailable(false),
     debuggerPresentPatched(false),
@@ -37,16 +63,17 @@ struct CoverageRunner
   {
     CallbackInfo* info = reinterpret_cast<CallbackInfo*>(userContext);
 
-    if (info->fileInfo->PathMatches(lineInfo->FileName))
+    std::filesystem::path filepath;
+    if (_sources.searchFromCodePath(lineInfo, *info->fileInfo, filepath))
     {
       // Try to find if file exists (and can be covered)
       auto file = std::string(lineInfo->FileName);
-      if (!std::filesystem::exists(file))
+      if (!std::filesystem::exists(filepath))
       {
 #ifndef NDEBUG
-        if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+        if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Error))
         {
-          std::cerr << std::format("Impossible to find file : {0}", file) << std::endl;
+          std::cerr << std::format("Impossible to find file : {0}", filepath.string()) << std::endl;
         }
 #endif
         return FALSE;
@@ -57,7 +84,7 @@ struct CoverageRunner
       if (it == info->breakpointsToSet.end())
       {
         // Find line info
-        auto fileLineInfo = info->fileInfo->LineInfo(file, lineInfo->LineNumber);
+        auto fileLineInfo = info->fileInfo->LineInfo(filepath.string(), lineInfo->LineNumber);
         if (fileLineInfo)
         {
           // Only create breakpoint if we haven't already.

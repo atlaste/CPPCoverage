@@ -72,7 +72,7 @@ namespace TestFormat
 				FileCoverageV2::writeFooter(ss);
 
 				// Create reader
-				auto options = RuntimeOptions::Instance();
+				auto options = RuntimeOptionsSingleton::Instance();
 				options.MergedOutput = filename; /// Dummy valid value
 				options.OutputFile   = filename; /// Dummy valid value
 				options.ExportFormat = RuntimeOptions::ExportFormatType::NativeV2;

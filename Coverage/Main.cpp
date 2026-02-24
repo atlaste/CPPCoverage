@@ -44,7 +44,7 @@ void ShowHelp()
 
 void ParseCommandLine(int argc, const char** argv)
 {
-  RuntimeOptions& opts = RuntimeOptions::Instance();
+  RuntimeOptions& opts = RuntimeOptionsSingleton::Instance();
 
   LPTSTR cmd = GetCommandLine();
   std::string cmdLine = cmd;
@@ -248,7 +248,7 @@ void ParseCommandLine(int argc, const char** argv)
       opts.ExecutableArguments = opts.ExecutableArguments.substr(1);
   */
 #ifdef _DEBUG
-  if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Trace))
+  if (opts.isAtLeastLevel(VerboseLevel::Trace))
   {
     std::cout << "Executable: " << opts.Executable << std::endl;
     std::cout << "Arguments: " << opts.ExecutableArguments << std::endl;
@@ -285,7 +285,7 @@ int main(int argc, const char** argv)
   }
 #endif
 
-  RuntimeOptions& opts = RuntimeOptions::Instance();
+  RuntimeOptions& opts = RuntimeOptionsSingleton::Instance();
 
   try
   {
@@ -293,7 +293,7 @@ int main(int argc, const char** argv)
   }
   catch (const std::exception& e)
   {
-    if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+    if (opts.isAtLeastLevel(VerboseLevel::Error))
     {
       std::cerr << "Error: " << e.what() << std::endl;
     }
@@ -307,7 +307,7 @@ int main(int argc, const char** argv)
   {
     if (opts.Executable.empty())
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+      if (opts.isAtLeastLevel(VerboseLevel::Error))
       {
         std::cerr << "Error: Missing executable file" << std::endl;
       }
@@ -335,7 +335,7 @@ int main(int argc, const char** argv)
   {
     if (!opts.MergedOutput.empty())
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+      if (opts.isAtLeastLevel(VerboseLevel::Info))
       {
         std::cout << "Merge into " << opts.MergedOutput << std::endl;
       }
@@ -345,7 +345,7 @@ int main(int argc, const char** argv)
   }
   catch (const std::exception& e)
   {
-    if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+    if (opts.isAtLeastLevel(VerboseLevel::Error))
     {
       std::cerr << "Error: " << e.what() << std::endl;
     }
