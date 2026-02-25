@@ -10,10 +10,9 @@
 #include "Disassembler/ReachabilityAnalysis.h"
 
 #include <algorithm>
-#include <format>
 #include <iostream>
 #include <filesystem>
-#include <map>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -30,9 +29,13 @@
 /// </summary>
 struct SourceManager 
 {
-  std::map<std::filesystem::path, std::filesystem::path> _conversion;
+  std::vector<std::regex> _excludeFilter;
+  std::unordered_map<std::filesystem::path, std::filesystem::path> _conversion;
 
   SourceManager() noexcept = default;
+
+  void setupExcludeFilter(const RuntimeOptions& opts);
+  bool isExcluded(const std::filesystem::path& originalPath) const;
 
   /// <summary>
   /// Search if PDB file exists (search into pdb path and inside CodePath).
@@ -42,7 +45,7 @@ struct SourceManager
   /// <param name="fileInfo"></param>
   /// <param name="finalPath"></param>
   /// <returns></returns>
-  bool searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath) const;
+  bool searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath);
 };
 
 struct CoverageRunner
@@ -66,19 +69,6 @@ struct CoverageRunner
     std::filesystem::path filepath;
     if (_sources.searchFromCodePath(lineInfo, *info->fileInfo, filepath))
     {
-      // Try to find if file exists (and can be covered)
-      auto file = std::string(lineInfo->FileName);
-      if (!std::filesystem::exists(filepath))
-      {
-#ifndef NDEBUG
-        if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Error))
-        {
-          std::cerr << std::format("Impossible to find file : {0}", filepath.string()) << std::endl;
-        }
-#endif
-        return FALSE;
-      }
-
       PVOID addr = reinterpret_cast<PVOID>(lineInfo->Address);
       auto it = info->breakpointsToSet.find(addr);
       if (it == info->breakpointsToSet.end())
@@ -99,6 +89,16 @@ struct CoverageRunner
           }
         }
       }
+    }
+    else
+    {
+#ifndef NDEBUG
+      if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Error))
+      {
+        std::cerr << std::format("Impossible to find file : {0}", info->fileInfo->filename) << std::endl;
+      }
+#endif
+      return FALSE;
     }
 
     return TRUE;

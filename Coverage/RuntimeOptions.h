@@ -2,6 +2,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 enum class VerboseLevel
 {
@@ -42,6 +43,7 @@ struct RuntimeOptions
   std::string ExecutableArguments;
   std::string PackageName = "Program.exe";
   std::string SolutionPath;
+  std::vector<std::string> excludeFilter;
 
   bool isAtLeastLevel(const VerboseLevel& level) const { return (static_cast<int>(_verboseLevel) & static_cast<int>(level)) == static_cast<int>(level); }
 };

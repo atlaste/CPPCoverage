@@ -27,6 +27,7 @@ void ShowHelp()
   std::cout << "                      Typical usage is to give sln path of project." << std::endl;
   std::cout << "                      The flag used to ignore code coverage for directories or files (by the PassToCPPCoverage method)." << std::endl;
   std::cout << "  -codeanalysis:" << std::endl;
+  std::cout << "  -excludeFile:       Regexp to exclude file of coverage (sometime you can have template fake file)" << std::endl;
   std::cout << "  -- [name]:          Run coverage on the given executable filename" << std::endl;
   std::cout << "Return code:" << std::endl;
   std::cout << "  0:                  Success run" << std::endl;
@@ -204,6 +205,16 @@ void ParseCommandLine(int argc, const char** argv)
       std::string t(argv[i]);
       opts.Executable = t;
       break;
+    }
+    else if( s == "-excludeFile")
+    {
+      ++i;
+      if (i == argc)
+      {
+        throw std::exception("Unexpected end of parameters. Expected filter.");
+      }
+
+      opts.excludeFilter.emplace_back( std::string(argv[i]) );
     }
     else if (s == "-help")
     {
