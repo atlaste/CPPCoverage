@@ -18,7 +18,27 @@ private:
 
   using DictCoverage = std::map<std::string, Profile>;
 
-  DictCoverage makeDictionary(const std::string& filename)
+  struct Result : public CoverageResult
+  {
+    DictCoverage _dict;
+
+    size_t nbCoveredFile() const override
+    {
+      return _dict.size();
+    }
+
+    size_t nbLineCovered(const std::filesystem::path& path) const override
+    {
+      const auto search = _dict.find(path.string());
+      if (search != _dict.cend())
+      {
+        return count(search->second.res.begin(), search->second.res.end(), 'c');
+      }
+      return 0ull;
+    }
+  };
+
+  DictCoverage makeDictionary(const std::string& filename) const
   {
     DictCoverage dictOutput;
 
@@ -97,6 +117,13 @@ public:
     MergeRunner(opts)
   {
     assert(_options.ExportFormat == RuntimeOptions::Native); // Support only this !
+  }
+
+  std::unique_ptr<CoverageResult> read(const std::filesystem::path& path) const override
+  {
+    auto r = std::make_unique<Result>();
+    r->_dict = makeDictionary(path.string());
+    return r;
   }
 
   /// Run merge

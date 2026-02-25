@@ -10,9 +10,9 @@
 #include "Disassembler/ReachabilityAnalysis.h"
 
 #include <algorithm>
-#include <format>
 #include <iostream>
 #include <filesystem>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -24,40 +24,64 @@
 #include <DbgHelp.h>
 #pragma warning(default : 4091)
 
+/// <summary>
+/// Allow to keep real path between PDB info and real path.
+/// </summary>
+struct SourceManager 
+{
+  struct SearchResult
+  {
+    bool isNew      = false;
+    bool isFound    = false;
+    bool isExcluded = false;
+  };
+
+  std::vector<std::regex> _excludeFilter;
+  std::unordered_map<std::filesystem::path, std::filesystem::path> _conversion;
+
+  SourceManager() noexcept = default;
+
+  void setupExcludeFilter(const RuntimeOptions& opts);
+  bool isExcluded(const std::filesystem::path& originalPath) const;
+
+  /// <summary>
+  /// Search if PDB file exists (search into pdb path and inside CodePath).
+  /// Then save it into map to not compute it again.
+  /// </summary>
+  SearchResult searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath);
+};
+
 struct CoverageRunner
 {
+  /// <summary>
+  /// Keep met source file (can be remap if PDB have another path)
+  /// </summary>
+  static SourceManager _sources;
+
   CoverageRunner(const RuntimeOptions& opts) : options(opts),
     debugInfoAvailable(false),
     debuggerPresentPatched(false),
     coverageContext(opts.Executable),
     profileInfo()
-  {}
+  {
+    // Initialize static data
+    _sources.setupExcludeFilter(opts);
+  }
 
   static BOOL CALLBACK SymEnumLinesCallback(PSRCCODEINFO lineInfo, PVOID userContext)
   {
     CallbackInfo* info = reinterpret_cast<CallbackInfo*>(userContext);
 
-    if (info->fileInfo->PathMatches(lineInfo->FileName))
+    std::filesystem::path filepath;
+    const auto result = _sources.searchFromCodePath(lineInfo, *info->fileInfo, filepath);
+    if (result.isFound)
     {
-      // Try to find if file exists (and can be covered)
-      auto file = std::string(lineInfo->FileName);
-      if (!std::filesystem::exists(file))
-      {
-#ifndef NDEBUG
-        if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
-        {
-          std::cerr << std::format("Impossible to find file : {0}", file) << std::endl;
-        }
-#endif
-        return FALSE;
-      }
-
       PVOID addr = reinterpret_cast<PVOID>(lineInfo->Address);
       auto it = info->breakpointsToSet.find(addr);
       if (it == info->breakpointsToSet.end())
       {
         // Find line info
-        auto fileLineInfo = info->fileInfo->LineInfo(file, lineInfo->LineNumber);
+        auto fileLineInfo = info->fileInfo->LineInfo(filepath.string(), lineInfo->LineNumber);
         if (fileLineInfo)
         {
           // Only create breakpoint if we haven't already.
@@ -72,6 +96,15 @@ struct CoverageRunner
           }
         }
       }
+    }
+    else
+    {
+      // Show one time into log 
+      if (result.isNew && !result.isExcluded && RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Error))
+      {
+        std::cerr << std::format("Impossible to find file : {0}", lineInfo->FileName) << std::endl;
+      }
+      return FALSE;
     }
 
     return TRUE;

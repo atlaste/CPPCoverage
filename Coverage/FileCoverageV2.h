@@ -76,7 +76,7 @@ struct FileCoverageV2
     {
       const size_t count = (size_t) (line & maskCount) + (size_t) (*src & maskCount);
 
-      const bool isCode = (line & maskIsCode) == maskIsCode;
+      const bool isCode    = ((line & maskIsCode) | (*src & maskIsCode)) == maskIsCode;
       const bool isPartial = (line & maskIsPartial) == maskIsPartial && (*src & maskIsPartial) == maskIsPartial;
 
       line = (uint16_t) std::min<size_t>(count, maskCount);

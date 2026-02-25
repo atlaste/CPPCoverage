@@ -3,12 +3,22 @@
 #include "RuntimeOptions.h"
 
 #include <cassert>
+#include <filesystem>
 #include <memory>
+
+struct CoverageResult
+{
+  virtual ~CoverageResult() = default;
+
+  virtual size_t nbCoveredFile() const = 0;
+
+  virtual size_t nbLineCovered(const std::filesystem::path& path) const = 0;
+};
 
 class MergeRunner
 {
 protected:
-  RuntimeOptions _options;    ///< Copy local of option.
+  const RuntimeOptions _options;    ///< Copy local of option.
 
   // Avoid copy constructor
   MergeRunner(const MergeRunner&) = delete;
@@ -27,6 +37,9 @@ public:
 
   /// Run merge
   virtual void execute() = 0;
+
+  /// Read dict on disk
+  virtual std::unique_ptr<CoverageResult> read( const std::filesystem::path& ) const = 0;
 
   // Allow to build good merge runner
   static std::unique_ptr<MergeRunner> createMergeRunner(const RuntimeOptions& opts);

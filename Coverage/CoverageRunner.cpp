@@ -1,0 +1,89 @@
+#include "CoverageRunner.h"
+
+//---------------------------------------------------------------------------------------
+
+SourceManager CoverageRunner::_sources;
+
+//---------------------------------------------------------------------------------------
+
+void SourceManager::setupExcludeFilter(const RuntimeOptions& opts)
+{
+  _excludeFilter.clear();
+  for (const auto& filter : opts.excludeFilter)
+  {
+    _excludeFilter.emplace_back(std::regex(filter, std::regex_constants::ECMAScript /*| std::regex_constants::icase*/));
+  }
+}
+
+bool SourceManager::isExcluded(const std::filesystem::path& originalPath) const
+{
+  for (const auto& filter : _excludeFilter)
+  {
+    if (std::regex_search(originalPath.string(), filter))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+SourceManager::SearchResult SourceManager::searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath)
+{
+  SearchResult result;
+  const auto originalPath = std::filesystem::path(lineInfo->FileName);
+  const auto itPath = _conversion.find(originalPath);
+  if (itPath != _conversion.cend())
+  {
+    finalPath = itPath->second;
+  }
+  else
+  {
+    result.isNew = true;
+    finalPath = std::filesystem::path();
+
+    // Search file is not inside exclude list and into CodePaths range
+    if (!isExcluded(originalPath) && fileInfo.PathMatches(lineInfo->FileName))
+    {
+      const auto& search = [&]()
+      {
+        for (const auto& codepath : RuntimeOptionsSingleton::Instance().CodePaths)
+        {
+          // Try to reinterpret path (file from another server ?)
+          finalPath = std::filesystem::path(lineInfo->FileName);
+          auto allFolders = finalPath.parent_path();
+          // Start with filename
+          finalPath = finalPath.filename();
+          const auto source = std::filesystem::path(codepath);
+
+          while (!allFolders.filename().string().empty())
+          {
+            auto testPath = source / finalPath;
+            if (std::filesystem::exists(testPath))
+            {
+              finalPath = testPath;
+              return;
+            }
+            else
+            {
+              finalPath = allFolders.filename() / finalPath;
+              allFolders = allFolders.parent_path();
+            }
+          }
+          // If found nothing, reset path
+          finalPath = std::filesystem::path();
+        }
+      };
+      search();
+    }
+    else
+    {
+      result.isExcluded = true;
+    }
+
+    // Save already meet path
+    _conversion.emplace( originalPath, finalPath );
+  }
+  result.isFound = !finalPath.empty();
+
+  return result;
+}

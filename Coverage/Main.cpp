@@ -27,6 +27,7 @@ void ShowHelp()
   std::cout << "                      Typical usage is to give sln path of project." << std::endl;
   std::cout << "                      The flag used to ignore code coverage for directories or files (by the PassToCPPCoverage method)." << std::endl;
   std::cout << "  -codeanalysis:" << std::endl;
+  std::cout << "  -excludeFile:       Regexp to exclude file of coverage (sometime you can have template fake file)" << std::endl;
   std::cout << "  -- [name]:          Run coverage on the given executable filename" << std::endl;
   std::cout << "Return code:" << std::endl;
   std::cout << "  0:                  Success run" << std::endl;
@@ -44,7 +45,7 @@ void ShowHelp()
 
 void ParseCommandLine(int argc, const char** argv)
 {
-  RuntimeOptions& opts = RuntimeOptions::Instance();
+  RuntimeOptions& opts = RuntimeOptionsSingleton::Instance();
 
   LPTSTR cmd = GetCommandLine();
   std::string cmdLine = cmd;
@@ -205,6 +206,16 @@ void ParseCommandLine(int argc, const char** argv)
       opts.Executable = t;
       break;
     }
+    else if( s == "-excludeFile")
+    {
+      ++i;
+      if (i == argc)
+      {
+        throw std::exception("Unexpected end of parameters. Expected filter.");
+      }
+
+      opts.excludeFilter.emplace_back( std::string(argv[i]) );
+    }
     else if (s == "-help")
     {
       ShowHelp();
@@ -248,7 +259,7 @@ void ParseCommandLine(int argc, const char** argv)
       opts.ExecutableArguments = opts.ExecutableArguments.substr(1);
   */
 #ifdef _DEBUG
-  if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Trace))
+  if (opts.isAtLeastLevel(VerboseLevel::Trace))
   {
     std::cout << "Executable: " << opts.Executable << std::endl;
     std::cout << "Arguments: " << opts.ExecutableArguments << std::endl;
@@ -285,7 +296,7 @@ int main(int argc, const char** argv)
   }
 #endif
 
-  RuntimeOptions& opts = RuntimeOptions::Instance();
+  RuntimeOptions& opts = RuntimeOptionsSingleton::Instance();
 
   try
   {
@@ -293,7 +304,7 @@ int main(int argc, const char** argv)
   }
   catch (const std::exception& e)
   {
-    if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+    if (opts.isAtLeastLevel(VerboseLevel::Error))
     {
       std::cerr << "Error: " << e.what() << std::endl;
     }
@@ -307,7 +318,7 @@ int main(int argc, const char** argv)
   {
     if (opts.Executable.empty())
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+      if (opts.isAtLeastLevel(VerboseLevel::Error))
       {
         std::cerr << "Error: Missing executable file" << std::endl;
       }
@@ -335,7 +346,7 @@ int main(int argc, const char** argv)
   {
     if (!opts.MergedOutput.empty())
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+      if (opts.isAtLeastLevel(VerboseLevel::Info))
       {
         std::cout << "Merge into " << opts.MergedOutput << std::endl;
       }
@@ -345,7 +356,7 @@ int main(int argc, const char** argv)
   }
   catch (const std::exception& e)
   {
-    if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+    if (opts.isAtLeastLevel(VerboseLevel::Error))
     {
       std::cerr << "Error: " << e.what() << std::endl;
     }

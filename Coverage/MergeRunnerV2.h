@@ -5,8 +5,7 @@
 #include "MergeRunner.h"
 
 #include <filesystem>
-#include <sstream>
-#include <map>
+#include <unordered_map>
 #include <regex>
 
 namespace TestFormat
@@ -14,14 +13,45 @@ namespace TestFormat
   class TestNativeV2;
 }
 
+
+
 class MergeRunnerV2 : public MergeRunner
 {
 public:
   friend class TestFormat::TestNativeV2;
-private:
+
   using CodeCoverage = std::unordered_map<std::string, FileCoverageV2>;
   using DictCoverage = std::unordered_map<std::string, CodeCoverage>;
 
+  struct Result : public CoverageResult
+  {
+    DictCoverage _dict;
+
+    size_t nbLineCovered(const std::filesystem::path& path) const override
+    {
+      for(const auto& item : _dict)
+      {
+        const auto search = item.second.find(path.string());
+        if (search != item.second.cend())
+        {
+          return search->second._nbLinesCovered;
+        }
+      }
+      return 0ull;
+    }
+    
+    size_t nbCoveredFile() const override
+    {
+      size_t nb = 0;
+      for(const auto& item : _dict)
+      {
+        nb += item.second.size();
+      }
+      return nb;
+    }
+  };
+
+private:
   std::string clean(const std::string& content) const
   {
     // Need to remove return line (not supported by regex)
@@ -154,25 +184,34 @@ private:
 
   void merge(const DictCoverage& dictOutput, DictCoverage& dictMerge)
   {
+    // Parsing Output
     auto itDirOutput = dictOutput.cbegin();
     while (itDirOutput != dictOutput.cend())
     {
+      // Search this file into the merge dict
       auto itDirMerge = dictMerge.find(itDirOutput->first);
-      if (itDirMerge != dictMerge.end())
+      if (itDirMerge != dictMerge.cend())
       {
         auto itFileOutput = itDirOutput->second.cbegin();
         while (itFileOutput != itDirOutput->second.cend())
         {
           auto fileMerge = itDirMerge->second.find(itFileOutput->first);
-          if (!fileMerge->second.merge(itFileOutput->second))
+          if ( fileMerge != itDirMerge->second.cend() )
           {
-            // Source is different from both version ?
-            std::cerr << "Merge warning: impossible to merge " << fileMerge->first << ": size between src/dst is not same." << std::endl;
+            if (!fileMerge->second.merge(itFileOutput->second))
+            {
+              // Source is different from both version ?
+              std::cerr << "Merge warning: impossible to merge " << fileMerge->first << ": size between src/dst is not same." << std::endl;
+            }
+          }
+          else // if is existing into itDirMerge only -> copy
+          {
+            itDirMerge->second[itFileOutput->first] = itFileOutput->second;
           }
           ++itFileOutput;
         }
       }
-      else
+      else // if is existing into itDirOutput only -> copy
       {
         dictMerge[itDirOutput->first] = itDirOutput->second;
       }
@@ -188,6 +227,13 @@ public:
     MergeRunner(opts)
   {
     assert(_options.ExportFormat == RuntimeOptions::NativeV2); // Support only this !
+  }
+
+  std::unique_ptr<CoverageResult> read( const std::filesystem::path& path ) const override
+  {
+    auto result = std::make_unique<Result>();
+    result->_dict = makeDictionary( path.string() );
+    return result;
   }
 
   /// Run merge
@@ -213,7 +259,7 @@ public:
     // ---- Make merge ---------------------------------------------------------------
     // Step 1: Parse output files and define a dictionary
     DictCoverage dictOutput = makeDictionary(_options.OutputFile);
-    DictCoverage dictMerge = makeDictionary(_options.MergedOutput);
+    DictCoverage dictMerge  = makeDictionary(_options.MergedOutput);
 
     // Step 2: Parse merge
     merge(dictOutput, dictMerge);
