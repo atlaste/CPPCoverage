@@ -42,7 +42,7 @@ SourceManager::SearchResult SourceManager::searchFromCodePath(const PSRCCODEINFO
     finalPath = std::filesystem::path();
 
     // Search file is not inside exclude list and into CodePaths range
-    if (!isExcluded(originalPath) && !fileInfo.PathMatches(lineInfo->FileName))
+    if (!isExcluded(originalPath) && fileInfo.PathMatches(lineInfo->FileName))
     {
       const auto& search = [&]()
       {
@@ -77,7 +77,7 @@ SourceManager::SearchResult SourceManager::searchFromCodePath(const PSRCCODEINFO
     }
     else
     {
-      result.isExcluded = false;
+      result.isExcluded = true;
     }
 
     // Save already meet path
