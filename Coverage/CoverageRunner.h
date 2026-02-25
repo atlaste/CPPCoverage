@@ -63,7 +63,10 @@ struct CoverageRunner
     debuggerPresentPatched(false),
     coverageContext(opts.Executable),
     profileInfo()
-  {}
+  {
+    // Initialize static data
+    _sources.setupExcludeFilter(opts);
+  }
 
   static BOOL CALLBACK SymEnumLinesCallback(PSRCCODEINFO lineInfo, PVOID userContext)
   {
