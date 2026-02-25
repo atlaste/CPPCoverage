@@ -41,49 +41,39 @@ SourceManager::SearchResult SourceManager::searchFromCodePath(const PSRCCODEINFO
     result.isNew = true;
     finalPath = std::filesystem::path();
 
-    // Search file is inside exclude list
-    if (!isExcluded(originalPath))
+    // Search file is not inside exclude list and into CodePaths range
+    if (!isExcluded(originalPath) && !fileInfo.PathMatches(lineInfo->FileName))
     {
-      if (!fileInfo.PathMatches(lineInfo->FileName))
+      const auto& search = [&]()
       {
-        const auto& search = [&]()
+        for (const auto& codepath : RuntimeOptionsSingleton::Instance().CodePaths)
         {
-          for (const auto& codepath : RuntimeOptionsSingleton::Instance().CodePaths)
-          {
-            // Try to reinterpret path (file from another server ?)
-            finalPath = std::filesystem::path(lineInfo->FileName);
-            auto allFolders = finalPath.parent_path();
-            // Start with filename
-            finalPath = finalPath.filename();
-            const auto source = std::filesystem::path(codepath);
+          // Try to reinterpret path (file from another server ?)
+          finalPath = std::filesystem::path(lineInfo->FileName);
+          auto allFolders = finalPath.parent_path();
+          // Start with filename
+          finalPath = finalPath.filename();
+          const auto source = std::filesystem::path(codepath);
 
-            while (!allFolders.filename().string().empty())
+          while (!allFolders.filename().string().empty())
+          {
+            auto testPath = source / finalPath;
+            if (std::filesystem::exists(testPath))
             {
-              auto testPath = source / finalPath;
-              if (std::filesystem::exists(testPath))
-              {
-                finalPath = testPath;
-                return;
-              }
-              else
-              {
-                finalPath = allFolders.filename() / finalPath;
-                allFolders = allFolders.parent_path();
-              }
+              finalPath = testPath;
+              return;
             }
-            // If found nothing, reset path
-            finalPath = std::filesystem::path();
+            else
+            {
+              finalPath = allFolders.filename() / finalPath;
+              allFolders = allFolders.parent_path();
+            }
           }
-        };
-        search();
-      }
-      else
-      {
-        if( std::filesystem::exists(originalPath) )
-        {
-          finalPath = originalPath;
+          // If found nothing, reset path
+          finalPath = std::filesystem::path();
         }
-      }
+      };
+      search();
     }
     else
     {
