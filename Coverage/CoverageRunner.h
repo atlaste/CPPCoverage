@@ -29,6 +29,13 @@
 /// </summary>
 struct SourceManager 
 {
+  struct SearchResult
+  {
+    bool isNew      = false;
+    bool isFound    = false;
+    bool isExcluded = false;
+  };
+
   std::vector<std::regex> _excludeFilter;
   std::unordered_map<std::filesystem::path, std::filesystem::path> _conversion;
 
@@ -41,11 +48,7 @@ struct SourceManager
   /// Search if PDB file exists (search into pdb path and inside CodePath).
   /// Then save it into map to not compute it again.
   /// </summary>
-  /// <param name="lineInfo"></param>
-  /// <param name="fileInfo"></param>
-  /// <param name="finalPath"></param>
-  /// <returns></returns>
-  bool searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath);
+  SearchResult searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath);
 };
 
 struct CoverageRunner
@@ -67,7 +70,8 @@ struct CoverageRunner
     CallbackInfo* info = reinterpret_cast<CallbackInfo*>(userContext);
 
     std::filesystem::path filepath;
-    if (_sources.searchFromCodePath(lineInfo, *info->fileInfo, filepath))
+    const auto result = _sources.searchFromCodePath(lineInfo, *info->fileInfo, filepath);
+    if (result.isFound)
     {
       PVOID addr = reinterpret_cast<PVOID>(lineInfo->Address);
       auto it = info->breakpointsToSet.find(addr);
@@ -92,12 +96,11 @@ struct CoverageRunner
     }
     else
     {
-#ifndef NDEBUG
-      if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Error))
+      // Show one time into log 
+      if (result.isNew && !result.isExcluded && RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Error))
       {
-        std::cerr << std::format("Impossible to find file : {0}", info->fileInfo->filename) << std::endl;
+        std::cerr << std::format("Impossible to find file : {0}", lineInfo->FileName) << std::endl;
       }
-#endif
       return FALSE;
     }
 

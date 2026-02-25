@@ -8,6 +8,7 @@ SourceManager CoverageRunner::_sources;
 
 void SourceManager::setupExcludeFilter(const RuntimeOptions& opts)
 {
+  _excludeFilter.clear();
   for (const auto& filter : opts.excludeFilter)
   {
     _excludeFilter.emplace_back(std::regex(filter, std::regex_constants::ECMAScript /*| std::regex_constants::icase*/));
@@ -26,17 +27,18 @@ bool SourceManager::isExcluded(const std::filesystem::path& originalPath) const
   return false;
 }
 
-bool SourceManager::searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath)
+SourceManager::SearchResult SourceManager::searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath)
 {
+  SearchResult result;
   const auto originalPath = std::filesystem::path(lineInfo->FileName);
   const auto itPath = _conversion.find(originalPath);
   if (itPath != _conversion.cend())
   {
     finalPath = itPath->second;
-    return !finalPath.empty();
   }
   else
   {
+    result.isNew = true;
     finalPath = std::filesystem::path();
 
     // Search file is inside exclude list
@@ -83,10 +85,15 @@ bool SourceManager::searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileC
         }
       }
     }
+    else
+    {
+      result.isExcluded = false;
+    }
 
     // Save already meet path
     _conversion.emplace( originalPath, finalPath );
-
-    return !finalPath.empty();
   }
+  result.isFound = !finalPath.empty();
+
+  return result;
 }
