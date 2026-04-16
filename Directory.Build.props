@@ -14,5 +14,5 @@
 
     <!-- VS 2026 -->
     <PlatformToolset Condition="'$(PlatformToolset)' == ''">v145</PlatformToolset>
-  </PropertyGroup>
+  </PropertyGroup> 
 </Project>
