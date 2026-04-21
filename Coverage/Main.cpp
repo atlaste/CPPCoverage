@@ -158,19 +158,19 @@ void ParseCommandLine(int argc, const char** argv)
       std::string t(argv[i]);
       if (t == "native")
       {
-        opts.ExportFormat = RuntimeOptions::Native;
+        opts.ExportFormat = RuntimeOptions::ExportFormatType::Native;
       }
       else if (t == "nativeV2")
       {
-        opts.ExportFormat = RuntimeOptions::NativeV2;
+        opts.ExportFormat = RuntimeOptions::ExportFormatType::NativeV2;
       }
       else if (t == "cobertura")
       {
-        opts.ExportFormat = RuntimeOptions::Cobertura;
+        opts.ExportFormat = RuntimeOptions::ExportFormatType::Cobertura;
       }
       else if (t == "clover")
       {
-        opts.ExportFormat = RuntimeOptions::Clover;
+        opts.ExportFormat = RuntimeOptions::ExportFormatType::Clover;
       }
       else
       {
@@ -257,14 +257,18 @@ void ParseCommandLine(int argc, const char** argv)
   }
 
   // Check we can merge
-  if ((opts.ExportFormat != RuntimeOptions::Native && opts.ExportFormat != RuntimeOptions::NativeV2) && !opts.MergedOutput.empty())
+  if (opts.ExportFormat != RuntimeOptions::ExportFormatType::Native &&
+      opts.ExportFormat != RuntimeOptions::ExportFormatType::NativeV2 &&
+      !opts.MergedOutput.empty())
   {
     throw std::exception("Merge mode is only for RuntimeOptions::Native or NativeV2 mode.");
   }
 
   // -consolidate piggy-backs on the Native / NativeV2 merge machinery, so
   // reject it for formats that can't round-trip through MergeRunner.
-  if ((opts.ExportFormat != RuntimeOptions::Native && opts.ExportFormat != RuntimeOptions::NativeV2) && opts.ConsolidateAuxiliary)
+  if (opts.ExportFormat != RuntimeOptions::ExportFormatType::Native &&
+      opts.ExportFormat != RuntimeOptions::ExportFormatType::NativeV2 &&
+      opts.ConsolidateAuxiliary)
   {
     throw std::exception("-consolidate is only supported for -format native or nativeV2.");
   }

@@ -128,9 +128,9 @@ struct FileCallbackInfo
   {
     switch (exportFormat)
     {
-      case RuntimeOptions::Clover:    WriteClover(stream); break;
-      case RuntimeOptions::Cobertura: WriteCobertura(stream); break;
-      case RuntimeOptions::NativeV2:  WriteNativeV2(stream); break;
+      case RuntimeOptions::ExportFormatType::Clover:    WriteClover(stream); break;
+      case RuntimeOptions::ExportFormatType::Cobertura: WriteCobertura(stream); break;
+      case RuntimeOptions::ExportFormatType::NativeV2:  WriteNativeV2(stream); break;
       default: WriteNative(stream, mergedProfileInfo); break;
     }
   }

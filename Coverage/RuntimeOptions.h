@@ -18,11 +18,6 @@ struct RuntimeOptions
 {
 private:
   RuntimeOptions() :
-    UseStaticCodeAnalysis(false),
-    ExportFormat(Native),
-    Attach(false),
-    AttachPid(0),
-    ConsolidateAuxiliary(false)
   {}
 
 public:
@@ -34,15 +29,15 @@ public:
 
   VerboseLevel _verboseLevel = VerboseLevel::Trace;
 
-  bool UseStaticCodeAnalysis;
+  bool UseStaticCodeAnalysis = false;
 
-  enum ExportFormatType
+  enum class ExportFormatType
   {
     Native,
     NativeV2,
     Cobertura,
     Clover
-  } ExportFormat = Native;
+  } ExportFormat = ExportFormatType::Native;
 
 
   std::string OutputFile;
@@ -62,15 +57,15 @@ public:
   // vstest.console.exe (x64) spawning testhost.x86.exe (x86)); the parent
   // Coverage-x64.exe then launches Coverage-x86.exe with -attach <pid> to
   // instrument the x86 child.
-  bool Attach;
-  DWORD AttachPid;
+  bool Attach = false;
+  DWORD AttachPid = 0;
 
   // When true, after the coverage run finishes and any sibling-bitness
   // CPPCoverage helper processes have produced their own .cov files, the
   // master process merges those files into its own -o output file and
   // deletes them. Only supported for Native / NativeV2 export formats
   // (the same restriction that applies to -m / MergedOutput).
-  bool ConsolidateAuxiliary;
+  bool ConsolidateAuxiliary = false;
 
   bool isAtLeastLevel(const VerboseLevel& level) const { return (static_cast<int>(_verboseLevel) & static_cast<int>(level)) == static_cast<int>(level); }
 };

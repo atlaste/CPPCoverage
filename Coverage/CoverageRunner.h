@@ -339,10 +339,10 @@ struct CoverageRunner
 
     switch (options.ExportFormat)
     {
-    case RuntimeOptions::Native:     cmd += " -format native"; break;
-    case RuntimeOptions::NativeV2:   cmd += " -format nativeV2"; break;
-    case RuntimeOptions::Cobertura:  cmd += " -format cobertura"; break;
-    case RuntimeOptions::Clover:     cmd += " -format clover"; break;
+    case RuntimeOptions::ExportFormatType::Native:     cmd += " -format native"; break;
+    case RuntimeOptions::ExportFormatType::NativeV2:   cmd += " -format nativeV2"; break;
+    case RuntimeOptions::ExportFormatType::Cobertura:  cmd += " -format cobertura"; break;
+    case RuntimeOptions::ExportFormatType::Clover:     cmd += " -format clover"; break;
     }
 
     if (options.UseStaticCodeAnalysis)
