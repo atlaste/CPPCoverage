@@ -53,10 +53,8 @@ void ShowHelp()
   std::cout << std::endl;
 }
 
-void ParseCommandLine(int argc, const char** argv)
+void ParseCommandLine(int argc, const char** argv, RuntimeOptions& opts)
 {
-  RuntimeOptions& opts = RuntimeOptions::Instance();
-
   LPTSTR cmd = GetCommandLine();
   std::string cmdLine = cmd;
 
@@ -365,11 +363,11 @@ int main(int argc, const char** argv)
   }
 #endif
 
-  RuntimeOptions& opts = RuntimeOptions::Instance();
+  auto& opts = RuntimeOptionsSingleton::Instance();
 
   try
   {
-    ParseCommandLine(argc, argv);
+    ParseCommandLine(argc, argv, opts);
   }
   catch (const std::exception& e)
   {

@@ -1,10 +1,11 @@
 #pragma once
 
 #include "base64.h"
-#include "FileInfo.h"
+#include "FileLineInfo.h"
 
 #include <format>
 #include <fstream>
+#include <vector>
 
 struct FileCoverageV2
 {

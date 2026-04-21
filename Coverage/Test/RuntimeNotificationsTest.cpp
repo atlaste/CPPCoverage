@@ -11,6 +11,10 @@ namespace TestRuntimeNotifications
 {
 	TEST_CLASS(TestNotifications)
 	{
+	private:
+		static constexpr char DEFAULT_SLN_PATH_WITHOUT_LAST_BACKSLASH[] = "C:\\proj\\sln";
+		static constexpr char DEFAULT_SLN_PATH[] = "C:\\proj\\sln\\";
+	public:
 		TEST_CLASS_INITIALIZE(Init)
 		{
 			// create test files
@@ -25,18 +29,8 @@ namespace TestRuntimeNotifications
 			FileSystem::CreateTestFile("C:\\proj\\lib\\ignoreFile.h", "ignoreFile.h contents");
 		}
 
-		TEST_METHOD_INITIALIZE(MethodInit)
-		{
-			// set default SolutionPath
-			auto& options = RuntimeOptions::Instance();
-			options.SolutionPath = "C:\\proj\\sln\\";
-		}
-
 		TEST_CLASS_CLEANUP(CleanUp)
 		{
-			auto& options = RuntimeOptions::Instance();
-			options.SolutionPath.clear();
-
 			FileSystem::DeleteTestFiles();
 		}
 
@@ -46,7 +40,9 @@ namespace TestRuntimeNotifications
 		{
 			static constexpr std::string_view LINE = "IGNORE FILE: C:\\proj\\lib\\notExist.cpp";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\notExist.cpp"));
@@ -56,7 +52,9 @@ namespace TestRuntimeNotifications
 		{
 			static constexpr std::string_view LINE = "IGNORE FILE: C:\\proj\\lib\\";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\ignoreFile.cpp"));
@@ -67,7 +65,9 @@ namespace TestRuntimeNotifications
 			// check also trim path
 			static constexpr std::string_view LINE = "IGNORE FILE:   C:\\proj\\lib\\ignoreFile.c  ";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\ignoreFile.cpp"));
@@ -80,7 +80,9 @@ namespace TestRuntimeNotifications
 			// check also trim path
 			static constexpr std::string_view LINE = "IGNORE FILE:..\\lib\\ignoreFile.c  ";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\ignoreFile.cpp"));
@@ -90,11 +92,11 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFileRelativeSolutionPathWithoutLastBackslash)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
-
 			static constexpr std::string_view LINE = "IGNORE FILE:..\\lib\\ignoreFile.c  ";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH_WITHOUT_LAST_BACKSLASH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\ignoreFile.cpp"));
@@ -106,7 +108,9 @@ namespace TestRuntimeNotifications
 		{
 			static constexpr std::string_view LINE = "IGNORE FILE: \\dir\\file.c";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\sln\\dir\\file.c"));
@@ -114,11 +118,11 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFileWithoutParentDirRelativeSolutionPathWithoutLastBackslash)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
-
 			static constexpr std::string_view LINE = "IGNORE FILE: \\dir\\file.c";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH_WITHOUT_LAST_BACKSLASH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\sln\\dir\\file.c"));
@@ -126,11 +130,11 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFileWithoutParentDirStartsWithDirName)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
-
 			static constexpr std::string_view LINE = "IGNORE FILE: dir\\file.c";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH_WITHOUT_LAST_BACKSLASH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\sln\\dir\\file.c"));
@@ -138,11 +142,10 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFileRelativeWithoutSolutionPath)
 		{
-			RuntimeOptions::Instance().SolutionPath.clear();
-
 			static constexpr std::string_view LINE = "IGNORE FILE:..\\lib\\ignoreFile.c  ";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\ignoreFile.c"));
@@ -152,7 +155,9 @@ namespace TestRuntimeNotifications
 		{
 			static constexpr std::string_view LINE = "IGNORE FILE:..\\..\\..\\lib\\ignoreFile.c  ";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\ignoreFile.c"));
@@ -164,7 +169,9 @@ namespace TestRuntimeNotifications
 		{
 			static constexpr std::string_view LINE = "IGNORE FOLDER: C:\\proj\\notExist\\";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\notExist\\"));
@@ -174,7 +181,9 @@ namespace TestRuntimeNotifications
 		{
 			static constexpr std::string_view LINE = "IGNORE FOLDER: C:\\proj\\lib\\ignoreFile.cpp";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\lib\\ignoreFile.cpp"));
@@ -185,7 +194,9 @@ namespace TestRuntimeNotifications
 			// check also trim path
 			static constexpr std::string_view LINE = "IGNORE FOLDER:   C:\\proj\\src\\ignoreFolder1  ";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\src\\ignoreFolder1\\srcFile.cpp"));
@@ -200,7 +211,9 @@ namespace TestRuntimeNotifications
 			// check also trim path
 			static constexpr std::string_view LINE = "IGNORE FOLDER:   ..\\src\\ignoreFolder1\\";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\src\\ignoreFolder1\\srcFile.cpp"));
@@ -212,11 +225,11 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFolderRelativeSolutionPathWithoutLastBackslash)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
-
 			static constexpr std::string_view LINE = "IGNORE FOLDER:   ..\\src\\ignoreFolder1";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH_WITHOUT_LAST_BACKSLASH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\src\\ignoreFolder1\\srcFile.cpp"));
@@ -230,7 +243,9 @@ namespace TestRuntimeNotifications
 		{
 			static constexpr std::string_view LINE = "IGNORE FOLDER: \\dir\\";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\sln\\dir\\file.cpp"));
@@ -239,11 +254,11 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFolderWithoutParentDirRelativeSolutionPathWithoutLastBackslash)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
-
 			static constexpr std::string_view LINE = "IGNORE FOLDER: \\dir";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH_WITHOUT_LAST_BACKSLASH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\sln\\dir\\file.cpp"));
@@ -252,11 +267,11 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFolderWithoutParentDirStartsWithDirName)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
-
 			static constexpr std::string_view LINE = "IGNORE FOLDER: dir";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH_WITHOUT_LAST_BACKSLASH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsTrue(notifications.IgnoreFile("C:\\proj\\sln\\dir\\file.cpp"));
@@ -265,11 +280,10 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFolderRelativeWithoutSolutionPath)
 		{
-			RuntimeOptions::Instance().SolutionPath.clear();
-
 			static constexpr std::string_view LINE = "IGNORE FOLDER:   ..\\src\\ignoreFolder1";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\src\\ignoreFolder1\\srcFile.cpp"));
@@ -280,7 +294,9 @@ namespace TestRuntimeNotifications
 		{
 			static constexpr std::string_view LINE = "IGNORE FOLDER:   ..\\..\\..\\src\\ignoreFolder1";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.SolutionPath = DEFAULT_SLN_PATH;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
 			Assert::IsFalse(notifications.IgnoreFile("C:\\proj\\src\\ignoreFolder1\\srcFile.cpp"));
@@ -291,26 +307,26 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(EnableCodeAnalysis)
 		{
-			RuntimeOptions::Instance().UseStaticCodeAnalysis = false;
-
 			static constexpr std::string_view LINE = "ENABLE CODE ANALYSIS";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.UseStaticCodeAnalysis = false;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
-			Assert::IsTrue(RuntimeOptions::Instance().UseStaticCodeAnalysis);
+			Assert::IsTrue(opts.UseStaticCodeAnalysis);
 		}
 
 		TEST_METHOD(DisableCodeAnalysis)
 		{
-			RuntimeOptions::Instance().UseStaticCodeAnalysis = true;
-
 			static constexpr std::string_view LINE = "DISABLE CODE ANALYSIS";
 
-			RuntimeNotifications notifications;
+			RuntimeOptions opts;
+			opts.UseStaticCodeAnalysis = true;
+			RuntimeNotifications notifications(opts);
 			notifications.Handle(LINE.data(), LINE.size());
 
-			Assert::IsFalse(RuntimeOptions::Instance().UseStaticCodeAnalysis);
+			Assert::IsFalse(opts.UseStaticCodeAnalysis);
 		}
 	};
 }

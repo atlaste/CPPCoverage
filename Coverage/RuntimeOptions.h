@@ -16,16 +16,8 @@ enum class VerboseLevel
 
 struct RuntimeOptions
 {
-private:
-  RuntimeOptions() :
-  {}
-
-public:
-  static RuntimeOptions& Instance()
-  {
-    static RuntimeOptions instance;
-    return instance;
-  }
+  explicit RuntimeOptions() = default;
+  virtual ~RuntimeOptions() = default;
 
   VerboseLevel _verboseLevel = VerboseLevel::Trace;
 
@@ -68,4 +60,19 @@ public:
   bool ConsolidateAuxiliary = false;
 
   bool isAtLeastLevel(const VerboseLevel& level) const { return (static_cast<int>(_verboseLevel) & static_cast<int>(level)) == static_cast<int>(level); }
+};
+
+struct RuntimeOptionsSingleton : public RuntimeOptions
+{
+private:
+  RuntimeOptionsSingleton() = default;
+
+public:
+  ~RuntimeOptionsSingleton() override = default;
+
+  static RuntimeOptions& Instance()
+  {
+    static RuntimeOptionsSingleton instance;
+    return instance;
+  }
 };

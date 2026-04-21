@@ -9,13 +9,17 @@ struct RuntimeCoverageFilter
   virtual bool IgnoreFile(const std::string& file) const = 0;
 };
 
+struct RuntimeOptions;
+
 struct RuntimeNotifications
 {
 public:
+  explicit RuntimeNotifications(RuntimeOptions& options);
   void Handle(const char* data, const size_t size);
   bool IgnoreFile(const std::string& filename) const;
 private:
   std::vector<std::unique_ptr<RuntimeCoverageFilter>> postProcessing;
+  RuntimeOptions& opts;
 
   std::string Trim(const std::string& t);
   std::string GetFQN(std::string s);
