@@ -148,7 +148,7 @@ namespace NubiloSoft.CoverageExt.Native
             lookup.Add(currentFile, coverage);
         }
 
-        void ICoverageData.Parsing(string filename)
+        void ICoverageData.Parsing(string filename, string solutionPath)
         {
             // Get file date (for modified checks)
             FileDate = new System.IO.FileInfo(filename).LastWriteTimeUtc;
@@ -171,8 +171,15 @@ namespace NubiloSoft.CoverageExt.Native
                     {
                         continue;
                     }
-
+                    
+                    // Replace by current solutionPath if needed
+                    bool   isSolutionPath = dirItem.Attributes["isSolutionPath"].InnerText == "true";
                     string currentDir = dirItem.Attributes["path"].InnerText;
+                    if ( isSolutionPath )
+                    {
+                        currentDir = solutionPath;
+                    }
+                    
                     // A directory is valid
                     if (String.IsNullOrEmpty(currentDir) || !System.IO.Path.IsPathRooted(currentDir))
                     {

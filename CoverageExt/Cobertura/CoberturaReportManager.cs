@@ -82,7 +82,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                     if (activeCoverageReport == null)
                     {
                         output.WriteLine("Updating coverage results from: {0}", coverageFile);
-                        activeCoverageReport = Load(coverageFile);
+                        activeCoverageReport = Load(coverageFile, folder);
                         activeCoverageFilename = coverageFile;
                     }
                 }
@@ -92,7 +92,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             return activeCoverageReport;
         }
 
-        private ICoverageData Load(string filename)
+        private ICoverageData Load(string filename, string solutionPath)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -102,7 +102,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 try
                 {
                     report = new Cobertura.CoberturaData();
-                    report.Parsing(filename);
+                    report.Parsing(filename, solutionPath);
                 }
                 catch (Exception e)
                 {

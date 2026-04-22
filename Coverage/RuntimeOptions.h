@@ -1,16 +1,17 @@
 #pragma once
 
-#include <list>
+#include <filesystem>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 enum class VerboseLevel
 {
-  Error = 0x01,
+  Error   = 0x01,
   Warning = 0x03,
-  Info = 0x07,
-  Trace = 0x0F,
-  None = 0
+  Info    = 0x07,
+  Trace   = 0x0F,
+  None    = 0
 };
 
 struct RuntimeOptions
@@ -38,7 +39,7 @@ struct RuntimeOptions
 
   std::string MergedOutput;
   std::string WorkingDirectory;
-  std::list<std::string> CodePaths;
+  std::unordered_set<std::filesystem::path> CodePaths;
   std::string Executable;
   std::string ExecutableArguments;
   std::string PackageName = "Program.exe";

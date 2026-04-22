@@ -1,5 +1,6 @@
 #include "CoverageRunner.h"
 
+#include <string>
 //---------------------------------------------------------------------------------------
 
 SourceManager CoverageRunner::_sources;
@@ -27,6 +28,58 @@ bool SourceManager::isExcluded(const std::filesystem::path& originalPath) const
   return false;
 }
 
+void SourceManager::searchRealPath(std::filesystem::path& finalPath, const std::filesystem::path& original, bool& exclude) const
+{
+  // Search if original path exist into valid filter
+  bool isInGoodPath = false;
+	for (const auto& codepath : RuntimeOptionsSingleton::Instance().CodePaths)
+	{
+		if (original.string().starts_with(codepath.string()))
+		{
+			isInGoodPath = true;
+			break;
+		}
+	}
+
+  // If file not exists on disk but path look like good, return missing file
+  if ( isInGoodPath && !std::filesystem::exists(original) )
+  {
+		finalPath = std::filesystem::path();
+		exclude = false;
+    return;
+  }
+
+  // Try to remap path based on CodePath (happens when CI run coverage on different disk or path )
+	for (const auto& codepath : RuntimeOptionsSingleton::Instance().CodePaths)
+	{
+		// Try to reinterpret path (file from another server ?)
+		finalPath = original;
+		auto allFolders = finalPath.parent_path();
+		// Start with filename
+		finalPath = finalPath.filename();
+		const auto source = codepath;
+
+		while (!allFolders.filename().string().empty())
+		{
+			auto testPath = source / finalPath;
+			if (std::filesystem::exists(testPath))
+			{
+				finalPath = testPath;
+        exclude = false;
+        return;
+			}
+			else
+			{
+				finalPath = allFolders.filename() / finalPath;
+				allFolders = allFolders.parent_path();
+			}
+		}
+		// If found nothing, reset path and consider exclude file
+		finalPath = std::filesystem::path();
+    exclude = true;
+	}
+}
+
 SourceManager::SearchResult SourceManager::searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath)
 {
   SearchResult result;
@@ -42,38 +95,9 @@ SourceManager::SearchResult SourceManager::searchFromCodePath(const PSRCCODEINFO
     finalPath = std::filesystem::path();
 
     // Search file is not inside exclude list and into CodePaths range
-    if (!isExcluded(originalPath) && fileInfo.PathMatches(lineInfo->FileName))
+    if ( !isExcluded(originalPath) )
     {
-      const auto& search = [&]()
-      {
-        for (const auto& codepath : RuntimeOptionsSingleton::Instance().CodePaths)
-        {
-          // Try to reinterpret path (file from another server ?)
-          finalPath = std::filesystem::path(lineInfo->FileName);
-          auto allFolders = finalPath.parent_path();
-          // Start with filename
-          finalPath = finalPath.filename();
-          const auto source = std::filesystem::path(codepath);
-
-          while (!allFolders.filename().string().empty())
-          {
-            auto testPath = source / finalPath;
-            if (std::filesystem::exists(testPath))
-            {
-              finalPath = testPath;
-              return;
-            }
-            else
-            {
-              finalPath = allFolders.filename() / finalPath;
-              allFolders = allFolders.parent_path();
-            }
-          }
-          // If found nothing, reset path
-          finalPath = std::filesystem::path();
-        }
-      };
-      search();
+      searchRealPath(finalPath, originalPath, result.isExcluded);
     }
     else
     {

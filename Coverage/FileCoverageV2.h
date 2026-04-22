@@ -3,6 +3,8 @@
 #include "base64.h"
 #include "FileInfo.h"
 
+#include <cassert>
+#include <filesystem>
 #include <format>
 #include <fstream>
 
@@ -50,19 +52,27 @@ struct FileCoverageV2
     return code;
   }
 
+  /// <summary>
+  /// Compute from scratch the line stats.
+  /// Warning: Nb code lines can variate too if template (don't produce code line if not used)
+  ///          Maybe compilation option are badly choose by user ?
+  /// </summary>
   void updateStats()
   {
     _nbLinesCovered = 0;
+    _nbLinesCode    = 0;
     for (const auto& line : _code)
     {
       if ((line & maskIsCode) == maskIsCode)
       {
+        _nbLinesCode += 1;
         if ((line & maskCount) > 0)
         {
           _nbLinesCovered += 1;
         }
       }
     }
+    assert(_nbLinesCovered <= _nbLinesCode);
   }
 
   bool merge(const FileCoverageV2& other)
@@ -76,7 +86,7 @@ struct FileCoverageV2
     {
       const size_t count = (size_t) (line & maskCount) + (size_t) (*src & maskCount);
 
-      const bool isCode    = ((line & maskIsCode) | (*src & maskIsCode)) == maskIsCode;
+      const bool isCode    = ((line & maskIsCode) | (*src & maskIsCode)) == maskIsCode || count > 0;
       const bool isPartial = (line & maskIsPartial) == maskIsPartial && (*src & maskIsPartial) == maskIsPartial;
 
       line = (uint16_t) std::min<size_t>(count, maskCount);
@@ -97,9 +107,9 @@ struct FileCoverageV2
     ofs << std::format(R"(<CppCoverage version="{0}">)", version) << std::endl;
   }
 
-  static void openDirectory(std::ostream& ofs, const std::string& aDir)
+  static void openDirectory(std::ostream& ofs, const bool isSolutionPath, const std::filesystem::path& aDir)
   {
-    ofs << std::format(R"(	<directory path="{0}">)", aDir) << std::endl;
+    ofs << std::format(R"(	<directory isSolutionPath="{0}" path="{1}">)", isSolutionPath ? "true" : "false", aDir.string()) << std::endl;
   }
 
   static void closeDirectory(std::ostream& ofs)

@@ -100,7 +100,7 @@ struct FileCallbackInfo
     const auto& codePaths = RuntimeOptionsSingleton::Instance().CodePaths;
     for (const auto& codePath : codePaths)
     {
-      if (PathMatches(filename, codePath))
+      if (PathMatches(filename, codePath.string()))
       {
         return true;
       }
@@ -379,7 +379,9 @@ private:
       filepaths.push_back(item.first);
     }
 
-    for (const auto& dirPath : RuntimeOptionsSingleton::Instance().CodePaths)
+    const auto& options = RuntimeOptionsSingleton::Instance();
+
+    for (const auto& dirPath : options.CodePaths)
     {
       bool dirPartAdded = false;
 
@@ -401,7 +403,7 @@ private:
         if (!dirPartAdded && !dirPath.empty())
         {
           dirPartAdded = true;
-          FileCoverageV2::openDirectory(stream, dirPath);
+          FileCoverageV2::openDirectory(stream, dirPath == options.SolutionPath, dirPath);
         }
 
         auto coverage = encodeCoverage(*it.second.get());
@@ -417,7 +419,7 @@ private:
       }
     }
 
-    if (!filepaths.empty() && RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Warning))
+    if (!filepaths.empty() && options.isAtLeastLevel(VerboseLevel::Warning))
     {
       std::cerr << "List of refuse coverage files (because not relative to any code path):" << std::endl;
 
@@ -430,7 +432,7 @@ private:
 
       for (const auto& dirPath : RuntimeOptionsSingleton::Instance().CodePaths)
       {
-        std::cerr << std::format("- {0}", dirPath) << std::endl;
+        std::cerr << std::format("- {0}", dirPath.string()) << std::endl;
       }
     }
 

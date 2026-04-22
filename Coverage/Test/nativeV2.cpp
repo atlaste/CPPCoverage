@@ -62,7 +62,8 @@ namespace TestFormat
 				FileCoverageV2::writeHeader(ss);
 				if (!dirName.empty())
 				{
-					FileCoverageV2::openDirectory(ss, dirName);
+					const bool isSolutionDir = true;
+					FileCoverageV2::openDirectory(ss, isSolutionDir, dirName);
 				}
 				merge.write(filename, ss);
 				if (!dirName.empty())
@@ -82,7 +83,8 @@ namespace TestFormat
 				Assert::AreEqual(EXPECT_DICT_SIZE, dict.size());
 
 				// Check dictionary
-				const auto& saved = dict[dirName][filename];
+				const auto& saved = dict[dirName]._coverages[filename];
+				Assert::AreEqual(true, dict[dirName]._isSolutionFolder);
 				Assert::AreEqual(reference.size(), saved._code.size());
 				Assert::AreEqual(reference, saved._code);
 				Assert::AreEqual(merge._nbLinesFile,    saved._nbLinesFile);

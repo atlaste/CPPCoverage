@@ -49,6 +49,9 @@ struct SourceManager
   /// Then save it into map to not compute it again.
   /// </summary>
   SearchResult searchFromCodePath(const PSRCCODEINFO& lineInfo, const FileCallbackInfo& fileInfo, std::filesystem::path& finalPath);
+
+private:
+  void searchRealPath(std::filesystem::path& finalPath, const std::filesystem::path& original, bool& exclude) const;
 };
 
 struct CoverageRunner

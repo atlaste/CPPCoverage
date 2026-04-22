@@ -13,6 +13,8 @@ struct CoverageResult
   virtual size_t nbCoveredFile() const = 0;
 
   virtual size_t nbLineCovered(const std::filesystem::path& path) const = 0;
+
+  virtual size_t nbFolders() const = 0;
 };
 
 class MergeRunner

@@ -20,7 +20,14 @@ class MergeRunnerV2 : public MergeRunner
 public:
   friend class TestFormat::TestNativeV2;
 
-  using CodeCoverage = std::unordered_map<std::string, FileCoverageV2>;
+  struct CodeCoverage
+  {
+    using Coverages = std::unordered_map<std::string, FileCoverageV2>;
+
+    bool      _isSolutionFolder = true;
+    Coverages _coverages;
+  };
+  
   using DictCoverage = std::unordered_map<std::string, CodeCoverage>;
 
   struct Result : public CoverageResult
@@ -31,8 +38,8 @@ public:
     {
       for(const auto& item : _dict)
       {
-        const auto search = item.second.find(path.string());
-        if (search != item.second.cend())
+        const auto search = item.second._coverages.find(path.string());
+        if (search != item.second._coverages.cend())
         {
           return search->second._nbLinesCovered;
         }
@@ -45,10 +52,15 @@ public:
       size_t nb = 0;
       for(const auto& item : _dict)
       {
-        nb += item.second.size();
+        nb += item.second._coverages.size();
       }
       return nb;
     }
+
+		size_t nbFolders() const override
+		{
+			return _dict.size();
+		}
   };
 
 private:
@@ -59,9 +71,10 @@ private:
     return  std::regex_replace(content, PatternClean, "");
   }
 
-  std::string getDir(const std::string& line) const
+  std::string getDir(const std::string& line, bool& isSolutionDir) const
   {
-    std::regex pattern(R"(<directory path=\"([^\"]*)\")", std::regex_constants::ECMAScript | std::regex_constants::icase);
+    isSolutionDir = false;
+    std::regex pattern(R"(<directory isSolutionPath=\"(\w*)\" path=\"([^\"]*)\")", std::regex_constants::ECMAScript | std::regex_constants::icase);
     std::smatch regex_result;
     std::regex_search(line, regex_result, pattern);
     if (!regex_result.ready())
@@ -69,7 +82,9 @@ private:
       return "";
     }
 
-    return regex_result.str(1);
+    isSolutionDir = regex_result.str(1) == "true";
+
+    return regex_result.str(2);
   }
 
   void parseFile(const std::string& filename, std::istream& stream, CodeCoverage& codeCoverage, const std::string& fileline) const
@@ -118,7 +133,7 @@ private:
       profile.md5Code = regex_result.str(2);
       std::memcpy(profile._code.data(), values.data(), values.size());
 
-      codeCoverage[filename] = profile;
+      codeCoverage._coverages[filename] = profile;
     }
     catch (const std::regex_error& e)
     {
@@ -146,6 +161,7 @@ private:
   {
     DictCoverage dictOutput;
     CodeCoverage codeCoverage;
+    bool isSolutionDir = false;
     std::string currentDir;
 
     std::string line;
@@ -156,7 +172,7 @@ private:
 
       if (lineClean.starts_with("<directory"))
       {
-        currentDir = getDir(lineClean);
+        currentDir = getDir(lineClean, isSolutionDir);
       }
       else if (lineClean.starts_with("<file"))
       {
@@ -164,22 +180,39 @@ private:
       }
       else if (lineClean.starts_with("</directory>"))
       {
-        if (!codeCoverage.empty())
+        if (!codeCoverage._coverages.empty())
         {
+          codeCoverage._isSolutionFolder = isSolutionDir;
           dictOutput[currentDir] = codeCoverage;
         }
 
-        codeCoverage.clear();
+        codeCoverage._coverages.clear();
         currentDir.clear();
       }
     }
 
-    if (!codeCoverage.empty())
+    if (!codeCoverage._coverages.empty())
     {
       dictOutput[""] = codeCoverage;
     }
 
     return dictOutput;
+  }
+
+  DictCoverage::iterator findMainDirectory(const DictCoverage::const_iterator& itDirOutput, DictCoverage& dictMerge)
+  {
+    // Search is folder exists
+		auto itDirMerge = dictMerge.find(itDirOutput->first);
+    
+    // If we don't found and it's a solutionDir, search if another solution dir exists inside data.
+    if ( itDirMerge == dictMerge.cend() && itDirOutput->second._isSolutionFolder )
+    {
+      itDirMerge = std::find_if(dictMerge.begin(), dictMerge.end(), [](const auto& data)
+      {
+        return data.second._isSolutionFolder;
+      });
+    }
+    return itDirMerge;
   }
 
   void merge(const DictCoverage& dictOutput, DictCoverage& dictMerge)
@@ -189,14 +222,14 @@ private:
     while (itDirOutput != dictOutput.cend())
     {
       // Search this file into the merge dict
-      auto itDirMerge = dictMerge.find(itDirOutput->first);
+      auto itDirMerge = findMainDirectory(itDirOutput, dictMerge);
       if (itDirMerge != dictMerge.cend())
       {
-        auto itFileOutput = itDirOutput->second.cbegin();
-        while (itFileOutput != itDirOutput->second.cend())
+        auto itFileOutput = itDirOutput->second._coverages.cbegin();
+        while (itFileOutput != itDirOutput->second._coverages.cend())
         {
-          auto fileMerge = itDirMerge->second.find(itFileOutput->first);
-          if ( fileMerge != itDirMerge->second.cend() )
+          auto fileMerge = itDirMerge->second._coverages.find(itFileOutput->first);
+          if ( fileMerge != itDirMerge->second._coverages.cend() )
           {
             if (!fileMerge->second.merge(itFileOutput->second))
             {
@@ -206,7 +239,7 @@ private:
           }
           else // if is existing into itDirMerge only -> copy
           {
-            itDirMerge->second[itFileOutput->first] = itFileOutput->second;
+            itDirMerge->second._coverages[itFileOutput->first] = itFileOutput->second;
           }
           ++itFileOutput;
         }
@@ -274,9 +307,9 @@ public:
       const auto& dirName = directories.first;
       if (!dirName.empty())
       {
-        FileCoverageV2::openDirectory(ofs, dirName);
+        FileCoverageV2::openDirectory(ofs, directories.second._isSolutionFolder, dirName);
       }
-      for (const auto& cover : directories.second)
+      for (const auto& cover : directories.second._coverages)
       {
         cover.second.write(cover.first, ofs);
       }

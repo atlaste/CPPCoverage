@@ -36,6 +36,11 @@ private:
       }
       return 0ull;
     }
+
+    size_t nbFolders() const override
+    {
+      return _dict.size();
+    }
   };
 
   DictCoverage makeDictionary(const std::string& filename) const

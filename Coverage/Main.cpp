@@ -108,6 +108,7 @@ void ParseCommandLine(int argc, const char** argv)
       opts.SolutionPath = t;
       if (!std::filesystem::exists(opts.SolutionPath))
         throw std::exception("The solution path provide is not existing.");
+      opts.CodePaths.emplace(opts.SolutionPath);
     }
     else if (s == "-format")
     {
@@ -159,7 +160,7 @@ void ParseCommandLine(int argc, const char** argv)
       }
 
       std::string t(argv[i]);
-      opts.CodePaths.push_back(t);
+      opts.CodePaths.emplace(t);
     }
     else if (s == "-w")
     {
@@ -265,6 +266,7 @@ void ParseCommandLine(int argc, const char** argv)
     std::cout << "Arguments: " << opts.ExecutableArguments << std::endl;
   }
 #endif
+  return -1;
 }
 
 class UTF8CodePage {
