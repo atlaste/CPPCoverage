@@ -3,6 +3,7 @@
 #include "base64.h"
 #include "FileLineInfo.h"
 
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <vector>
@@ -98,9 +99,9 @@ struct FileCoverageV2
     ofs << std::format(R"(<CppCoverage version="{0}">)", version) << std::endl;
   }
 
-  static void openDirectory(std::ostream& ofs, const std::string& aDir)
+  static void openDirectory(std::ostream& ofs, const std::filesystem::path& aDir)
   {
-    ofs << std::format(R"(	<directory path="{0}">)", aDir) << std::endl;
+    ofs << std::format(R"(	<directory path="{0}">)", aDir.string()) << std::endl;
   }
 
   static void closeDirectory(std::ostream& ofs)

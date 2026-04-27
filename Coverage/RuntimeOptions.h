@@ -1,7 +1,7 @@
 #pragma once
 
-#include <list>
 #include <string>
+#include <unordered_set>
 
 #include <Windows.h>
 
@@ -36,7 +36,7 @@ struct RuntimeOptions
 
   std::string MergedOutput;
   std::string WorkingDirectory;
-  std::list<std::string> CodePaths;
+  std::unordered_set<std::string> CodePaths;
   std::string Executable;
   std::string ExecutableArguments;
   std::string PackageName = "Program.exe";

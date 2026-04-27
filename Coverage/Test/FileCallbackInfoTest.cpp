@@ -34,7 +34,7 @@ namespace TestFileCallbackInfo
 				"PROF: \n";
 
 			RuntimeOptions options;
-			options.CodePaths.push_back("C:\\proj\\src\\");
+			options.CodePaths.emplace("C:\\proj\\src\\");
 			options.Executable = "report.txt";
 
 			FileCallbackInfo fileCallbackInfo(options);
@@ -93,9 +93,9 @@ namespace TestFileCallbackInfo
 	public:
 		TestWriteReport()
 		{
-			options.CodePaths.push_back("C:\\proj\\src\\");
-			options.CodePaths.push_back("C:\\proj\\empty\\");
-			options.CodePaths.push_back("C:\\proj\\lib\\");
+			options.CodePaths.emplace("C:\\proj\\src\\");
+			options.CodePaths.emplace("C:\\proj\\empty\\");
+			options.CodePaths.emplace("C:\\proj\\lib\\");
 
 			options.Executable = "report.txt";
 			options.PackageName = "MyPackage.exe";
