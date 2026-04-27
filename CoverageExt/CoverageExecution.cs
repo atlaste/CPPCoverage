@@ -103,7 +103,6 @@ namespace NubiloSoft.CoverageExt
             {
                 @"\Microsoft Visual Studio\18\Professional\Common7\IDE\Extensions\TestPlatform",
                 @"\Microsoft Visual Studio\18\Community\Common7\IDE\Extensions\TestPlatform",
-                @"\Microsoft Visual Studio\18\Professional\Common7\IDE\Extensions\TestPlatform",
                 @"\Microsoft Visual Studio\18\Enterprise\Common7\IDE\Extensions\TestPlatform",
                 @"\Microsoft Visual Studio\18\BuildTools\Common7\IDE\Extensions\TestPlatform",
                 @"\Microsoft Visual Studio\2022\Professional\Common7\IDE\Extensions\TestPlatform\",
