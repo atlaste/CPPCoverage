@@ -13,8 +13,8 @@ namespace TestFileCallbackInfo
 	public:
 		TestLineInfo()
 		{
-			auto& options = RuntimeOptions::Instance();
-			options.CodePaths.push_back("C:\\proj\\src\\");
+			auto& options = RuntimeOptionsSingleton::Instance();
+			options.CodePaths.emplace("C:\\proj\\src\\");
 
 			// create a test file
 			FileSystem::CreateTestFile("C:\\proj\\src\\srcFile.cpp", "Line_1\nLine_2\nLine_3\nLine_4");
@@ -23,7 +23,7 @@ namespace TestFileCallbackInfo
 
 		~TestLineInfo()
 		{
-			auto& options = RuntimeOptions::Instance();
+			auto& options = RuntimeOptionsSingleton::Instance();
 			options.CodePaths.clear();
 
 			FileSystem::DeleteTestFiles();
@@ -94,10 +94,10 @@ namespace TestFileCallbackInfo
 	public:
 		TestWriteReport()
 		{
-			auto& options = RuntimeOptions::Instance();
-			options.CodePaths.push_back("C:\\proj\\src\\");
-			options.CodePaths.push_back("C:\\proj\\empty\\");
-			options.CodePaths.push_back("C:\\proj\\lib\\");
+			auto& options = RuntimeOptionsSingleton::Instance();
+			options.CodePaths.emplace("C:\\proj\\src\\");
+			options.CodePaths.emplace("C:\\proj\\empty\\");
+			options.CodePaths.emplace("C:\\proj\\lib\\");
 
 			options.PackageName = "MyPackage.exe";
 
@@ -120,7 +120,7 @@ namespace TestFileCallbackInfo
 
 		~TestWriteReport()
 		{
-			auto& options = RuntimeOptions::Instance();
+			auto& options = RuntimeOptionsSingleton::Instance();
 			options.CodePaths.clear();
 			options.PackageName.clear();
 
@@ -157,7 +157,7 @@ namespace TestFileCallbackInfo
 			const std::string expectReport =
 				R"(<?xml version="1.0" encoding="utf-8"?>)""\n" \
 				R"(<CppCoverage version="2.0">)""\n" \
-				R"(	<directory path="C:\proj\src\">)""\n" \
+				R"(	<directory isSolutionPath="false" path="C:\proj\src\">)""\n" \
 				R"(		<file path="srcFile.cpp" md5="a2bab6536c40355d0adbca65a76d94aa">)""\n" \
 				R"(			<stats nbLinesInFile="5" nbLinesOfCode="4" nbLinesCovered="3"/>)""\n" \
 				R"(			<coverage>BIACwAAAAIACwA==</coverage>)""\n" \
@@ -167,7 +167,7 @@ namespace TestFileCallbackInfo
 				R"(			<coverage>BoADgA==</coverage>)""\n" \
 				R"(		</file>)""\n" \
 				R"(	</directory>)""\n" \
-				R"(	<directory path="C:\proj\lib\">)""\n" \
+				R"(	<directory isSolutionPath="false" path="C:\proj\lib\">)""\n" \
 				R"(		<file path="libFile.cpp" md5="a4eabc0c3e65e7df3a3bb1ccc1adcd9f">)""\n" \
 				R"(			<stats nbLinesInFile="3" nbLinesOfCode="3" nbLinesCovered="0"/>)""\n" \
 				R"(			<coverage>AIAAgACA</coverage>)""\n" \

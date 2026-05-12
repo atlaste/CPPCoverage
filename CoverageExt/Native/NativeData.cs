@@ -111,7 +111,7 @@ namespace NubiloSoft.CoverageExt.Native
             }
         }
 
-        public void Parsing(string filename)
+        public void Parsing( string filename, string solutionPath )
         {
             // Get file date (for modified checks)
             FileDate = new System.IO.FileInfo(filename).LastWriteTimeUtc;

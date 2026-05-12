@@ -43,6 +43,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\CoverageRunner.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Disassembler\ReachabilityAnalysis.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Disassembler\X86DisassemblerDecoder.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\FileInfo.cpp" />
