@@ -1,5 +1,11 @@
 # Free C++ Code Coverage
 
+[![KiCad 10](https://img.shields.io/badge/KiCad-10-314CB0?logo=kicad&logoColor=white)](https://www.kicad.org/)
+[![License: BSD](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
+[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=5SZAYVTQFJDBE)
+
+A KiCad PCB plugin that automatically places silkscreen reference designators and value labels using global ILP optimization — keeping them off footprints, vias, holes, mask features, and each other.
+
 CPPCoverage is a Visual Studio extension that calculates code coverage and profile data for C++ applications and Visual Studio C++ native tests. Basically it provides 
 you with an easy-to-use, light-weight C++ code coverage and profiler, right from Visual Studio and with the features you expect from tools like these. 
 
@@ -142,6 +148,21 @@ In fact, our Coverage engine measures this and emits 'p' for 'partial coverage' 
 
 So... in short: if a template specialization is hit, we'll mark the line as green, regardless if all possible template arguments are tested or not.
 
+# Crossing x86 and x64 boundaries
+
+Particularly nasty is the fact that nowadays test runners start in -say- x64 and then spawn x86 child processes. Don't worry, we've got you covered. The coverage runner 
+automatically detects this and spawns his friend specially built for the other architecture. 
+
+# Support this project
+
+Creating and maintaining all my open-source projects takes a lot of time and money. If this plugin saved you an evening of debugging or thousands of euro's for a commercial tool, please consider supporting it so we can continue our work:
+
+<p align="center">
+  <a href="https://www.paypal.com/donate/?hosted_button_id=5SZAYVTQFJDBE">
+    <img src="https://img.shields.io/badge/Donate%20via-PayPal-00457C?style=for-the-badge&logo=paypal&logoColor=white" alt="Donate via PayPal">
+  </a>
+</p>
+
 # License
 
 Your friendly BSD license. Please give credits where credits are deserved.
@@ -154,3 +175,4 @@ A special thank you must go to Michał Antoniak (nickname: MAntoniak) who contri
 # Talk, contact
 
 Have something to contribute or want to discuss something? Join us on discord: [https://discord.gg/4He86kN5](https://discord.gg/rgHhXVwuJQ)
+

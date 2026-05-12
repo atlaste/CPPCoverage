@@ -145,7 +145,26 @@ namespace NubiloSoft.CoverageExt.Native
                     coverage.addCoverage(fileItem.InnerText);
                 }
             }
-            lookup.Add(currentFile, coverage);
+
+            // A well-behaved writer produces one <file> per path, but real-
+            // world .cov files can end up with multiple entries that
+            // normalize to the same key here (e.g. PDBs emitting the same
+            // source with different casings, or legacy files produced by
+            // older builds of this tool, or cross-bitness helper runs that
+            // got merged together). Rather than crash with "An item with
+            // the same key has already been added", keep the entry with the
+            // most coverage so the user still gets a useful report.
+            if (lookup.TryGetValue(currentFile, out var existing))
+            {
+                if (coverage.stats.lineCoveredFile > existing.stats.lineCoveredFile)
+                {
+                    lookup[currentFile] = coverage;
+                }
+            }
+            else
+            {
+                lookup.Add(currentFile, coverage);
+            }
         }
 
         void ICoverageData.Parsing(string filename, string solutionPath)

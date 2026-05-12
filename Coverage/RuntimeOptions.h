@@ -5,6 +5,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include <Windows.h>
+
 enum class VerboseLevel
 {
   Error   = 0x01,
@@ -18,7 +20,10 @@ struct RuntimeOptions
 {
   RuntimeOptions() :
     UseStaticCodeAnalysis(false),
-    ExportFormat(Native)
+    ExportFormat(Native),
+    Attach(false),
+    AttachPid(0),
+    ConsolidateAuxiliary(false)
   {}
   virtual ~RuntimeOptions() = default;
   
@@ -45,6 +50,23 @@ struct RuntimeOptions
   std::string PackageName = "Program.exe";
   std::string SolutionPath;
   std::vector<std::string> excludeFilter;
+
+  // When Attach is true, the coverage runner will attach (DebugActiveProcess)
+  // to an already-running process identified by AttachPid instead of launching
+  // a new process with CreateProcess. This is primarily used internally when
+  // a mismatched-bitness child process is spawned by the main target (e.g.
+  // vstest.console.exe (x64) spawning testhost.x86.exe (x86)); the parent
+  // Coverage-x64.exe then launches Coverage-x86.exe with -attach <pid> to
+  // instrument the x86 child.
+  bool Attach;
+  DWORD AttachPid;
+
+  // When true, after the coverage run finishes and any sibling-bitness
+  // CPPCoverage helper processes have produced their own .cov files, the
+  // master process merges those files into its own -o output file and
+  // deletes them. Only supported for Native / NativeV2 export formats
+  // (the same restriction that applies to -m / MergedOutput).
+  bool ConsolidateAuxiliary;
 
   bool isAtLeastLevel(const VerboseLevel& level) const { return (static_cast<int>(_verboseLevel) & static_cast<int>(level)) == static_cast<int>(level); }
 };

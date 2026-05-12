@@ -135,6 +135,328 @@ struct CoverageRunner
 
   std::unordered_map<std::string, std::unique_ptr<ProfileFrame>> profileInfo;
 
+  // PIDs of child processes we must detach from after the current debug event
+  // is continued (because they have a bitness that is incompatible with ours).
+  std::vector<DWORD> pendingDetach;
+
+  // Handles of sibling-bitness CPPCoverage.exe helper processes we launched
+  // to instrument cross-bitness child processes. We wait on these at the end
+  // of the debug loop before writing our own report.
+  std::vector<HANDLE> siblingCoverageProcesses;
+
+  // Output files produced by sibling-bitness CPPCoverage.exe helper
+  // processes. Main.cpp reads this after Start() returns so it can fold
+  // them into the merged coverage file.
+  std::vector<std::string> auxiliaryCoverageOutputs;
+
+  // Returns true if the given process has the same bitness as ourselves and
+  // can therefore be safely debugged. A 64-bit debugger cannot reliably drive
+  // a 32-bit child (WOW64) process: symbol loading and cross-bitness
+  // breakpoint writes corrupt the target. When the user launches something
+  // like vstest.console.exe (x64), it may in turn spawn x86 workers such as
+  // testhost.x86.exe; those must be detached rather than instrumented.
+  bool IsProcessCompatibleBitness(HANDLE hProcess)
+  {
+    USHORT ourMachine;
+#if defined(_M_AMD64)
+    ourMachine = IMAGE_FILE_MACHINE_AMD64;
+#elif defined(_M_IX86)
+    ourMachine = IMAGE_FILE_MACHINE_I386;
+#elif defined(_M_ARM64)
+    ourMachine = IMAGE_FILE_MACHINE_ARM64;
+#else
+    ourMachine = IMAGE_FILE_MACHINE_UNKNOWN;
+#endif
+
+    // Prefer IsWow64Process2 because it reports the real machine type, and
+    // unlike IsWow64Process it works correctly when a 64-bit debugger
+    // inspects a same-bitness child (see the old TODO FIXME block further
+    // down in this file).
+    typedef BOOL(WINAPI* pfnIsWow64Process2)(HANDLE, USHORT*, USHORT*);
+    static auto fnIsWow64Process2 = reinterpret_cast<pfnIsWow64Process2>(
+      GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process2"));
+
+    if (fnIsWow64Process2)
+    {
+      USHORT processMachine = 0;
+      USHORT nativeMachine = 0;
+      if (fnIsWow64Process2(hProcess, &processMachine, &nativeMachine))
+      {
+        // processMachine is IMAGE_FILE_MACHINE_UNKNOWN when the child
+        // is a native process (not running under WOW64). In that case
+        // the actual machine equals the native OS machine.
+        USHORT actualMachine = (processMachine == IMAGE_FILE_MACHINE_UNKNOWN)
+          ? nativeMachine
+          : processMachine;
+        return actualMachine == ourMachine;
+      }
+    }
+
+    // Fallback for very old Windows: use IsWow64Process. This can only
+    // answer the question for a 64-bit debugger; a 32-bit debugger on a
+    // 64-bit OS cannot distinguish a native 64-bit child from itself via
+    // this API, so we conservatively report "compatible" and let the
+    // existing failure modes apply.
+    BOOL isWow64 = FALSE;
+    if (IsWow64Process(hProcess, &isWow64))
+    {
+#if defined(_WIN64)
+      return isWow64 == FALSE;
+#else
+      return true;
+#endif
+    }
+
+    return true;
+  }
+
+  // Quote a single command-line argument the way CommandLineToArgvW expects
+  // it back. Only escapes what's strictly necessary (backslashes preceding a
+  // quote, plus the surrounding quote when the arg contains spaces, tabs,
+  // or quotes).
+  static std::string QuoteArg(const std::string& arg)
+  {
+    bool needsQuote = arg.empty() ||
+      arg.find(' ') != std::string::npos ||
+      arg.find('\t') != std::string::npos ||
+      arg.find('"') != std::string::npos;
+
+    if (!needsQuote)
+    {
+      return arg;
+    }
+
+    std::string out;
+    out.reserve(arg.size() + 2);
+    out.push_back('"');
+    for (size_t i = 0; i < arg.size(); ++i)
+    {
+      size_t backslashes = 0;
+      while (i < arg.size() && arg[i] == '\\')
+      {
+        ++backslashes;
+        ++i;
+      }
+
+      if (i == arg.size())
+      {
+        out.append(backslashes * 2, '\\');
+        break;
+      }
+
+      if (arg[i] == '"')
+      {
+        out.append(backslashes * 2 + 1, '\\');
+        out.push_back('"');
+      }
+      else
+      {
+        out.append(backslashes, '\\');
+        out.push_back(arg[i]);
+      }
+    }
+    out.push_back('"');
+    return out;
+  }
+
+  // Return the full path to the sibling-bitness CPPCoverage executable, or
+  // empty string when none can be found next to us. We assume the standard
+  // naming scheme used by this project: "Coverage-x64.exe", "Coverage-x86.exe",
+  // and the corresponding "*d.exe" debug builds all sit in the same folder.
+  // The rule is simply: toggle "x64" <-> "x86" in our own filename.
+  std::string ResolveSiblingCoverageExecutable() const
+  {
+    char selfPathBuffer[MAX_PATH] = { 0 };
+    DWORD len = GetModuleFileNameA(NULL, selfPathBuffer, MAX_PATH);
+    if (len == 0 || len >= MAX_PATH)
+    {
+      return std::string();
+    }
+
+    std::string selfPath(selfPathBuffer, len);
+
+    // Find the last "x64" or "x86" substring within the filename portion
+    // only. Searching inside the directory portion would misidentify the
+    // sibling when the build directory itself happens to contain "x64".
+    auto slash = selfPath.find_last_of("\\/");
+    size_t fileStart = (slash == std::string::npos) ? 0 : slash + 1;
+
+    std::string filename = selfPath.substr(fileStart);
+
+    auto lastX64 = filename.rfind("x64");
+    auto lastX86 = filename.rfind("x86");
+
+    // Also accept uppercase X64/X86 in case someone renames the binaries.
+    if (lastX64 == std::string::npos)
+    {
+      lastX64 = filename.rfind("X64");
+    }
+    if (lastX86 == std::string::npos)
+    {
+      lastX86 = filename.rfind("X86");
+    }
+
+    std::string siblingFilename = filename;
+    if (lastX64 != std::string::npos &&
+        (lastX86 == std::string::npos || lastX64 > lastX86))
+    {
+      siblingFilename.replace(lastX64, 3,
+        (filename[lastX64] == 'X') ? "X86" : "x86");
+    }
+    else if (lastX86 != std::string::npos)
+    {
+      siblingFilename.replace(lastX86, 3,
+        (filename[lastX86] == 'X') ? "X64" : "x64");
+    }
+    else
+    {
+      // Our own executable name doesn't contain x64/x86; we can't
+      // automatically find the sibling.
+      return std::string();
+    }
+
+    std::string siblingPath = selfPath.substr(0, fileStart) + siblingFilename;
+    if (!std::filesystem::exists(siblingPath))
+    {
+      return std::string();
+    }
+    return siblingPath;
+  }
+
+  // Try to hand off the given child process (identified by PID) to our
+  // sibling-bitness CPPCoverage so it can be instrumented. Returns true on
+  // success. On success, the sibling process handle is stored in
+  // siblingCoverageProcesses and its output file in auxiliaryCoverageOutputs.
+  //
+  // IMPORTANT: the caller is responsible for subsequently detaching from the
+  // child via DebugActiveProcessStop. This method intentionally does not do
+  // the detach itself: that must happen in the top-level debug-event loop at
+  // a well-defined point (after ContinueDebugEvent).
+  bool SpawnSiblingCoverageForChild(DWORD childPid, const std::string& childExePath)
+  {
+    std::string siblingExe = ResolveSiblingCoverageExecutable();
+    if (siblingExe.empty())
+    {
+      if (options.isAtLeastLevel(VerboseLevel::Warning))
+      {
+        std::cout << "No sibling CPPCoverage.exe found next to this executable; "
+          "cannot instrument cross-bitness child PID " << childPid << "." << std::endl;
+      }
+      return false;
+    }
+
+    // Compute a unique output file for the sibling. We don't want it to
+    // overwrite our own .cov. Main.cpp will later merge it into the
+    // MergedOutput if one was requested.
+    std::string auxOutput;
+    if (!options.OutputFile.empty())
+    {
+      auxOutput = options.OutputFile + ".child-" + std::to_string(childPid) + ".cov";
+    }
+    else if (!childExePath.empty())
+    {
+      auxOutput = childExePath + ".child-" + std::to_string(childPid) + ".cov";
+    }
+    else
+    {
+      auxOutput = options.Executable + ".child-" + std::to_string(childPid) + ".cov";
+    }
+
+    // Build the sibling command line. Note we deliberately do NOT pass
+    // -m: merging into a single merged file from multiple concurrent
+    // coverage processes is racy. Main.cpp runs the merge for us after
+    // all helpers have finished.
+    std::string cmd = QuoteArg(siblingExe);
+    cmd += " -quiet";
+    cmd += " -attach ";
+    cmd += std::to_string(childPid);
+    cmd += " -o ";
+    cmd += QuoteArg(auxOutput);
+
+    switch (options.ExportFormat)
+    {
+    case RuntimeOptions::Native:     cmd += " -format native"; break;
+    case RuntimeOptions::NativeV2:   cmd += " -format nativeV2"; break;
+    case RuntimeOptions::Cobertura:  cmd += " -format cobertura"; break;
+    case RuntimeOptions::Clover:     cmd += " -format clover"; break;
+    }
+
+    if (options.UseStaticCodeAnalysis)
+    {
+      cmd += " -codeanalysis";
+    }
+    if (options.ConsolidateAuxiliary)
+    {
+      // If a sibling itself has to hand off another cross-bitness
+      // grandchild, we want that chain to also collapse to one file.
+      cmd += " -consolidate";
+    }
+    for (const auto& codePath : options.CodePaths)
+    {
+      cmd += " -p " + QuoteArg(codePath);
+    }
+    if (!options.SolutionPath.empty())
+    {
+      cmd += " -solution " + QuoteArg(options.SolutionPath);
+    }
+    if (!options.PackageName.empty() && options.PackageName != "Program.exe")
+    {
+      cmd += " -pkg " + QuoteArg(options.PackageName);
+    }
+
+    if (!childExePath.empty())
+    {
+      cmd += " -- ";
+      cmd += QuoteArg(childExePath);
+    }
+
+    if (options.isAtLeastLevel(VerboseLevel::Info))
+    {
+      std::cout << "Launching sibling coverage for cross-bitness PID "
+        << childPid << ": " << cmd << std::endl;
+    }
+
+    STARTUPINFOA si;
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
+    // Share stdout/stderr so sibling diagnostics reach the same terminal.
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdInput  = GetStdHandle(STD_INPUT_HANDLE);
+    si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    si.hStdError  = GetStdHandle(STD_ERROR_HANDLE);
+
+    // CreateProcess wants a writable buffer for the command line.
+    std::vector<char> cmdBuffer(cmd.begin(), cmd.end());
+    cmdBuffer.push_back('\0');
+
+    BOOL ok = CreateProcessA(
+      NULL,
+      cmdBuffer.data(),
+      NULL, NULL,
+      TRUE,   // inherit handles (for stdout/stderr sharing)
+      0,
+      NULL, NULL,
+      &si, &pi);
+
+    if (!ok)
+    {
+      if (options.isAtLeastLevel(VerboseLevel::Error))
+      {
+        std::cerr << "Failed to launch sibling coverage process: "
+          << Util::GetLastErrorAsString() << std::endl;
+      }
+      return false;
+    }
+
+    CloseHandle(pi.hThread);
+    siblingCoverageProcesses.push_back(pi.hProcess);
+    auxiliaryCoverageOutputs.push_back(auxOutput);
+    return true;
+  }
+
   std::string GetFileNameFromHandle(HANDLE hFile)
   {
     BOOL bSuccess = FALSE;
@@ -443,42 +765,95 @@ struct CoverageRunner
   {
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_LOAD_ANYTHING);
 
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-    ZeroMemory(&pi, sizeof(pi));
-
-    std::string arguments;
-    if (!options.ExecutableArguments.empty())
+    if (options.Attach)
     {
-      arguments = options.ExecutableArguments;
-    }
-
-    // Read working directory (if empty need to set NULL)
-    const char* workingDirectory = NULL;
-    if (!options.WorkingDirectory.empty())
-    {
-      workingDirectory = options.WorkingDirectory.c_str();
-    }
-
-    auto result = CreateProcess(NULL, arguments.data(), NULL, NULL, FALSE, DEBUG_PROCESS, NULL, workingDirectory, &si, &pi);
-    if (result == 0)
-    {
-      if (pi.dwProcessId == 0)
+      // Attach mode: we're taking over an already-running process
+      // (typically handed off from a sibling-bitness CPPCoverage).
+      //
+      // There is an inherent race when we're spawned as a handoff from
+      // the sibling CPPCoverage: the sibling launches us before it
+      // finishes detaching via DebugActiveProcessStop, so our first
+      // DebugActiveProcess call may race against the sibling still
+      // owning the debug port. We therefore retry briefly before
+      // giving up. Under normal single-process usage, the first call
+      // succeeds immediately.
+      const int maxAttempts = 50;  // ~5 seconds total
+      BOOL attached = FALSE;
+      DWORD lastError = 0;
+      for (int attempt = 0; attempt < maxAttempts && !attached; ++attempt)
       {
-        if (options.isAtLeastLevel(VerboseLevel::Error))
+        attached = DebugActiveProcess(options.AttachPid);
+        if (!attached)
         {
-          const std::string msg = "Error running process; the most likely cause of this is a x86/x64 mix-up. Message " + Util::GetLastErrorAsString();
-          throw std::exception(msg.c_str());
+          lastError = GetLastError();
+          // Abort immediately if the target doesn't exist anymore;
+          // retrying won't help.
+          if (lastError == ERROR_INVALID_PARAMETER)
+          {
+            break;
+          }
+          Sleep(100);
         }
       }
-      else
+
+      if (!attached)
       {
-        if (options.isAtLeastLevel(VerboseLevel::Error))
+        SetLastError(lastError);
+        const std::string msg = "Error attaching to process " +
+          std::to_string(options.AttachPid) + ": " +
+          Util::GetLastErrorAsString();
+        throw std::exception(msg.c_str());
+      }
+
+      // Make sure the target isn't killed if *we* crash. The sibling
+      // that spawned us has its own expectations about the child
+      // surviving long enough to finish the test run.
+      DebugSetProcessKillOnExit(FALSE);
+
+      if (options.isAtLeastLevel(VerboseLevel::Info))
+      {
+        std::cout << "Attached to PID " << options.AttachPid << std::endl;
+      }
+    }
+    else
+    {
+      STARTUPINFO si;
+      PROCESS_INFORMATION pi;
+      ZeroMemory(&si, sizeof(si));
+      si.cb = sizeof(si);
+      ZeroMemory(&pi, sizeof(pi));
+
+      std::string arguments;
+      if (!options.ExecutableArguments.empty())
+      {
+        arguments = options.ExecutableArguments;
+      }
+
+      // Read working directory (if empty need to set NULL)
+      const char* workingDirectory = NULL;
+      if (!options.WorkingDirectory.empty())
+      {
+        workingDirectory = options.WorkingDirectory.c_str();
+      }
+
+      auto result = CreateProcess(NULL, arguments.data(), NULL, NULL, FALSE, DEBUG_PROCESS, NULL, workingDirectory, &si, &pi);
+      if (result == 0)
+      {
+        if (pi.dwProcessId == 0)
         {
-          const std::string msg = "Error running process: " + Util::GetLastErrorAsString();
-          throw std::exception(msg.c_str());
+          if (options.isAtLeastLevel(VerboseLevel::Error))
+          {
+            const std::string msg = "Error running process; the most likely cause of this is a x86/x64 mix-up. Message " + Util::GetLastErrorAsString();
+            throw std::exception(msg.c_str());
+          }
+        }
+        else
+        {
+          if (options.isAtLeastLevel(VerboseLevel::Error))
+          {
+            const std::string msg = "Error running process: " + Util::GetLastErrorAsString();
+            throw std::exception(msg.c_str());
+          }
         }
       }
     }
@@ -549,6 +924,51 @@ struct CoverageRunner
           {
             auto process = debugEvent.u.CreateProcessInfo.hProcess;
             auto thread = debugEvent.u.CreateProcessInfo.hThread;
+
+            // Cross-bitness children (e.g. a 64-bit vstest.console.exe
+            // spawning a 32-bit testhost.x86.exe) cannot be safely
+            // instrumented by this debugger: loading symbols and
+            // writing 0xCC breakpoints across the bitness boundary
+            // corrupts them. Hand them off to the sibling-bitness
+            // CPPCoverage.exe (which ships alongside this binary) via
+            // process attach, then detach ourselves so the sibling can
+            // take over as the sole debugger.
+            if (!IsProcessCompatibleBitness(process))
+            {
+              auto filename = GetFileNameFromHandle(debugEvent.u.CreateProcessInfo.hFile);
+              if (options.isAtLeastLevel(VerboseLevel::Info))
+              {
+                std::cout << "Cross-bitness child detected: "
+                  << filename << " (PID " << debugEvent.dwProcessId
+                  << "). Handing off to sibling coverage tool." << std::endl;
+              }
+
+              // The debugger owns hFile on CREATE_PROCESS_DEBUG_EVENT
+              // and must close it. Since we won't be loading symbols
+              // from it, release it now to avoid holding a file lock.
+              if (debugEvent.u.CreateProcessInfo.hFile != NULL)
+              {
+                CloseHandle(debugEvent.u.CreateProcessInfo.hFile);
+              }
+
+              // Try to launch the sibling CPPCoverage before we
+              // detach. Even though the child is still suspended at
+              // this point (we haven't ContinueDebugEvent'd yet),
+              // the sibling can't attach while we're still the
+              // debugger, so the actual DebugActiveProcess call in
+              // the sibling will happen after our detach. There is
+              // a brief window during which the child runs
+              // unmonitored; Windows mitigates this via synthetic
+              // LOAD_DLL / CREATE_PROCESS events when the sibling
+              // attaches, so no already-loaded module is missed.
+              SpawnSiblingCoverageForChild(debugEvent.dwProcessId, filename);
+
+              // Defer the actual detach until after ContinueDebugEvent
+              // for this event has been issued.
+              pendingDetach.push_back(debugEvent.dwProcessId);
+              break;
+            }
+
             auto pinfo = new ProcessInfo(debugEvent.dwProcessId, process);
             pinfo->Threads[debugEvent.dwThreadId] = thread;
             processMap[debugEvent.dwProcessId] = std::unique_ptr<ProcessInfo>(pinfo);
@@ -568,11 +988,6 @@ struct CoverageRunner
 
           case CREATE_THREAD_DEBUG_EVENT:
           {
-            //if (!quiet)
-            //{
-            //	std::cout << "Thread 0x" << std::hex << debugEvent.u.CreateThread.hThread << std::dec << " (Id: " << debugEvent.dwThreadId << ") created." << std::endl;
-            //}
-
             auto thread = debugEvent.u.CreateThread.hThread;
             auto proc = processMap[debugEvent.dwProcessId].get();
             proc->Threads[debugEvent.dwThreadId] = thread;
@@ -581,11 +996,6 @@ struct CoverageRunner
 
           case EXIT_THREAD_DEBUG_EVENT:
           {
-            //if (!quiet)
-            //{
-            //	std::cout << "Thread Id: " << debugEvent.dwThreadId << " exited with code: " << debugEvent.u.ExitThread.dwExitCode << "." << std::endl;
-            //}
-
             auto proc = processMap[debugEvent.dwProcessId].get();
             proc->Threads.erase(proc->Threads.find(debugEvent.dwThreadId));
           }
@@ -602,13 +1012,13 @@ struct CoverageRunner
             // executionSuccess &= (debugEvent.u.ExitProcess.dwExitCode == 0);
 
             processMap.erase(debugEvent.dwProcessId);
-            
-					  // Get only the latest RC code of latest process.
-					  // Here we consider all process depends of master process which must be released at the end.
-					  if( processMap.empty() )
-					  {
-						  executionSuccess = (debugEvent.u.ExitProcess.dwExitCode == 0);
-					  }
+
+            // Get only the latest RC code of latest process.
+            // Here we consider all process depends of master process which must be released at the end.
+            if (processMap.empty())
+            {
+              executionSuccess = (debugEvent.u.ExitProcess.dwExitCode == 0);
+            }
             continueDebugging = processMap.empty() ? false : true;
           }
           break;
@@ -928,6 +1338,28 @@ struct CoverageRunner
         ContinueDebugEvent(debugEvent.dwProcessId, debugEvent.dwThreadId, continueStatus);
 
         continueStatus = DBG_CONTINUE;
+
+        // Detach any child processes that were flagged during this
+        // event cycle (e.g. cross-bitness children). This is done
+        // after ContinueDebugEvent so the kernel has fully processed
+        // the CREATE_PROCESS event for the child before we tell it we
+        // no longer want to debug it.
+        if (!pendingDetach.empty())
+        {
+          for (DWORD detachPid : pendingDetach)
+          {
+            if (!DebugActiveProcessStop(detachPid))
+            {
+              if (options.isAtLeastLevel(VerboseLevel::Warning))
+              {
+                std::cerr << "Warning: failed to detach from PID "
+                  << detachPid << ": "
+                  << Util::GetLastErrorAsString() << std::endl;
+              }
+            }
+          }
+          pendingDetach.clear();
+        }
       }
     }
 
@@ -937,6 +1369,40 @@ struct CoverageRunner
       {
         SymCleanup(it.second->Handle);
       }
+    }
+
+    // Wait for sibling CPPCoverage helper processes (spawned to handle
+    // cross-bitness children) to finish. They each write their own .cov
+    // file which Main.cpp will fold into the merged coverage output.
+    // By the time we get here our primary target has already exited, so
+    // its cross-bitness workers should be exiting or already gone.
+    if (!siblingCoverageProcesses.empty())
+    {
+      if (options.isAtLeastLevel(VerboseLevel::Info))
+      {
+        std::cout << "Waiting for " << siblingCoverageProcesses.size()
+          << " sibling coverage helper process(es)..." << std::endl;
+      }
+
+      for (HANDLE h : siblingCoverageProcesses)
+      {
+        WaitForSingleObject(h, INFINITE);
+
+        DWORD exitCode = 0;
+        if (GetExitCodeProcess(h, &exitCode) && exitCode != 0)
+        {
+          if (options.isAtLeastLevel(VerboseLevel::Warning))
+          {
+            std::cerr << "Sibling coverage helper exited with code "
+              << exitCode << std::endl;
+          }
+          // Don't fail the whole run on a sibling failure: the user
+          // still gets our own coverage, and the sibling issue is
+          // surfaced via its non-zero exit code in the log.
+        }
+        CloseHandle(h);
+      }
+      siblingCoverageProcesses.clear();
     }
 
     // Group profile data together:

@@ -156,6 +156,9 @@ namespace NubiloSoft.CoverageExt
             if (!Settings.Instance.UseOpenCppCoverageRunner)
             {
                 //argumentBuilder.Append("-quiet "); // Not show info
+                // Fold any sibling-bitness helper .cov files into the main
+                // report; see CoverageRunner::SpawnSiblingCoverageForChild.
+                argumentBuilder.Append("-consolidate ");
                 argumentBuilder.Append("-solution ");
                 argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
                 argumentBuilder.Append(" -o ");
@@ -265,101 +268,146 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
+        // Substring emitted by our C++ runner (CoverageRunner::Start) when
+        // CreateProcess with DEBUG_PROCESS fails because the debugger and
+        // debuggee have incompatible bitness (e.g. a 32-bit Coverage-x86.exe
+        // trying to debug a 64-bit vstest.console.exe). When we see this, we
+        // retry once with the opposite platform; the cross-bitness handoff
+        // logic in the runner takes care of the rest.
+        private const string ArchitectureMismatchMarker = "x86/x64 mix-up";
+
         private void StartImpl(string solutionFolder, List<string> codePaths, string platform, string dllFolder, string dllFilename,
           string workingDirectory, string commandline, bool merge)
         {
             try
             {
-                // Delete old coverage file
+                // Delete old coverage file (only once; survives retries)
                 (string resultFile, string tempFile) = CoverageReportPaths(solutionFolder);
                 if (File.Exists(tempFile))
                 {
                     File.Delete(tempFile);
                 }
 
-                // Create your Process
-                Process process = new Process();
-                process.StartInfo.FileName = CoverageExePath(platform);
+                // Visual Studio's 'platform' pick is only a best guess (e.g. it
+                // says x86 for a project whose actual test host is the 64-bit
+                // vstest.console.exe). If the first try fails with our
+                // architecture-mismatch marker, we flip the platform once and
+                // retry. Only enabled for our own runner.
+                bool canRetryOnArchMismatch = !Settings.Instance.UseOpenCppCoverageRunner;
+                bool archMismatchRetried = false;
+                string coveragePlatform = platform;
 
-                string filename = Path.GetFileName(process.StartInfo.FileName);
-                if (!File.Exists(process.StartInfo.FileName))
+                while (true)
                 {
-                    throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
-                }
+                    // Reset per-attempt state so a retry has a clean slate for
+                    // both the console-output buffer and the watchdog timer.
+                    tb.Clear();
+                    lastEvent = DateTime.UtcNow;
 
-                string arguments = PrepareArguments(solutionFolder, codePaths, platform, Path.Combine(dllFolder, dllFilename),
-                  workingDirectory, commandline, tempFile, merge ? resultFile : String.Empty);
-                output.WriteLine("Execute coverage: {0}", arguments);
+                    // Create your Process
+                    Process process = new Process();
+                    process.StartInfo.FileName = CoverageExePath(coveragePlatform);
 
-                process.StartInfo.WorkingDirectory = !Settings.Instance.UseOpenCppCoverageRunner ? dllFolder : Path.GetDirectoryName(tempFile);
-                process.StartInfo.Arguments = arguments;
-                process.StartInfo.CreateNoWindow = true;
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-
-                process.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
-                process.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
-
-                process.Start();
-
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                bool exited = false;
-                while (!exited && lastEvent.AddMinutes(15) > DateTime.UtcNow)
-                {
-                    exited = process.WaitForExit(1000 * 60);
-                }
-
-                if (!exited)
-                {
-                    // Kill process.
-                    process.Kill();
-                    throw new Exception("Creating code coverage timed out (more than 15min).");
-                }
-                else if (process.ExitCode != 0)
-                {
-                    string message = "";
-                    switch (process.ExitCode)
+                    string filename = Path.GetFileName(process.StartInfo.FileName);
+                    if (!File.Exists(process.StartInfo.FileName))
                     {
-                        case 4:
-                            message = String.Format("Coverage may failed.\n\r{0} is not finished with rc=0.", filename);
-                            break;
-                        default:
-                            message = String.Format("Coverage application returns code {0}", process.ExitCode);
-                            break;
+                        throw new NotSupportedException(filename + " was not found. Expected: " + process.StartInfo.FileName);
                     }
-                    MessageBox.Show(message, "Coverage Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
 
-                string consoleOutput = tb.ToString();
+                    string arguments = PrepareArguments(solutionFolder, codePaths, coveragePlatform, Path.Combine(dllFolder, dllFilename),
+                      workingDirectory, commandline, tempFile, merge ? resultFile : String.Empty);
+                    output.WriteLine("Execute coverage: {0}", arguments);
 
-                if (consoleOutput.Contains("Usage:"))
-                {
-                    throw new Exception("Incorrect command line argument passed to coverage tool");
-                }
+                    process.StartInfo.WorkingDirectory = !Settings.Instance.UseOpenCppCoverageRunner ? dllFolder : Path.GetDirectoryName(tempFile);
+                    process.StartInfo.Arguments = arguments;
+                    process.StartInfo.CreateNoWindow = true;
+                    process.StartInfo.UseShellExecute = false;
+                    process.StartInfo.RedirectStandardOutput = true;
+                    process.StartInfo.RedirectStandardError = true;
 
-                if (consoleOutput.Contains("Error: the test source file"))
-                {
-                    throw new Exception("Cannot find test source file " + dllFilename);
-                }
+                    process.OutputDataReceived += new DataReceivedEventHandler(OutputHandler);
+                    process.ErrorDataReceived += new DataReceivedEventHandler(OutputHandler);
 
-                if (File.Exists(tempFile))
-                {
-                    if (!merge)
+                    process.Start();
+
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+
+                    bool exited = false;
+                    while (!exited && lastEvent.AddMinutes(15) > DateTime.UtcNow)
                     {
-                        // All fine, update file:
-                        if (File.Exists(resultFile))
+                        exited = process.WaitForExit(1000 * 60);
+                    }
+
+                    if (!exited)
+                    {
+                        // Kill process.
+                        process.Kill();
+                        throw new Exception("Creating code coverage timed out (more than 15min).");
+                    }
+
+                    string consoleOutput = tb.ToString();
+
+                    // Before treating a non-zero exit as a real failure, check
+                    // for the arch-mismatch marker and retry on the other
+                    // platform once.
+                    if (canRetryOnArchMismatch && !archMismatchRetried &&
+                        consoleOutput.Contains(ArchitectureMismatchMarker))
+                    {
+                        string alternatePlatform = (coveragePlatform == "x86") ? "x64" : "x86";
+                        output.WriteLine(
+                            "Coverage runner reported an x86/x64 mix-up on '{0}'. " +
+                            "Retrying with '{1}' (the sibling runner will cover both bitnesses via handoff).",
+                            coveragePlatform, alternatePlatform);
+
+                        coveragePlatform = alternatePlatform;
+                        archMismatchRetried = true;
+                        continue;
+                    }
+
+                    if (process.ExitCode != 0)
+                    {
+                        string message = "";
+                        switch (process.ExitCode)
                         {
-                            File.Delete(resultFile);
+                            case 4:
+                                message = String.Format("Coverage may failed.\n\r{0} is not finished with rc=0.", filename);
+                                break;
+                            default:
+                                message = String.Format("Coverage application returns code {0}", process.ExitCode);
+                                break;
                         }
-                        File.Move(tempFile, resultFile);
+                        MessageBox.Show(message, "Coverage Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
-                }
-                else
-                {
-                    output.WriteLine("No coverage report generated. Cannot continue.");
+
+                    if (consoleOutput.Contains("Usage:"))
+                    {
+                        throw new Exception("Incorrect command line argument passed to coverage tool");
+                    }
+
+                    if (consoleOutput.Contains("Error: the test source file"))
+                    {
+                        throw new Exception("Cannot find test source file " + dllFilename);
+                    }
+
+                    if (File.Exists(tempFile))
+                    {
+                        if (!merge)
+                        {
+                            // All fine, update file:
+                            if (File.Exists(resultFile))
+                            {
+                                File.Delete(resultFile);
+                            }
+                            File.Move(tempFile, resultFile);
+                        }
+                    }
+                    else
+                    {
+                        output.WriteLine("No coverage report generated. Cannot continue.");
+                    }
+
+                    break; // Exit the retry loop on success or non-retryable error.
                 }
             }
             catch (Exception ex)
