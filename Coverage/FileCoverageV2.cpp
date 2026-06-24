@@ -1,6 +1,7 @@
 #include "FileCoverageV2.h"
 #include "base64.h"
 
+#include <cassert>
 #include <format>
 
 FileCoverageV2::FileCoverageV2(size_t nbLines) :
@@ -37,16 +38,19 @@ FileCoverageV2::LineArray::value_type FileCoverageV2::encodeLine(bool isCode, co
 void FileCoverageV2::updateStats()
 {
   _nbLinesCovered = 0;
+  _nbLinesCode = 0;
   for (const auto& line : _code)
   {
     if ((line & maskIsCode) == maskIsCode)
     {
+      _nbLinesCode++;
       if ((line & maskCount) > 0)
       {
-        _nbLinesCovered += 1;
+        _nbLinesCovered++;
       }
     }
   }
+  assert(_nbLinesCovered <= _nbLinesCode);
 }
 
 bool FileCoverageV2::merge(const FileCoverageV2& other)
