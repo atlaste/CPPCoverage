@@ -29,13 +29,13 @@ namespace TestNativeV2
 {
 	TEST_CLASS(FileCoverage)
 	{
+		static constexpr auto max = FileCoverageV2::maskCount;
+		static constexpr auto c = FileCoverageV2::maskIsCode;
+		static constexpr auto p = FileCoverageV2::maskIsPartial;
 	public:
 
 		TEST_METHOD(WriteTest)
 		{
-			const auto max = FileCoverageV2::maskCount;
-			const auto c = FileCoverageV2::maskIsCode;
-			const auto p = FileCoverageV2::maskIsPartial;
 			FileCoverageV2 coverage(9);
 			coverage.md5Code = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
 			coverage._code = { 0, 0, c, c, c | p | 1, c | 10000, c | 3000, 0, c | p | 1 };
@@ -49,6 +49,58 @@ namespace TestNativeV2
 				"		<file path=\"filename\" md5=\"0123456789ABCDEFGHIJKLMNOPQRSTUV\">\n"
 				"			<stats nbLinesInFile=\"9\" nbLinesOfCode=\"6\" nbLinesCovered=\"4\"/>\n"
 				"			<coverage>AAAAAACAAIABwBCnuIsAAAHA</coverage>\n"
+				"		</file>\n";
+
+			std::stringstream ss;
+			coverage.write("filename", ss);
+			Assert::AreEqual(EXPECT_STREAM, ss.str().c_str());
+		}
+
+		TEST_METHOD(MergeTest)
+		{
+			FileCoverageV2 coverage(9);
+			coverage.md5Code = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+			coverage._code = { 0, 0, c, c, c | p | 1, c | 10000, c | 3000, 0, c };
+			coverage.updateStats();
+
+			FileCoverageV2 other(9);
+			other.md5Code = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+			other._code = { 10, c | p | 20, c, c, c | p | 4, c | p | 50, c | 3000, c | 8, c | 2 };
+			other.updateStats();
+
+			auto result = coverage.merge(other);
+			Assert::IsTrue(result);
+
+			static constexpr char EXPECT_STREAM[] =
+				"		<file path=\"filename\" md5=\"0123456789ABCDEFGHIJKLMNOPQRSTUV\">\n"
+				"			<stats nbLinesInFile=\"9\" nbLinesOfCode=\"9\" nbLinesCovered=\"7\"/>\n"
+				"			<coverage>CoAUgACAAIAFwEKncJcIgAKA</coverage>\n"
+				"		</file>\n";
+
+			std::stringstream ss;
+			coverage.write("filename", ss);
+			Assert::AreEqual(EXPECT_STREAM, ss.str().c_str());
+		}
+
+		TEST_METHOD(MergeDifferentLinesCountTest)
+		{
+			FileCoverageV2 coverage(3);
+			coverage.md5Code = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+			coverage._code = { 0, 0, c };
+			coverage.updateStats();
+
+			FileCoverageV2 other(9);
+			other.md5Code = "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+			other._code = { 10, c | p | 20, c, c, c | p | 4, c | p | 50, c | 3000, c | 8, c | 2 };
+			other.updateStats();
+
+			auto result = coverage.merge(other);
+			Assert::IsFalse(result);
+
+			static constexpr char EXPECT_STREAM[] =
+				"		<file path=\"filename\" md5=\"0123456789ABCDEFGHIJKLMNOPQRSTUV\">\n"
+				"			<stats nbLinesInFile=\"3\" nbLinesOfCode=\"1\" nbLinesCovered=\"0\"/>\n"
+				"			<coverage>AAAAAACA</coverage>\n"
 				"		</file>\n";
 
 			std::stringstream ss;
