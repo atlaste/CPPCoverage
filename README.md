@@ -4,8 +4,6 @@
 [![License: BSD](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=5SZAYVTQFJDBE)
 
-A KiCad PCB plugin that automatically places silkscreen reference designators and value labels using global ILP optimization — keeping them off footprints, vias, holes, mask features, and each other.
-
 CPPCoverage is a Visual Studio extension that calculates code coverage and profile data for C++ applications and Visual Studio C++ native tests. Basically it provides 
 you with an easy-to-use, light-weight C++ code coverage and profiler, right from Visual Studio and with the features you expect from tools like these. 
 
