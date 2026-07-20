@@ -169,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileCallbackInfoTest.cpp" />
+    <ClCompile Include="FileCoverageV2Test.cpp" />
     <ClCompile Include="FileInfoTest.cpp" />
     <ClCompile Include="md5Test.cpp" />
     <ClCompile Include="MergeRunnerV1Test.cpp" />
