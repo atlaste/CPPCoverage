@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FileLineInfo.h"
+#include "FileInfo.h"
 #include "FileCoverageV2.h"
 #include "BreakpointData.h"
 #include "RuntimeOptions.h"
@@ -21,11 +21,12 @@
 
 struct FileCallbackInfo
 {
-  FileCallbackInfo(const std::string& filename) :
-    filename(filename)
+  FileCallbackInfo(const RuntimeOptions& opts) :
+    opts(opts)
   {
-    if (RuntimeOptions::Instance().CodePaths.empty())
+    if (opts.CodePaths.empty())
     {
+      const auto& filename = opts.Executable;
       auto idx = filename.find("x64");
       if (idx == std::string::npos)
       {
@@ -47,13 +48,17 @@ struct FileCallbackInfo
     }
   }
 
-  std::string filename;
   std::string sourcePath;
 
   using MergedProfileInfoMap = std::unordered_map<std::string, std::unique_ptr<std::vector<ProfileInfo>>>;
   using FileInfoMap = std::unordered_map<std::string, std::unique_ptr<FileInfo>>;
 
   FileInfoMap lineData;
+
+  const std::string& GetFilename()
+  {
+    return opts.Executable;
+  }
 
   void Filter(RuntimeNotifications& notifications)
   {
@@ -66,7 +71,7 @@ struct FileCallbackInfo
         std::swap(tmp, it.second);
         newLineData[it.first] = std::move(tmp);
       }
-      else if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Trace))
+      else if (opts.isAtLeastLevel(VerboseLevel::Trace))
       {
         std::cout << "Removing file " << it.first << std::endl;
       }
@@ -97,7 +102,7 @@ struct FileCallbackInfo
       return PathMatches(filename, sourcePath);
     }
 
-    const auto& codePaths = RuntimeOptions::Instance().CodePaths;
+    const auto& codePaths = opts.CodePaths;
     for (const auto& codePath : codePaths)
     {
       if (PathMatches(filename, codePath))
@@ -128,14 +133,15 @@ struct FileCallbackInfo
   {
     switch (exportFormat)
     {
-      case RuntimeOptions::Clover:    WriteClover(stream); break;
-      case RuntimeOptions::Cobertura: WriteCobertura(stream); break;
-      case RuntimeOptions::NativeV2:  WriteNativeV2(stream); break;
+      case RuntimeOptions::ExportFormatType::Clover:    WriteClover(stream); break;
+      case RuntimeOptions::ExportFormatType::Cobertura: WriteCobertura(stream); break;
+      case RuntimeOptions::ExportFormatType::NativeV2:  WriteNativeV2(stream); break;
       default: WriteNative(stream, mergedProfileInfo); break;
     }
   }
 
 private:
+  const RuntimeOptions& opts;
 
   void WriteClover(std::ostream& stream)
   {
@@ -170,7 +176,7 @@ private:
     // stream << "coveredstatements=\"300\" statements=\"500\" coveredmethods=\"50\" methods=\"80\" ";
     // stream << "coveredconditionals=\"100\" conditionals=\"120\" coveredelements=\"900\" elements=\"1000\" ";
     stream << "complexity=\"0\" />" << std::endl;
-    stream << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\">" << std::endl;
+    stream << "<package name=\"" << opts.PackageName << "\">" << std::endl;
     for (auto& it : lineData)
     {
       auto ptr = it.second.get();
@@ -229,7 +235,7 @@ private:
     stream << "<coverage line-rate=\"" << lineRate << "\"" << " " << "version=\"\">" << std::endl;
     stream << "\t" << "<packages>" << std::endl;
 
-    stream << "\t\t" << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\" line-rate=\"" << lineRate << "\">" << std::endl;
+    stream << "\t\t" << "<package name=\"" << opts.PackageName << "\" line-rate=\"" << lineRate << "\">" << std::endl;
     stream << "\t\t\t" << "<classes>" << std::endl;
     for (auto& it : lineData)
     {
@@ -379,7 +385,7 @@ private:
       filepaths.push_back(item.first);
     }
 
-    for (const auto& dirPath : RuntimeOptions::Instance().CodePaths)
+    for (const auto& dirPath : opts.CodePaths)
     {
       bool dirPartAdded = false;
 
@@ -417,7 +423,7 @@ private:
       }
     }
 
-    if (!filepaths.empty() && RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
+    if (!filepaths.empty() && opts.isAtLeastLevel(VerboseLevel::Warning))
     {
       std::cerr << "List of refuse coverage files (because not relative to any code path):" << std::endl;
 
@@ -428,7 +434,7 @@ private:
 
       std::cerr << std::endl << "List of code paths:" << std::endl;
 
-      for (const auto& dirPath : RuntimeOptions::Instance().CodePaths)
+      for (const auto& dirPath : opts.CodePaths)
       {
         std::cerr << std::format("- {0}", dirPath) << std::endl;
       }

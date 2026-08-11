@@ -26,10 +26,11 @@
 
 struct CoverageRunner
 {
-  CoverageRunner(const RuntimeOptions& opts) : options(opts),
+  CoverageRunner(RuntimeOptions& opts) : options(opts),
+    notifications(opts),
     debugInfoAvailable(false),
     debuggerPresentPatched(false),
-    coverageContext(opts.Executable),
+    coverageContext(opts),
     profileInfo()
   {}
 
@@ -44,7 +45,7 @@ struct CoverageRunner
       if (!std::filesystem::exists(file))
       {
 #ifndef NDEBUG
-        if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+        if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Error))
         {
           std::cerr << std::format("Impossible to find file : {0}", file) << std::endl;
         }
@@ -339,10 +340,10 @@ struct CoverageRunner
 
     switch (options.ExportFormat)
     {
-    case RuntimeOptions::Native:     cmd += " -format native"; break;
-    case RuntimeOptions::NativeV2:   cmd += " -format nativeV2"; break;
-    case RuntimeOptions::Cobertura:  cmd += " -format cobertura"; break;
-    case RuntimeOptions::Clover:     cmd += " -format clover"; break;
+    case RuntimeOptions::ExportFormatType::Native:     cmd += " -format native"; break;
+    case RuntimeOptions::ExportFormatType::NativeV2:   cmd += " -format nativeV2"; break;
+    case RuntimeOptions::ExportFormatType::Cobertura:  cmd += " -format cobertura"; break;
+    case RuntimeOptions::ExportFormatType::Clover:     cmd += " -format clover"; break;
     }
 
     if (options.UseStaticCodeAnalysis)
@@ -598,7 +599,7 @@ struct CoverageRunner
           IMAGEHLP_SYMBOL img;
 #endif
 
-          if (SymGetSymFromName(proc->Handle, "PassToCPPCoverage", &img) && (coverageContext.filename == filename))
+          if (SymGetSymFromName(proc->Handle, "PassToCPPCoverage", &img) && (coverageContext.GetFilename() == filename))
           {
             auto size = ReachabilityAnalysis::FirstInstructionSize(proc->Handle, img.Address);
 

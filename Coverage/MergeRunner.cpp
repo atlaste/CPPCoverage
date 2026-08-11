@@ -11,10 +11,10 @@ MergeRunner::MergeRunner(const RuntimeOptions& opts) :
 
   switch (opts.ExportFormat)
   {
-    case RuntimeOptions::Native:
+    case RuntimeOptions::ExportFormatType::Native:
       runner = std::make_unique<MergeRunnerV1>();
       break;
-    case RuntimeOptions::NativeV2:
+    case RuntimeOptions::ExportFormatType::NativeV2:
       runner = std::make_unique<MergeRunnerV2>();
       break;
     default:

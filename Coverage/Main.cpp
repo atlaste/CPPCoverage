@@ -53,10 +53,8 @@ void ShowHelp()
   std::cout << std::endl;
 }
 
-void ParseCommandLine(int argc, const char** argv)
+void ParseCommandLine(int argc, const char** argv, RuntimeOptions& opts)
 {
-  RuntimeOptions& opts = RuntimeOptions::Instance();
-
   LPTSTR cmd = GetCommandLine();
   std::string cmdLine = cmd;
 
@@ -158,19 +156,19 @@ void ParseCommandLine(int argc, const char** argv)
       std::string t(argv[i]);
       if (t == "native")
       {
-        opts.ExportFormat = RuntimeOptions::Native;
+        opts.ExportFormat = RuntimeOptions::ExportFormatType::Native;
       }
       else if (t == "nativeV2")
       {
-        opts.ExportFormat = RuntimeOptions::NativeV2;
+        opts.ExportFormat = RuntimeOptions::ExportFormatType::NativeV2;
       }
       else if (t == "cobertura")
       {
-        opts.ExportFormat = RuntimeOptions::Cobertura;
+        opts.ExportFormat = RuntimeOptions::ExportFormatType::Cobertura;
       }
       else if (t == "clover")
       {
-        opts.ExportFormat = RuntimeOptions::Clover;
+        opts.ExportFormat = RuntimeOptions::ExportFormatType::Clover;
       }
       else
       {
@@ -197,7 +195,7 @@ void ParseCommandLine(int argc, const char** argv)
       }
 
       std::string t(argv[i]);
-      opts.CodePaths.push_back(t);
+      opts.CodePaths.emplace(t);
     }
     else if (s == "-w")
     {
@@ -257,14 +255,18 @@ void ParseCommandLine(int argc, const char** argv)
   }
 
   // Check we can merge
-  if ((opts.ExportFormat != RuntimeOptions::Native && opts.ExportFormat != RuntimeOptions::NativeV2) && !opts.MergedOutput.empty())
+  if (opts.ExportFormat != RuntimeOptions::ExportFormatType::Native &&
+      opts.ExportFormat != RuntimeOptions::ExportFormatType::NativeV2 &&
+      !opts.MergedOutput.empty())
   {
     throw std::exception("Merge mode is only for RuntimeOptions::Native or NativeV2 mode.");
   }
 
   // -consolidate piggy-backs on the Native / NativeV2 merge machinery, so
   // reject it for formats that can't round-trip through MergeRunner.
-  if ((opts.ExportFormat != RuntimeOptions::Native && opts.ExportFormat != RuntimeOptions::NativeV2) && opts.ConsolidateAuxiliary)
+  if (opts.ExportFormat != RuntimeOptions::ExportFormatType::Native &&
+      opts.ExportFormat != RuntimeOptions::ExportFormatType::NativeV2 &&
+      opts.ConsolidateAuxiliary)
   {
     throw std::exception("-consolidate is only supported for -format native or nativeV2.");
   }
@@ -324,7 +326,7 @@ void ParseCommandLine(int argc, const char** argv)
       opts.ExecutableArguments = opts.ExecutableArguments.substr(1);
   */
 #ifdef _DEBUG
-  if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Trace))
+  if (opts.isAtLeastLevel(VerboseLevel::Trace))
   {
     std::cout << "Executable: " << opts.Executable << std::endl;
     std::cout << "Arguments: " << opts.ExecutableArguments << std::endl;
@@ -361,15 +363,15 @@ int main(int argc, const char** argv)
   }
 #endif
 
-  RuntimeOptions& opts = RuntimeOptions::Instance();
+  auto& opts = RuntimeOptionsSingleton::Instance();
 
   try
   {
-    ParseCommandLine(argc, argv);
+    ParseCommandLine(argc, argv, opts);
   }
   catch (const std::exception& e)
   {
-    if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+    if (opts.isAtLeastLevel(VerboseLevel::Error))
     {
       std::cerr << "Error: " << e.what() << std::endl;
     }
@@ -388,7 +390,7 @@ int main(int argc, const char** argv)
   {
     if (opts.Executable.empty())
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+      if (opts.isAtLeastLevel(VerboseLevel::Error))
       {
         std::cerr << "Error: Missing executable file" << std::endl;
       }
@@ -438,7 +440,7 @@ int main(int argc, const char** argv)
     {
       if (!std::filesystem::exists(localOutputFile))
       {
-        if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
+        if (opts.isAtLeastLevel(VerboseLevel::Warning))
         {
           std::cerr << "Warning: -consolidate requested but the master coverage file is missing: "
             << localOutputFile << std::endl;
@@ -450,14 +452,14 @@ int main(int argc, const char** argv)
         {
           if (!std::filesystem::exists(auxFile))
           {
-            if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
+            if (opts.isAtLeastLevel(VerboseLevel::Warning))
             {
               std::cerr << "Warning: expected auxiliary coverage file missing: " << auxFile << std::endl;
             }
             continue;
           }
 
-          if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+          if (opts.isAtLeastLevel(VerboseLevel::Info))
           {
             std::cout << "Consolidating auxiliary coverage into "
               << localOutputFile << ": " << auxFile << std::endl;
@@ -473,7 +475,7 @@ int main(int argc, const char** argv)
 
           std::error_code ec;
           std::filesystem::remove(auxFile, ec);
-          if (ec && RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
+          if (ec && opts.isAtLeastLevel(VerboseLevel::Warning))
           {
             std::cerr << "Warning: failed to remove consolidated aux file "
               << auxFile << ": " << ec.message() << std::endl;
@@ -488,7 +490,7 @@ int main(int argc, const char** argv)
   }
   catch (const std::exception& e)
   {
-    if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+    if (opts.isAtLeastLevel(VerboseLevel::Error))
     {
       std::cerr << "Error while consolidating auxiliary coverage: " << e.what() << std::endl;
     }
@@ -500,7 +502,7 @@ int main(int argc, const char** argv)
   {
     if (!opts.MergedOutput.empty())
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+      if (opts.isAtLeastLevel(VerboseLevel::Info))
       {
         std::cout << "Merge into " << opts.MergedOutput << std::endl;
       }
@@ -518,7 +520,7 @@ int main(int argc, const char** argv)
       {
         if (!std::filesystem::exists(auxFile))
         {
-          if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
+          if (opts.isAtLeastLevel(VerboseLevel::Warning))
           {
             std::cerr << "Warning: expected auxiliary coverage file missing: " << auxFile << std::endl;
           }
@@ -527,7 +529,7 @@ int main(int argc, const char** argv)
 
         RuntimeOptions auxOpts = opts;
         auxOpts.OutputFile = auxFile;
-        if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+        if (opts.isAtLeastLevel(VerboseLevel::Info))
         {
           std::cout << "Merging auxiliary coverage: " << auxFile << std::endl;
         }
@@ -538,7 +540,7 @@ int main(int argc, const char** argv)
   }
   catch (const std::exception& e)
   {
-    if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+    if (opts.isAtLeastLevel(VerboseLevel::Error))
     {
       std::cerr << "Error: " << e.what() << std::endl;
     }

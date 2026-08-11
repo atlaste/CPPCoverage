@@ -49,6 +49,10 @@ struct RuntimeFolderFilter : RuntimeCoverageFilter
 };
 
 
+RuntimeNotifications::RuntimeNotifications(RuntimeOptions& options) :
+  opts(options)
+{}
+
 std::string RuntimeNotifications::Trim(const std::string& t)
 {
   std::string s = t;
@@ -73,7 +77,7 @@ std::string RuntimeNotifications::GetFQN(std::string s)
   static constexpr char BACKSLASH = '\\';
   static constexpr std::string_view parentDir = "..\\";
 
-  auto cp = RuntimeOptions::Instance().SolutionPath;
+  auto cp = opts.SolutionPath;
   if (cp.empty()) { return s; }
 
   while (s.size() > parentDir.size() && s.starts_with(parentDir))
@@ -112,7 +116,7 @@ std::string RuntimeNotifications::GetFQN(std::string s)
 
 void RuntimeNotifications::PrintInvalidNotification(const std::string& notification, const std::string_view information)
 {
-  if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
+  if (opts.isAtLeastLevel(VerboseLevel::Warning))
   {
     std::cout << "WARNING: Invalid path " << notification << ". " << information << std::endl;
   }
@@ -144,7 +148,7 @@ void RuntimeNotifications::Handle(const char* data, const size_t size)
     }
     else
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+      if (opts.isAtLeastLevel(VerboseLevel::Info))
       {
         std::cout << "Ignoring folder: " << fullname << std::endl;
       }
@@ -166,7 +170,7 @@ void RuntimeNotifications::Handle(const char* data, const size_t size)
     }
     else
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+      if (opts.isAtLeastLevel(VerboseLevel::Info))
       {
         std::cout << "Ignoring file: " << file << std::endl;
       }
@@ -175,13 +179,13 @@ void RuntimeNotifications::Handle(const char* data, const size_t size)
   }
   else if (s == "ENABLE CODE ANALYSIS")
   {
-    RuntimeOptions::Instance().UseStaticCodeAnalysis = true;
+    opts.UseStaticCodeAnalysis = true;
   }
   else if (s == "DISABLE CODE ANALYSIS")
   {
-    RuntimeOptions::Instance().UseStaticCodeAnalysis = false;
+    opts.UseStaticCodeAnalysis = false;
   }
-  else if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+  else if (opts.isAtLeastLevel(VerboseLevel::Error))
   {
     std::cout << "Unknown option passed to coverage: " << s << std::endl;
   }

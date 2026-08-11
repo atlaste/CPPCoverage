@@ -13,9 +13,6 @@ namespace TestFileCallbackInfo
 	public:
 		TestLineInfo()
 		{
-			auto& options = RuntimeOptions::Instance();
-			options.CodePaths.push_back("C:\\proj\\src\\");
-
 			// create a test file
 			FileSystem::CreateTestFile("C:\\proj\\src\\srcFile.cpp", "Line_1\nLine_2\nLine_3\nLine_4");
 			FileSystem::CreateTestFile("C:\\proj\\src\\srcFile.hpp", "Line_1\nLine_2\n");
@@ -23,9 +20,6 @@ namespace TestFileCallbackInfo
 
 		~TestLineInfo()
 		{
-			auto& options = RuntimeOptions::Instance();
-			options.CodePaths.clear();
-
 			FileSystem::DeleteTestFiles();
 		}
 
@@ -39,7 +33,11 @@ namespace TestFileCallbackInfo
 				"RES: u_\n" \
 				"PROF: \n";
 
-			FileCallbackInfo fileCallbackInfo("report.txt");
+			RuntimeOptions options;
+			options.CodePaths.emplace("C:\\proj\\src\\");
+			options.Executable = "report.txt";
+
+			FileCallbackInfo fileCallbackInfo(options);
 			auto ptr = fileCallbackInfo.LineInfo("C:\\proj\\src\\srcFile.cpp", 1);
 			Assert::IsNotNull(ptr);
 			ptr->DebugCount = 1;
@@ -71,6 +69,7 @@ namespace TestFileCallbackInfo
 
 	TEST_CLASS(TestWriteReport)
 	{
+		RuntimeOptions options;
 		FileCallbackInfo* fileCallbackInfo = nullptr;
 
 		std::vector<FileLineInfo> createFileLineInfoArray(const std::vector<std::tuple<uint16_t, uint16_t>>& lineInfo)
@@ -94,11 +93,11 @@ namespace TestFileCallbackInfo
 	public:
 		TestWriteReport()
 		{
-			auto& options = RuntimeOptions::Instance();
-			options.CodePaths.push_back("C:\\proj\\src\\");
-			options.CodePaths.push_back("C:\\proj\\empty\\");
-			options.CodePaths.push_back("C:\\proj\\lib\\");
+			options.CodePaths.emplace("C:\\proj\\src\\");
+			options.CodePaths.emplace("C:\\proj\\empty\\");
+			options.CodePaths.emplace("C:\\proj\\lib\\");
 
+			options.Executable = "report.txt";
 			options.PackageName = "MyPackage.exe";
 
 			// create test files
@@ -108,7 +107,7 @@ namespace TestFileCallbackInfo
 			FileSystem::CreateTestFile("C:\\proj\\lib\\libFile.h", "1st line\n2nd line\n3rd line");
 
 			// create instance of FileCallbackInfo
-			fileCallbackInfo = new FileCallbackInfo("report.txt");
+			fileCallbackInfo = new FileCallbackInfo(options);
 			Assert::IsNotNull(fileCallbackInfo);
 
 			// add informations about test files
@@ -120,10 +119,6 @@ namespace TestFileCallbackInfo
 
 		~TestWriteReport()
 		{
-			auto& options = RuntimeOptions::Instance();
-			options.CodePaths.clear();
-			options.PackageName.clear();
-
 			FileSystem::DeleteTestFiles();
 
 			delete fileCallbackInfo;
