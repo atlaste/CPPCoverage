@@ -12,6 +12,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Main.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\MergeRunner.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\RuntimeNotifications.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\CoverageRunner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\base64.h" />

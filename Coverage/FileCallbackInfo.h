@@ -24,7 +24,7 @@ struct FileCallbackInfo
   FileCallbackInfo(const std::string& filename) :
     filename(filename)
   {
-    if (RuntimeOptions::Instance().CodePaths.empty())
+    if (RuntimeOptionsSingleton::Instance().CodePaths.empty())
     {
       auto idx = filename.find("x64");
       if (idx == std::string::npos)
@@ -66,7 +66,7 @@ struct FileCallbackInfo
         std::swap(tmp, it.second);
         newLineData[it.first] = std::move(tmp);
       }
-      else if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Trace))
+      else if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Trace))
       {
         std::cout << "Removing file " << it.first << std::endl;
       }
@@ -74,7 +74,7 @@ struct FileCallbackInfo
     std::swap(lineData, newLineData);
   }
 
-  bool PathMatches(const char* first, const std::string& second)
+  bool PathMatches(const char* first, const std::string& second) const
   {
     const char* ptr = first;
     const char* gt = second.data();
@@ -90,17 +90,17 @@ struct FileCallbackInfo
     return true;
   }
 
-  bool PathMatches(const char* filename)
+  bool PathMatches(const char* filename) const
   {
     if (!sourcePath.empty())
     {
       return PathMatches(filename, sourcePath);
     }
 
-    const auto& codePaths = RuntimeOptions::Instance().CodePaths;
+    const auto& codePaths = RuntimeOptionsSingleton::Instance().CodePaths;
     for (const auto& codePath : codePaths)
     {
-      if (PathMatches(filename, codePath))
+      if (PathMatches(filename, codePath.string()))
       {
         return true;
       }
@@ -170,7 +170,7 @@ private:
     // stream << "coveredstatements=\"300\" statements=\"500\" coveredmethods=\"50\" methods=\"80\" ";
     // stream << "coveredconditionals=\"100\" conditionals=\"120\" coveredelements=\"900\" elements=\"1000\" ";
     stream << "complexity=\"0\" />" << std::endl;
-    stream << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\">" << std::endl;
+    stream << "<package name=\"" << RuntimeOptionsSingleton::Instance().PackageName << "\">" << std::endl;
     for (auto& it : lineData)
     {
       auto ptr = it.second.get();
@@ -229,7 +229,7 @@ private:
     stream << "<coverage line-rate=\"" << lineRate << "\"" << " " << "version=\"\">" << std::endl;
     stream << "\t" << "<packages>" << std::endl;
 
-    stream << "\t\t" << "<package name=\"" << RuntimeOptions::Instance().PackageName << "\" line-rate=\"" << lineRate << "\">" << std::endl;
+    stream << "\t\t" << "<package name=\"" << RuntimeOptionsSingleton::Instance().PackageName << "\" line-rate=\"" << lineRate << "\">" << std::endl;
     stream << "\t\t\t" << "<classes>" << std::endl;
     for (auto& it : lineData)
     {
@@ -379,7 +379,9 @@ private:
       filepaths.push_back(item.first);
     }
 
-    for (const auto& dirPath : RuntimeOptions::Instance().CodePaths)
+    const auto& options = RuntimeOptionsSingleton::Instance();
+
+    for (const auto& dirPath : options.CodePaths)
     {
       bool dirPartAdded = false;
 
@@ -401,7 +403,7 @@ private:
         if (!dirPartAdded && !dirPath.empty())
         {
           dirPartAdded = true;
-          FileCoverageV2::openDirectory(stream, dirPath);
+          FileCoverageV2::openDirectory(stream, dirPath == options.SolutionPath, dirPath);
         }
 
         auto coverage = encodeCoverage(*it.second.get());
@@ -417,7 +419,7 @@ private:
       }
     }
 
-    if (!filepaths.empty() && RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
+    if (!filepaths.empty() && options.isAtLeastLevel(VerboseLevel::Warning))
     {
       std::cerr << "List of refuse coverage files (because not relative to any code path):" << std::endl;
 
@@ -428,9 +430,9 @@ private:
 
       std::cerr << std::endl << "List of code paths:" << std::endl;
 
-      for (const auto& dirPath : RuntimeOptions::Instance().CodePaths)
+      for (const auto& dirPath : RuntimeOptionsSingleton::Instance().CodePaths)
       {
-        std::cerr << std::format("- {0}", dirPath) << std::endl;
+        std::cerr << std::format("- {0}", dirPath.string()) << std::endl;
       }
     }
 

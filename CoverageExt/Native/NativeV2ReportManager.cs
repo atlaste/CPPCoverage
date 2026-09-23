@@ -15,7 +15,7 @@ namespace NubiloSoft.CoverageExt.Native
               && instance.Format == CoverageFormat.NativeV2;
         }
 
-        public override ICoverageData Load(string filename)
+        public override ICoverageData Load(string filename, string solutionPath)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -25,7 +25,7 @@ namespace NubiloSoft.CoverageExt.Native
                 try
                 {
                     report = new Native.NativeV2Data();
-                    report.Parsing(filename);
+                    report.Parsing(filename, solutionPath);
                 }
                 catch (Exception e)
                 {

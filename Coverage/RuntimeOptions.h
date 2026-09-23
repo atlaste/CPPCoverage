@@ -1,22 +1,23 @@
 #pragma once
 
-#include <list>
+#include <filesystem>
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 #include <Windows.h>
 
 enum class VerboseLevel
 {
-  Error = 0x01,
+  Error   = 0x01,
   Warning = 0x03,
-  Info = 0x07,
-  Trace = 0x0F,
-  None = 0
+  Info    = 0x07,
+  Trace   = 0x0F,
+  None    = 0
 };
 
 struct RuntimeOptions
 {
-private:
   RuntimeOptions() :
     UseStaticCodeAnalysis(false),
     ExportFormat(Native),
@@ -24,14 +25,8 @@ private:
     AttachPid(0),
     ConsolidateAuxiliary(false)
   {}
-
-public:
-  static RuntimeOptions& Instance()
-  {
-    static RuntimeOptions instance;
-    return instance;
-  }
-
+  virtual ~RuntimeOptions() = default;
+  
   VerboseLevel _verboseLevel = VerboseLevel::Trace;
 
   bool UseStaticCodeAnalysis;
@@ -49,11 +44,12 @@ public:
 
   std::string MergedOutput;
   std::string WorkingDirectory;
-  std::list<std::string> CodePaths;
+  std::unordered_set<std::filesystem::path> CodePaths;
   std::string Executable;
   std::string ExecutableArguments;
   std::string PackageName = "Program.exe";
   std::string SolutionPath;
+  std::vector<std::string> excludeFilter;
 
   // When Attach is true, the coverage runner will attach (DebugActiveProcess)
   // to an already-running process identified by AttachPid instead of launching
@@ -73,4 +69,19 @@ public:
   bool ConsolidateAuxiliary;
 
   bool isAtLeastLevel(const VerboseLevel& level) const { return (static_cast<int>(_verboseLevel) & static_cast<int>(level)) == static_cast<int>(level); }
+};
+
+struct RuntimeOptionsSingleton : public RuntimeOptions
+{
+private:
+  RuntimeOptionsSingleton() = default;
+
+public:
+  ~RuntimeOptionsSingleton() override = default;
+
+  static RuntimeOptions& Instance()
+  {
+    static RuntimeOptionsSingleton instance;
+    return instance;
+  }
 };

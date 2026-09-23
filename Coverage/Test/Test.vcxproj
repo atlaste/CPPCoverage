@@ -168,9 +168,11 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CoverageRunnerTest.cpp" />
     <ClCompile Include="FileCallbackInfoTest.cpp" />
     <ClCompile Include="FileInfoTest.cpp" />
     <ClCompile Include="md5Test.cpp" />
+    <ClCompile Include="MergeRunnerTest.cpp" />
     <ClCompile Include="MergeRunnerV1Test.cpp" />
     <ClCompile Include="nativeV2.cpp" />
     <ClCompile Include="RuntimeNotificationsTest.cpp" />

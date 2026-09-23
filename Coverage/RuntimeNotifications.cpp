@@ -73,7 +73,7 @@ std::string RuntimeNotifications::GetFQN(std::string s)
   static constexpr char BACKSLASH = '\\';
   static constexpr std::string_view parentDir = "..\\";
 
-  auto cp = RuntimeOptions::Instance().SolutionPath;
+  auto cp = RuntimeOptionsSingleton::Instance().SolutionPath;
   if (cp.empty()) { return s; }
 
   while (s.size() > parentDir.size() && s.starts_with(parentDir))
@@ -112,7 +112,7 @@ std::string RuntimeNotifications::GetFQN(std::string s)
 
 void RuntimeNotifications::PrintInvalidNotification(const std::string& notification, const std::string_view information)
 {
-  if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Warning))
+  if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Warning))
   {
     std::cout << "WARNING: Invalid path " << notification << ". " << information << std::endl;
   }
@@ -144,7 +144,7 @@ void RuntimeNotifications::Handle(const char* data, const size_t size)
     }
     else
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+      if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Info))
       {
         std::cout << "Ignoring folder: " << fullname << std::endl;
       }
@@ -166,7 +166,7 @@ void RuntimeNotifications::Handle(const char* data, const size_t size)
     }
     else
     {
-      if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Info))
+      if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Info))
       {
         std::cout << "Ignoring file: " << file << std::endl;
       }
@@ -175,13 +175,13 @@ void RuntimeNotifications::Handle(const char* data, const size_t size)
   }
   else if (s == "ENABLE CODE ANALYSIS")
   {
-    RuntimeOptions::Instance().UseStaticCodeAnalysis = true;
+    RuntimeOptionsSingleton::Instance().UseStaticCodeAnalysis = true;
   }
   else if (s == "DISABLE CODE ANALYSIS")
   {
-    RuntimeOptions::Instance().UseStaticCodeAnalysis = false;
+    RuntimeOptionsSingleton::Instance().UseStaticCodeAnalysis = false;
   }
-  else if (RuntimeOptions::Instance().isAtLeastLevel(VerboseLevel::Error))
+  else if (RuntimeOptionsSingleton::Instance().isAtLeastLevel(VerboseLevel::Error))
   {
     std::cout << "Unknown option passed to coverage: " << s << std::endl;
   }

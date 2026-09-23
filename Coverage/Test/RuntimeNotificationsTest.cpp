@@ -28,13 +28,13 @@ namespace TestRuntimeNotifications
 		TEST_METHOD_INITIALIZE(MethodInit)
 		{
 			// set default SolutionPath
-			auto& options = RuntimeOptions::Instance();
+			auto& options = RuntimeOptionsSingleton::Instance();
 			options.SolutionPath = "C:\\proj\\sln\\";
 		}
 
 		TEST_CLASS_CLEANUP(CleanUp)
 		{
-			auto& options = RuntimeOptions::Instance();
+			auto& options = RuntimeOptionsSingleton::Instance();
 			options.SolutionPath.clear();
 
 			FileSystem::DeleteTestFiles();
@@ -90,7 +90,7 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFileRelativeSolutionPathWithoutLastBackslash)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
+			RuntimeOptionsSingleton::Instance().SolutionPath = "C:\\proj\\sln";
 
 			static constexpr std::string_view LINE = "IGNORE FILE:..\\lib\\ignoreFile.c  ";
 
@@ -114,7 +114,7 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFileWithoutParentDirRelativeSolutionPathWithoutLastBackslash)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
+			RuntimeOptionsSingleton::Instance().SolutionPath = "C:\\proj\\sln";
 
 			static constexpr std::string_view LINE = "IGNORE FILE: \\dir\\file.c";
 
@@ -126,7 +126,7 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFileWithoutParentDirStartsWithDirName)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
+			RuntimeOptionsSingleton::Instance().SolutionPath = "C:\\proj\\sln";
 
 			static constexpr std::string_view LINE = "IGNORE FILE: dir\\file.c";
 
@@ -138,7 +138,7 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFileRelativeWithoutSolutionPath)
 		{
-			RuntimeOptions::Instance().SolutionPath.clear();
+			RuntimeOptionsSingleton::Instance().SolutionPath.clear();
 
 			static constexpr std::string_view LINE = "IGNORE FILE:..\\lib\\ignoreFile.c  ";
 
@@ -212,7 +212,7 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFolderRelativeSolutionPathWithoutLastBackslash)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
+			RuntimeOptionsSingleton::Instance().SolutionPath = "C:\\proj\\sln";
 
 			static constexpr std::string_view LINE = "IGNORE FOLDER:   ..\\src\\ignoreFolder1";
 
@@ -239,7 +239,7 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFolderWithoutParentDirRelativeSolutionPathWithoutLastBackslash)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
+			RuntimeOptionsSingleton::Instance().SolutionPath = "C:\\proj\\sln";
 
 			static constexpr std::string_view LINE = "IGNORE FOLDER: \\dir";
 
@@ -252,7 +252,7 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFolderWithoutParentDirStartsWithDirName)
 		{
-			RuntimeOptions::Instance().SolutionPath = "C:\\proj\\sln";
+			RuntimeOptionsSingleton::Instance().SolutionPath = "C:\\proj\\sln";
 
 			static constexpr std::string_view LINE = "IGNORE FOLDER: dir";
 
@@ -265,7 +265,7 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(IgnoreFolderRelativeWithoutSolutionPath)
 		{
-			RuntimeOptions::Instance().SolutionPath.clear();
+			RuntimeOptionsSingleton::Instance().SolutionPath.clear();
 
 			static constexpr std::string_view LINE = "IGNORE FOLDER:   ..\\src\\ignoreFolder1";
 
@@ -291,26 +291,26 @@ namespace TestRuntimeNotifications
 
 		TEST_METHOD(EnableCodeAnalysis)
 		{
-			RuntimeOptions::Instance().UseStaticCodeAnalysis = false;
+			RuntimeOptionsSingleton::Instance().UseStaticCodeAnalysis = false;
 
 			static constexpr std::string_view LINE = "ENABLE CODE ANALYSIS";
 
 			RuntimeNotifications notifications;
 			notifications.Handle(LINE.data(), LINE.size());
 
-			Assert::IsTrue(RuntimeOptions::Instance().UseStaticCodeAnalysis);
+			Assert::IsTrue(RuntimeOptionsSingleton::Instance().UseStaticCodeAnalysis);
 		}
 
 		TEST_METHOD(DisableCodeAnalysis)
 		{
-			RuntimeOptions::Instance().UseStaticCodeAnalysis = true;
+			RuntimeOptionsSingleton::Instance().UseStaticCodeAnalysis = true;
 
 			static constexpr std::string_view LINE = "DISABLE CODE ANALYSIS";
 
 			RuntimeNotifications notifications;
 			notifications.Handle(LINE.data(), LINE.size());
 
-			Assert::IsFalse(RuntimeOptions::Instance().UseStaticCodeAnalysis);
+			Assert::IsFalse(RuntimeOptionsSingleton::Instance().UseStaticCodeAnalysis);
 		}
 	};
 }
