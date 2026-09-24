@@ -152,13 +152,17 @@ namespace NubiloSoft.CoverageExt
           string workingDirectory, string commandline, string reportFile, string mergeFile)
         {
             StringBuilder argumentBuilder = new StringBuilder();
+            var settings = Settings.Instance;
 
-            if (!Settings.Instance.UseOpenCppCoverageRunner)
+            if (!settings.UseOpenCppCoverageRunner)
             {
                 //argumentBuilder.Append("-quiet "); // Not show info
-                // Fold any sibling-bitness helper .cov files into the main
-                // report; see CoverageRunner::SpawnSiblingCoverageForChild.
-                argumentBuilder.Append("-consolidate ");
+                if ((settings.Format == CoverageFormat.Native) || (settings.Format == CoverageFormat.NativeV2))
+                {
+                    // Fold any sibling-bitness helper .cov files into the main
+                    // report; see CoverageRunner::SpawnSiblingCoverageForChild.
+                    argumentBuilder.Append("-consolidate ");
+                }
                 argumentBuilder.Append("-solution ");
                 argumentBuilder.Append(PathWithQuotes(solutionFolder.TrimEnd('\\', '/')));
                 argumentBuilder.Append(" -o ");
@@ -184,7 +188,7 @@ namespace NubiloSoft.CoverageExt
                 }
 
                 argumentBuilder.Append(" -format ");
-                switch (Settings.Instance.Format)
+                switch (settings.Format)
                 {
                     default:
                         argumentBuilder.Append("native");
@@ -204,7 +208,7 @@ namespace NubiloSoft.CoverageExt
                 }
 
                 argumentBuilder.Append(" -verbose ");
-                switch (Settings.Instance.Verbosity)
+                switch (settings.Verbosity)
                 {
                     case CoverageVerbosity.Info:
                         argumentBuilder.Append("info");
