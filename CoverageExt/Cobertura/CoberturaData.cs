@@ -33,7 +33,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
             UInt32 IFileCoverageData.nbLines()
             {
-                return (UInt32)vector.Count;
+                return (UInt32)vector.TotalLines;
             }
 
             ProfileVector IFileCoverageData.profile()
@@ -76,8 +76,8 @@ namespace NubiloSoft.CoverageExt.Cobertura
                         ++stats.lineCoveredFile;
                     }
                 }
-                stats.lineOfCodeFile = (uint)kv.Value.vector.Count;
-                stats.lineInsideFile = stats.lineOfCodeFile;
+                stats.lineOfCodeFile = (uint)kv.Value.vector.CodeCount;
+                stats.lineInsideFile = (uint)kv.Value.vector.TotalLines;
 
                 yield return new Tuple<string, FileCoverageStats>(kv.Key, stats);
             }

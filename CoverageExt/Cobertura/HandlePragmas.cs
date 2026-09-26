@@ -99,6 +99,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
             try
             {
                 string[] lines = File.ReadAllLines(filename);
+                data.TotalLines = lines.Length;
                 for (int i = 0; i < lines.Length; ++i)
                 {
                     var flag = GetLineType(lines[i]);
@@ -119,15 +120,6 @@ namespace NubiloSoft.CoverageExt.Cobertura
                         {
                             data.Remove(i);
                         }
-                    }
-                }
-
-                if (!enabled)
-                {
-                    var count = data.Count;
-                    for (int i = lines.Length; i < count; ++i)
-                    {
-                        data.Remove(i);
                     }
                 }
             }
