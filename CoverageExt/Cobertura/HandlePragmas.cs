@@ -95,29 +95,36 @@ namespace NubiloSoft.CoverageExt.Cobertura
         public static void Update(string filename, BitVector data)
         {
             bool enabled = true;
+            var lineInFile = 0;
 
             try
             {
-                string[] lines = File.ReadAllLines(filename);
-                for (int i = 0; i < lines.Length; ++i)
+                using (var sr = new StreamReader(filename))
                 {
-                    var flag = GetLineType(lines[i]);
-                    if (flag == LineType.ENABLE_COVERAGE)
+                    for (int i = 0; true; i++)
                     {
-                        data.Remove(i);
-                        enabled = true;
-                    }
-                    else if (flag == LineType.DISABLE_COVERAGE)
-                    {
-                        enabled = false;
-                        data.Remove(i);
-                    }
-                    else
-                    {
-                        // Update data accordingly:
-                        if (!enabled)
+                        string line = sr.ReadLine();
+                        if (line == null) break;
+                        lineInFile++;
+
+                        var flag = GetLineType(line);
+                        if (flag == LineType.ENABLE_COVERAGE)
                         {
                             data.Remove(i);
+                            enabled = true;
+                        }
+                        else if (flag == LineType.DISABLE_COVERAGE)
+                        {
+                            enabled = false;
+                            data.Remove(i);
+                        }
+                        else
+                        {
+                            // Update data accordingly:
+                            if (!enabled)
+                            {
+                                data.Remove(i);
+                            }
                         }
                     }
                 }
@@ -125,7 +132,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 if (!enabled)
                 {
                     var count = data.Count;
-                    for (int i = lines.Length; i < count; ++i)
+                    for (int i = lineInFile; i < count; ++i)
                     {
                         data.Remove(i);
                     }
