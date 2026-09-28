@@ -43,15 +43,14 @@ namespace NubiloSoft.CoverageExt.Report
 
             // Link data to UI.
             CollectionViewSource itemCollectionViewSource = (CollectionViewSource)(FindResource("ItemCollectionViewSource"));
-            itemCollectionViewSource.Source = new ObservableCollection<FileCoverage>();
             itemCollectionViewSource.Source = this.loaded;
 
             BindingOperations.EnableCollectionSynchronization(this.loaded, lockObject);
         }
 
-        private readonly List<FileCoverage> loaded = new List<FileCoverage>();
+        private readonly ObservableCollection<FileCoverage> loaded = new ObservableCollection<FileCoverage>();
 
-        public List<FileCoverage> LoadedData { get { return loaded; } }
+        public ObservableCollection<FileCoverage> LoadedData { get { return loaded; } }
 
         public class FileCoverage
         {
@@ -181,11 +180,6 @@ namespace NubiloSoft.CoverageExt.Report
             }
         }
 
-        private void MyToolWindow_GotFocus(object sender, RoutedEventArgs e)
-        {
-            Update();
-        }
-
         private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -204,25 +198,6 @@ namespace NubiloSoft.CoverageExt.Report
                     }
                 }
             }
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            Update();
-        }
-
-        private void Grid_GotFocus(object sender, RoutedEventArgs e)
-        {
-            Update();
-        }
-
-        private void MyToolWindow_LayoutUpdated(object sender, EventArgs e)
-        {
-        }
-
-        private void MyToolWindow_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
-        {
-            Update();
         }
     }
 }
