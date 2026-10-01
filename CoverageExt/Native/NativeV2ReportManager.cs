@@ -1,5 +1,6 @@
 ﻿using EnvDTE;
 using NubiloSoft.CoverageExt.Data;
+using NubiloSoft.CoverageExt.Loggers;
 using System;
 
 namespace NubiloSoft.CoverageExt.Native
@@ -29,7 +30,7 @@ namespace NubiloSoft.CoverageExt.Native
                 }
                 catch (Exception e)
                 {
-                    output.WriteLine("Error loading coverage report: {0}", e.Message);
+                    Logger.Info("Error loading coverage report: {0}", e.Message);
                 }
             }
             return report;

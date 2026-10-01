@@ -1,5 +1,6 @@
 ﻿using EnvDTE;
 using NubiloSoft.CoverageExt.Data;
+using NubiloSoft.CoverageExt.Loggers;
 using System;
 using System.IO;
 
@@ -10,14 +11,12 @@ namespace NubiloSoft.CoverageExt.Native
         public NativeReportManager(DTE dte)
         {
             this.dte = dte;
-            this.output = new OutputWindow(dte);
 
             this.activeCoverageReport = null;
             this.activeCoverageFilename = null;
         }
 
         protected DTE dte;
-        protected OutputWindow output;
 
         protected Data.ICoverageData activeCoverageReport;
         protected string activeCoverageFilename;
@@ -59,8 +58,8 @@ namespace NubiloSoft.CoverageExt.Native
             try
             {
                 string filename = dte.Solution.FileName;
-                string folder = System.IO.Path.GetDirectoryName(filename);
-                string coverageFile = System.IO.Path.Combine(folder, "CodeCoverage.cov");
+                string folder = Path.GetDirectoryName(filename);
+                string coverageFile = Path.Combine(folder, "CodeCoverage.cov");
 
                 if (activeCoverageFilename != coverageFile)
                 {
@@ -81,13 +80,13 @@ namespace NubiloSoft.CoverageExt.Native
 
                     if (activeCoverageReport == null)
                     {
-                        output.WriteLine("------ Start update Coverage ------");
-                        output.WriteLine("Updating coverage results from: {0}", coverageFile);
+                        Logger.Info("------ Start update Coverage ------");
+                        Logger.Info("Updating coverage results from: {0}", coverageFile);
                         var watch = System.Diagnostics.Stopwatch.StartNew();
                         activeCoverageReport = Load(coverageFile);
                         activeCoverageFilename = coverageFile;
                         watch.Stop();
-                        output.WriteLine("========== Done in {0} ms with {1} entries ==========", watch.ElapsedMilliseconds, activeCoverageReport.nbEntries());
+                        Logger.Info("========== Done in {0} ms with {1} entries ==========", watch.ElapsedMilliseconds, activeCoverageReport.nbEntries());
                     }
                 }
             }
@@ -115,7 +114,7 @@ namespace NubiloSoft.CoverageExt.Native
                 }
                 catch (Exception e)
                 {
-                    output.WriteLine("Error loading coverage report: {0}", e.Message);
+                    Logger.Info("Error loading coverage report: {0}", e.Message);
                 }
             }
             return report;

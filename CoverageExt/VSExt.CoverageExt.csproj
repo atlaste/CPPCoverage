@@ -311,6 +311,8 @@
     <Compile Include="Data\ReportManagerSingleton.cs" />
     <Compile Include="DTEInitializer.cs" />
     <Compile Include="GeneralOptionPageGrid.cs" />
+    <Compile Include="Loggers\Logger.cs" />
+    <Compile Include="Loggers\OutputWindowLogger.cs" />
     <Compile Include="Native\NativeData.cs" />
     <Compile Include="Native\NativeReportManager.cs" />
     <Compile Include="Native\NativeV2Data.cs" />
@@ -321,7 +323,6 @@
     </Compile>
     <Compile Include="Report\CoverageReportToolWindow.cs" />
     <Compile Include="Guids.cs" />
-    <Compile Include="OutputWindow.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

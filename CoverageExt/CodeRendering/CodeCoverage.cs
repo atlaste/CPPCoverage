@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Formatting;
 using NubiloSoft.CoverageExt.Data;
+using NubiloSoft.CoverageExt.Loggers;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,7 +32,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal Pen partialCoveredPen;
 
         private readonly EnvDTE.DTE dte;
-        private readonly OutputWindow outputWindow;
 
         private readonly ITextDocumentFactoryService textDocumentFactory;
         private ITextDocument TextDocument;
@@ -43,7 +43,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte, ITextDocumentFactoryService textDocumentFactory)
         {
             this.dte = dte;
-            this.outputWindow = new OutputWindow(dte);
             this.view = view;
             this.textDocumentFactory = textDocumentFactory;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
@@ -141,7 +140,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            this.outputWindow.WriteDebugLine("Instance_OnShowCodeCoveragePropertyChanged");
+            Logger.Debug("Instance_OnShowCodeCoveragePropertyChanged");
             Redraw();
         }
 
@@ -154,7 +153,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
-            this.outputWindow.WriteDebugLine("Instance_OnSettingsChanged");
+            Logger.Debug("Instance_OnSettingsChanged");
             InitializeColors();
             Redraw();
         }
@@ -290,12 +289,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             activeReport = coverageData.GetData(activeFilename);
             if (activeReport == null)
             {
-                outputWindow.WriteDebugLine("No report found for this file: {0}", activeFilename);
+                Logger.Debug("No report found for this file: {0}", activeFilename);
                 return false;
             }
-            else
-                outputWindow.WriteDebugLine("Report found for this file: {0}", activeFilename);
 
+            Logger.Debug("Report found for this file: {0}", activeFilename);
             return true;
         }
 

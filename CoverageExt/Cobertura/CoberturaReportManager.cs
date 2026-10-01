@@ -1,5 +1,6 @@
 ﻿extern alias EnvDTE;
 using NubiloSoft.CoverageExt.Data;
+using NubiloSoft.CoverageExt.Loggers;
 using System;
 using System.IO;
 
@@ -10,14 +11,12 @@ namespace NubiloSoft.CoverageExt.Cobertura
         public CoberturaReportManager(EnvDTE.DTE dte)
         {
             this.dte = dte;
-            this.output = new OutputWindow(dte);
 
             this.activeCoverageReport = null;
             this.activeCoverageFilename = null;
         }
 
         private readonly EnvDTE.DTE dte;
-        private readonly OutputWindow output;
 
         private Data.ICoverageData activeCoverageReport;
         private string activeCoverageFilename;
@@ -81,7 +80,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
                     if (activeCoverageReport == null)
                     {
-                        output.WriteLine("Updating coverage results from: {0}", coverageFile);
+                        Logger.Info("Updating coverage results from: {0}", coverageFile);
                         activeCoverageReport = Load(coverageFile);
                         activeCoverageFilename = coverageFile;
                     }
@@ -106,7 +105,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 }
                 catch (Exception e)
                 {
-                    output.WriteLine("Error loading coverage report: {0}", e.Message);
+                    Logger.Info("Error loading coverage report: {0}", e.Message);
                 }
             }
             return report;
