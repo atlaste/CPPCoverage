@@ -257,7 +257,7 @@ namespace NubiloSoft.CoverageExt
 
                 // run coverage
                 var solutionFolder = Path.GetDirectoryName(dte.Solution.FileName);
-                RunCoverage(solutionFolder, vcproj, merge);
+                await Task.Run(() => RunCoverageAsync(solutionFolder, vcproj, merge));
             }
             catch (Exception ex)
             {
@@ -297,9 +297,8 @@ namespace NubiloSoft.CoverageExt
             return filePaths;
         }
 
-        private void RunCoverage(string solutionFolder, VCProject vcproj, bool merge)
+        private async Task RunCoverageAsync(string solutionFolder, VCProject vcproj, bool merge)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 IVCCollection configs = (IVCCollection)vcproj.Configurations;
@@ -354,7 +353,7 @@ namespace NubiloSoft.CoverageExt
                     var codePaths = GetCodePaths(vcproj);
 
                     CoverageExecution executor = new CoverageExecution();
-                    executor.Start(
+                    await executor.RunAsync(
                         solutionFolder,
                         codePaths,
                         platform,
