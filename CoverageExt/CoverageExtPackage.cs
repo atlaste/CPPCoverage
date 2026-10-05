@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.VCProjectEngine;
 using NubiloSoft.CoverageExt.Data;
 using NubiloSoft.CoverageExt.Loggers;
+using NubiloSoft.CoverageExt.Report;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -138,6 +139,17 @@ namespace NubiloSoft.CoverageExt
             if (string.IsNullOrEmpty(dte.DTE.Solution.FileName)) return;
             var solutionFolder = Path.GetDirectoryName(dte.DTE.Solution.FileName);
             ReportManagerSingleton.OnLoadedSolution(solutionFolder);
+            ReloadReportWindow();
+        }
+
+        private void ReloadReportWindow()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var window = (CoverageReportToolWindow)FindToolWindow(typeof(CoverageReportToolWindow), 0, false);
+            if ((null != window) && (null != window.Frame))
+            {
+                window.Reload();
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -262,6 +274,8 @@ namespace NubiloSoft.CoverageExt
                 // run coverage
                 var solutionFolder = Path.GetDirectoryName(dte.Solution.FileName);
                 await Task.Run(() => RunCoverageAsync(solutionFolder, vcproj, merge));
+
+                ReloadReportWindow();
             }
             catch (Exception ex)
             {
