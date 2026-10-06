@@ -260,6 +260,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void Redraw()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             UpdateLayer(view.TextViewLines);
         }
 
@@ -268,10 +269,17 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private bool InitCurrent()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             string activeFilename = GetActiveFilename();
             if (activeFilename == null) return false;
 
-            var dataProvider = ReportManagerSingleton.Instance(dte);
+            if (dte == null) return false;
+            string filename = dte.Solution.FileName;
+            if (filename == null) return false;
+            string solutionFolder = Path.GetDirectoryName(filename);
+
+            var dataProvider = ReportManagerSingleton.Instance(solutionFolder);
             if (dataProvider == null) return false;
 
             var coverageData = dataProvider.UpdateData();
@@ -302,11 +310,14 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             UpdateLayer(e.NewOrReformattedLines);
         }
 
         private void UpdateLayer(IList<ITextViewLine> lines)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             if (Settings.Instance.ShowCodeCoverage)
             {
                 if (activeReport != null && lines.Count == 0)

@@ -1,7 +1,9 @@
 ﻿using EnvDTE;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,8 +29,13 @@ namespace NubiloSoft.CoverageExt.Report
         {
             get
             {
+                ThreadHelper.ThrowIfNotOnUIThread();
+
                 var d = dte();
-                return d == null ? null : Data.ReportManagerSingleton.Instance(d);
+                if (d == null) return null;
+
+                var solutionFolder = Path.GetDirectoryName(d.Solution.FileName);
+                return Data.ReportManagerSingleton.Instance(solutionFolder);
             }
         }
 
@@ -38,6 +45,8 @@ namespace NubiloSoft.CoverageExt.Report
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             // First update the data.
             Update();
 
@@ -81,6 +90,7 @@ namespace NubiloSoft.CoverageExt.Report
 
         private void Load()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 LoadImpl();
@@ -90,6 +100,8 @@ namespace NubiloSoft.CoverageExt.Report
 
         private void LoadImpl()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             var manager = Manager;
             if (manager == null)
             {
@@ -183,6 +195,8 @@ namespace NubiloSoft.CoverageExt.Report
 
         private void MyToolWindow_GotFocus(object sender, RoutedEventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             var d = dte();
             if (d != null)
             {
@@ -192,7 +206,7 @@ namespace NubiloSoft.CoverageExt.Report
 
         private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (sender != null)
             {
                 DataGrid grid = sender as DataGrid;
@@ -212,16 +226,19 @@ namespace NubiloSoft.CoverageExt.Report
 
         public void Update()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             Load();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             Update();
         }
 
         private void Grid_GotFocus(object sender, RoutedEventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             Update();
         }
 
@@ -231,6 +248,7 @@ namespace NubiloSoft.CoverageExt.Report
 
         private void MyToolWindow_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             Update();
         }
     }

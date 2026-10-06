@@ -1,18 +1,13 @@
-﻿using EnvDTE;
-
-namespace NubiloSoft.CoverageExt.Data
+﻿namespace NubiloSoft.CoverageExt.Data
 {
-    /// <summary>
-    /// Unfortunately we need a singleton because we cannot pass objects across the boundaries of DTE instances.
-    /// </summary>
     public class ReportManagerSingleton
     {
         private static IReportManager instance = null;
-        private static object lockObject = new object();
+        private static readonly object lockObject = new object();
 
-        public static IReportManager Instance(DTE dte)
+        public static IReportManager Instance(string solutionFolder)
         {
-            if (dte != null)
+            if (solutionFolder != null)
             {
                 lock (lockObject)
                 {
@@ -23,19 +18,19 @@ namespace NubiloSoft.CoverageExt.Data
                             switch (Settings.Instance.Format)
                             {
                                 case CoverageFormat.Native:
-                                    instance = new Native.NativeReportManager(dte);
+                                    instance = new Native.NativeReportManager(solutionFolder);
                                     break;
                                 case CoverageFormat.NativeV2:
-                                    instance = new Native.NativeV2ReportManager(dte);
+                                    instance = new Native.NativeV2ReportManager(solutionFolder);
                                     break;
                                 case CoverageFormat.Cobertura:
-                                    instance = new Cobertura.CoberturaReportManager(dte);
+                                    instance = new Cobertura.CoberturaReportManager(solutionFolder);
                                     break;
                             }
                         }
                         else
                         {
-                            instance = new Cobertura.CoberturaReportManager(dte);
+                            instance = new Cobertura.CoberturaReportManager(solutionFolder);
                         }
                     }
                 }
