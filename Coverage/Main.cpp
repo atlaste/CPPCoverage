@@ -195,7 +195,7 @@ void ParseCommandLine(int argc, const char** argv, RuntimeOptions& opts)
       }
 
       std::string t(argv[i]);
-      opts.CodePaths.emplace(t);
+      opts.CodePaths.push_back(t);
     }
     else if (s == "-w")
     {
