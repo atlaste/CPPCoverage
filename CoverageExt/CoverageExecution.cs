@@ -101,6 +101,10 @@ namespace NubiloSoft.CoverageExt
             // TODO: We can do much better here by using the registry...
             var folders = new[]
             {
+                @"\Microsoft Visual Studio\18\Professional\Common7\IDE\Extensions\TestPlatform",
+                @"\Microsoft Visual Studio\18\Community\Common7\IDE\Extensions\TestPlatform",
+                @"\Microsoft Visual Studio\18\Enterprise\Common7\IDE\Extensions\TestPlatform",
+                @"\Microsoft Visual Studio\18\BuildTools\Common7\IDE\Extensions\TestPlatform",
                 @"\Microsoft Visual Studio\2022\Professional\Common7\IDE\Extensions\TestPlatform\",
                 @"\Microsoft Visual Studio\2022\Community\Common7\IDE\Extensions\TestPlatform\",
                 @"\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\Extensions\TestPlatform\",
