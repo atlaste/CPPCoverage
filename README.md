@@ -1,6 +1,5 @@
 # Free C++ Code Coverage
 
-[![KiCad 10](https://img.shields.io/badge/KiCad-10-314CB0?logo=kicad&logoColor=white)](https://www.kicad.org/)
 [![License: BSD](https://img.shields.io/badge/License-BSD-green.svg)](LICENSE)
 [![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-00457C?logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=5SZAYVTQFJDBE)
 
