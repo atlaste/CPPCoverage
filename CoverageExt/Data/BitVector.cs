@@ -13,10 +13,9 @@ namespace NubiloSoft.CoverageExt.Data
         {
             get
             {
-                int result = (data.Length + 1) * 4;
-                while (true)
+                int result = (data.Length * 4) - 1;
+                while (result >= 0 && !IsFound(result))
                 {
-                    if (IsFound(result)) break;
                     result--;
                 }
                 return result;
@@ -28,7 +27,8 @@ namespace NubiloSoft.CoverageExt.Data
             get
             {
                 var result = 0;
-                for (int index = 0; index <= LastIndex; index++)
+                var lastIndex = LastIndex;
+                for (int index = 0; index <= lastIndex; index++)
                 {
                     if (IsFound(index))
                         result++;
@@ -102,7 +102,8 @@ namespace NubiloSoft.CoverageExt.Data
 
         public IEnumerable<KeyValuePair<int, bool>> Enumerate()
         {
-            for (int index = 0; index <= LastIndex; ++index)
+            var lastIndex = LastIndex;
+            for (int index = 0; index <= lastIndex; ++index)
             {
                 if (IsFound(index))
                 {
