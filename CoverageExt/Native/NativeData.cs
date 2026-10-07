@@ -34,7 +34,7 @@ namespace NubiloSoft.CoverageExt.Native
 
             UInt32 IFileCoverageData.nbLines()
             {
-                return (UInt32)vector.Count;
+                return (UInt32)vector.TotalLines;
             }
 
             ProfileVector IFileCoverageData.profile()
@@ -75,8 +75,8 @@ namespace NubiloSoft.CoverageExt.Native
                         ++stats.lineCoveredFile;
                     }
                 }
-                stats.lineOfCodeFile = (uint)kv.Value.vector.Count;
-                stats.lineInsideFile = stats.lineOfCodeFile;
+                stats.lineOfCodeFile = (uint)kv.Value.vector.CodeCount;
+                stats.lineInsideFile = (uint)kv.Value.vector.TotalLines;
 
                 yield return new Tuple<string, FileCoverageStats>(kv.Key, stats);
             }
@@ -131,7 +131,7 @@ namespace NubiloSoft.CoverageExt.Native
                         {
                             cov = cov.Substring("RES: ".Length);
 
-                            BitVector currentVector = new Data.BitVector();
+                            BitVector currentVector = new BitVector();
 
                             for (int i = 0; i < cov.Length; ++i)
                             {
@@ -144,13 +144,11 @@ namespace NubiloSoft.CoverageExt.Native
                                 {
                                     currentVector.Set(i, false);
                                 }
-                                else
-                                {
-                                    currentVector.Ensure(i + 1);
-                                }
                             }
+                            currentVector.TotalLines = cov.Length;
+                            currentVector.Finish();
 
-                            ProfileVector currentProfile = new Data.ProfileVector(currentVector.Count);
+                            ProfileVector currentProfile = new ProfileVector(cov.Length);
 
                             string prof = sr.ReadLine();
                             if (prof != null && prof.StartsWith("PROF: "))

@@ -7,14 +7,42 @@ namespace NubiloSoft.CoverageExt.Data
     {
         private byte[] data = new byte[16];
 
-        public int Count { get { return data.Length * 4; } }
+        public int TotalLines { get; set; }
+
+        private int LastIndex
+        {
+            get
+            {
+                int result = (data.Length + 1) * 4;
+                while (true)
+                {
+                    if (IsFound(result)) break;
+                    result--;
+                }
+                return result;
+            }
+        }
+
+        public int CodeCount
+        {
+            get
+            {
+                var result = 0;
+                for (int index = 0; index <= LastIndex; index++)
+                {
+                    if (IsFound(index))
+                        result++;
+                }
+                return result;
+            }
+        }
 
         public void Set(int index, bool value)
         {
             Ensure(index + 1);
 
             int byteIndex = index >> 2;
-            int bitIndex = (index & 0x3);
+            int bitIndex = index & 0x3;
 
             if (value)
             {
@@ -28,7 +56,7 @@ namespace NubiloSoft.CoverageExt.Data
             }
         }
 
-        public void Ensure(int index)
+        private void Ensure(int index)
         {
             int byteIndex = index >> 2;
 
@@ -38,21 +66,16 @@ namespace NubiloSoft.CoverageExt.Data
             }
         }
 
-        private int GetValue(int index)
+        private byte GetValue(int index)
         {
             int byteIndex = index >> 2;
-
-            if (byteIndex >= data.Length)
-            {
-                return 0;
-            }
-            return data[byteIndex];
+            return (byteIndex < data.Length) ? data[byteIndex] : (byte)0;
         }
 
         public bool IsSet(int index)
         {
             int bitIndex = index & 0x3;
-            int value = GetValue(index);
+            var value = GetValue(index);
 
             return ((value >> bitIndex) & 0x01) != 0;
         }
@@ -60,34 +83,30 @@ namespace NubiloSoft.CoverageExt.Data
         public bool IsFound(int index)
         {
             int bitIndex = index & 0x3;
-            int value = GetValue(index);
+            var value = GetValue(index);
 
             return ((value >> bitIndex) & 0x10) != 0;
         }
 
         public void Remove(int index)
         {
-            int byteIndex = index >> 2;
-            int bitIndex = (index & 0x3);
+            var b = GetValue(index);
+            if (b == 0) return;
 
-            if (byteIndex < data.Length)
-            {
-                byte b = data[byteIndex];
-                byte mask = (byte)(0xFF ^ (0x11 << bitIndex));
-                data[byteIndex] = (byte)(mask & b);
-            }
+            int byteIndex = index >> 2;
+            int bitIndex = index & 0x3;
+
+            byte mask = (byte)(0xFF ^ (0x11 << bitIndex));
+            data[byteIndex] = (byte)(mask & b);
         }
 
         public IEnumerable<KeyValuePair<int, bool>> Enumerate()
         {
-            for (int index = 0; index < data.Length * 4; ++index)
+            for (int index = 0; index <= LastIndex; ++index)
             {
-                int byteIndex = index >> 2;
-                int bitIndex = (index & 0x3);
-
-                if (((data[byteIndex] >> bitIndex) & 0x10) != 0)
+                if (IsFound(index))
                 {
-                    bool found = (((data[byteIndex] >> bitIndex) & 0x01) != 0);
+                    bool found = IsSet(index);
                     yield return new KeyValuePair<int, bool>(index, found);
                 }
             }
@@ -104,5 +123,4 @@ namespace NubiloSoft.CoverageExt.Data
             Array.Resize(ref data, i);
         }
     }
-
 }
