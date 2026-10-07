@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.VCProjectEngine;
 using NubiloSoft.CoverageExt.Data;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
@@ -174,7 +175,7 @@ namespace NubiloSoft.CoverageExt
 
                     // TODO FIXME: We should probably check if it's a DLL as well.
 
-                    if (project.FullName.EndsWith(".vcxproj"))
+                    if (project.Object is VCProject)
                     {
                         menuCommand.Visible = true;
                     }
@@ -238,7 +239,7 @@ namespace NubiloSoft.CoverageExt
         private List<string> GetCodePaths(VCProject vcproj)
         {
             var filePaths = new List<string>();
-            foreach (var file in vcproj.Files)
+            foreach (VCFile file in (IEnumerable)vcproj.Files)
             {
                 var dirName = Path.GetDirectoryName(file.FullPath);
                 if (!filePaths.Contains(dirName))
