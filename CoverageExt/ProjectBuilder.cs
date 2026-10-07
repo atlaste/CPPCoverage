@@ -1,20 +1,19 @@
-﻿using System;
+﻿using NubiloSoft.CoverageExt.Loggers;
+using System;
 
 namespace NubiloSoft.CoverageExt
 {
     public class ProjectBuilder
     {
         private readonly EnvDTE.DTE dte;
-        private readonly OutputWindow outputWindow;
 
         private readonly string projectName;
         private readonly string configName;
         private readonly Action onSuccessAction;
 
-        public ProjectBuilder(EnvDTE.DTE dte, OutputWindow outputWindow, string projectName, string configName, Action onSuccessAction)
+        public ProjectBuilder(EnvDTE.DTE dte, string projectName, string configName, Action onSuccessAction)
         {
             this.dte = dte;
-            this.outputWindow = outputWindow;
             this.projectName = projectName;
             this.configName = configName;
             this.onSuccessAction = onSuccessAction;
@@ -25,7 +24,7 @@ namespace NubiloSoft.CoverageExt
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
 
             dte.Events.BuildEvents.OnBuildProjConfigDone += OnBuildDone;
-            outputWindow.WriteLine("Start building the {0} project in {1} configuration", projectName, configName);
+            Logger.Info("Start building the {0} project in {1} configuration", projectName, configName);
             dte.Solution.SolutionBuild.BuildProject(configName, projectName, false);
         }
 
@@ -35,7 +34,7 @@ namespace NubiloSoft.CoverageExt
 
             if (project == projectName && solutionConfig == configName)
             {
-                outputWindow.WriteLine("Build completed, result: {0}", success.ToString());
+                Logger.Info("Build completed, result: {0}", success.ToString());
                 dte.Events.BuildEvents.OnBuildProjConfigDone -= OnBuildDone;
                 if (success)
                 {

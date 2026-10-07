@@ -1,3 +1,4 @@
+using NubiloSoft.CoverageExt.Loggers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,10 +12,9 @@ namespace NubiloSoft.CoverageExt
 {
     public class CoverageExecution
     {
-        public CoverageExecution(DTE dte, OutputWindow output)
+        public CoverageExecution(DTE dte)
         {
             this.dte = dte;
-            this.output = output;
         }
 
         private static readonly string ProgramFilesX86Path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
@@ -24,7 +24,6 @@ namespace NubiloSoft.CoverageExt
         private DateTime lastEvent = DateTime.UtcNow;
 
         private readonly DTE dte;
-        private readonly OutputWindow output;
 
         private int running = 0;
 
@@ -50,7 +49,7 @@ namespace NubiloSoft.CoverageExt
                     Name = "Code coverage generator thread"
                 };
 
-                this.output.WriteLine("Calculating code coverage...");
+                Logger.Info("Calculating code coverage...");
 
                 t.Start();
             }
@@ -130,21 +129,21 @@ namespace NubiloSoft.CoverageExt
                 string file = pf + fold + "vstest.console.exe";
                 if (File.Exists(file))
                 {
-                    output.WriteLine("Found vstest console app.");
+                    Logger.Info("Found vstest console app.");
                     return file;
                 }
             }
 
             pf = ProgramFilesX64Path.TrimEnd('\\');
-            output.WriteLine(pf);
+            Logger.Info(pf);
 
             foreach (var fold in folders)
             {
                 string file = pf + fold + "vstest.console.exe";
-                output.WriteLine(file);
+                Logger.Info(file);
                 if (File.Exists(file))
                 {
-                    output.WriteLine("Found vstest console app.");
+                    Logger.Info("Found vstest console app.");
                     return file;
                 }
             }
@@ -324,7 +323,7 @@ namespace NubiloSoft.CoverageExt
 
                     string arguments = PrepareArguments(solutionFolder, codePaths, coveragePlatform, Path.Combine(dllFolder, dllFilename),
                       workingDirectory, commandline, tempFile, merge ? resultFile : String.Empty);
-                    output.WriteLine("Execute coverage: {0}", arguments);
+                    Logger.Info("Execute coverage: {0}", arguments);
 
                     process.StartInfo.WorkingDirectory = !Settings.Instance.UseOpenCppCoverageRunner ? dllFolder : Path.GetDirectoryName(tempFile);
                     process.StartInfo.Arguments = arguments;
@@ -363,7 +362,7 @@ namespace NubiloSoft.CoverageExt
                         consoleOutput.Contains(ArchitectureMismatchMarker))
                     {
                         string alternatePlatform = (coveragePlatform == "x86") ? "x64" : "x86";
-                        output.WriteLine(
+                        Logger.Info(
                             "Coverage runner reported an x86/x64 mix-up on '{0}'. " +
                             "Retrying with '{1}' (the sibling runner will cover both bitnesses via handoff).",
                             coveragePlatform, alternatePlatform);
@@ -412,7 +411,7 @@ namespace NubiloSoft.CoverageExt
                     }
                     else
                     {
-                        output.WriteLine("No coverage report generated. Cannot continue.");
+                        Logger.Info("No coverage report generated. Cannot continue.");
                     }
 
                     break; // Exit the retry loop on success or non-retryable error.
@@ -420,7 +419,7 @@ namespace NubiloSoft.CoverageExt
             }
             catch (Exception ex)
             {
-                output.WriteLine("Uncaught error during coverage execution: {0}", ex.Message);
+                Logger.Info("Uncaught error during coverage execution: {0}", ex.Message);
             }
             Data.ReportManagerSingleton.Instance(dte).ResetData();
             Settings.Instance.TriggerRedraw();
@@ -435,7 +434,7 @@ namespace NubiloSoft.CoverageExt
                 string s = e.Data;
 
                 tb.AppendLine(s);
-                output.WriteLine(s);
+                Logger.Info(s);
 
                 lastEvent = DateTime.UtcNow;
             }
