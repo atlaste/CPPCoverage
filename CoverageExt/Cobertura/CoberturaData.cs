@@ -24,11 +24,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
             CoverageState IFileCoverageData.state(uint idLine)
             {
-                if (!vector.IsFound((int)idLine))
-                {
-                    return CoverageState.Irrelevant;
-                }
-                return vector.IsSet((int)idLine) ? CoverageState.Covered : CoverageState.Uncovered;
+                return vector.GetCoverageState((int)idLine);
             }
 
             UInt32 IFileCoverageData.nbLines()
@@ -64,6 +60,11 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
         public UInt32 nbEntries() => (UInt32)lookup.Count();
 
+        private bool IsCovered(CoverageState state)
+        {
+            return (state == CoverageState.Covered) || (state == CoverageState.Partially);
+        }
+
         public IEnumerable<Tuple<string, FileCoverageStats>> Overview()
         {
             foreach (var kv in lookup)
@@ -71,7 +72,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 var stats = new FileCoverageStats();
                 foreach (var item in kv.Value.vector.Enumerate())
                 {
-                    if (item.Value)
+                    if (IsCovered(item.Value))
                     {
                         ++stats.lineCoveredFile;
                     }
@@ -170,11 +171,11 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
                                             if (hits == "0")
                                             {
-                                                current.vector.Set(int.Parse(num) - 1, false);
+                                                current.vector.Set(int.Parse(num) - 1, CoverageState.Uncovered);
                                             }
                                             else
                                             {
-                                                current.vector.Set(int.Parse(num) - 1, true);
+                                                current.vector.Set(int.Parse(num) - 1, CoverageState.Covered);
                                             }
                                         }
                                         break;
