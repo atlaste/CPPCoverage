@@ -13,7 +13,15 @@ namespace NubiloSoft.CoverageExt.Loggers
             if (instance != null)
                 return;
 
-            instance = new OutputWindowLogger(dte);
+            try
+            {
+                instance = new OutputWindowLogger(dte);
+            }
+            catch
+            {
+                // Never fail package initialization over a missing output pane;
+                // logging simply stays disabled in that case.
+            }
         }
         public static void Info(string format, params object[] args)
         {
