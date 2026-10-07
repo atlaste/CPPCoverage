@@ -25,11 +25,7 @@ namespace NubiloSoft.CoverageExt.Native
 
             CoverageState IFileCoverageData.state(uint idLine)
             {
-                if (!vector.IsFound((int)idLine))
-                {
-                    return CoverageState.Irrelevant;
-                }
-                return vector.IsSet((int)idLine) ? CoverageState.Covered : CoverageState.Uncovered;
+                return vector.GetCoverageState((int)idLine);
             }
 
             UInt32 IFileCoverageData.nbLines()
@@ -63,6 +59,11 @@ namespace NubiloSoft.CoverageExt.Native
 
         public UInt32 nbEntries() => (UInt32)lookup.Count();
 
+        private bool IsCovered(CoverageState state)
+        {
+            return (state == CoverageState.Covered) || (state == CoverageState.Partially);
+        }
+
         public IEnumerable<Tuple<string, FileCoverageStats>> Overview()
         {
             foreach (var kv in lookup)
@@ -70,7 +71,7 @@ namespace NubiloSoft.CoverageExt.Native
                 var stats = new FileCoverageStats();
                 foreach (var item in kv.Value.vector.Enumerate())
                 {
-                    if (item.Value)
+                    if (IsCovered(item.Value))
                     {
                         ++stats.lineCoveredFile;
                     }
@@ -93,12 +94,12 @@ namespace NubiloSoft.CoverageExt.Native
                 int existingCovered = 0;
                 foreach (var v in existing.vector.Enumerate())
                 {
-                    if (v.Value) existingCovered++;
+                    if (IsCovered(v.Value)) existingCovered++;
                 }
                 int newCovered = 0;
                 foreach (var v in data.vector.Enumerate())
                 {
-                    if (v.Value) newCovered++;
+                    if (IsCovered(v.Value)) newCovered++;
                 }
                 if (newCovered > existingCovered)
                 {
@@ -136,13 +137,17 @@ namespace NubiloSoft.CoverageExt.Native
                             for (int i = 0; i < cov.Length; ++i)
                             {
                                 char c = cov[i];
-                                if (c == 'c' || c == 'p')
+                                if (c == 'c')
                                 {
-                                    currentVector.Set(i, true);
+                                    currentVector.Set(i, CoverageState.Covered);
+                                }
+                                else if (c == 'p')
+                                {
+                                    currentVector.Set(i, CoverageState.Partially);
                                 }
                                 else if (c == 'u')
                                 {
-                                    currentVector.Set(i, false);
+                                    currentVector.Set(i, CoverageState.Uncovered);
                                 }
                             }
                             currentVector.TotalLines = cov.Length;

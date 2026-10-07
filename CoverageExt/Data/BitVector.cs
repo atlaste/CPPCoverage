@@ -5,6 +5,12 @@ namespace NubiloSoft.CoverageExt.Data
 {
     public class BitVector
     {
+        private const byte VALUE_MASK = 0x11;
+
+        private const byte VALUE_COVERED = 0x11;
+        private const byte VALUE_PARTIALLY = 0x10;
+        private const byte VALUE_UNCOVERED = 0x01;
+
         private byte[] data = new byte[16];
 
         public int TotalLines { get; set; }
@@ -37,23 +43,24 @@ namespace NubiloSoft.CoverageExt.Data
             }
         }
 
-        public void Set(int index, bool value)
+        public void Set(int index, CoverageState state)
         {
             Ensure(index + 1);
 
             int byteIndex = index >> 2;
             int bitIndex = index & 0x3;
 
-            if (value)
+            byte value = 0;
+            switch (state)
             {
-                byte b = (byte)(0x11 << bitIndex);
-                data[byteIndex] |= b;
+                case CoverageState.Covered: value = VALUE_COVERED; break;
+                case CoverageState.Partially: value = VALUE_PARTIALLY; break;
+                case CoverageState.Uncovered: value = VALUE_UNCOVERED; break;
+                default: break;
             }
-            else
-            {
-                byte b = (byte)(0x10 << bitIndex);
-                data[byteIndex] |= b;
-            }
+
+            byte b = (byte)(value << bitIndex);
+            data[byteIndex] |= b;
         }
 
         private void Ensure(int index)
@@ -72,20 +79,27 @@ namespace NubiloSoft.CoverageExt.Data
             return (byteIndex < data.Length) ? data[byteIndex] : (byte)0;
         }
 
-        public bool IsSet(int index)
+        public CoverageState GetCoverageState(int index)
         {
             int bitIndex = index & 0x3;
             var value = GetValue(index);
+            var valueState = (value >> bitIndex) & VALUE_MASK;
 
-            return ((value >> bitIndex) & 0x01) != 0;
+            switch (valueState)
+            {
+                case VALUE_COVERED: return CoverageState.Covered;
+                case VALUE_PARTIALLY: return CoverageState.Partially;
+                case VALUE_UNCOVERED: return CoverageState.Uncovered;
+                default: return CoverageState.Irrelevant;
+            }
         }
 
-        public bool IsFound(int index)
+        private bool IsFound(int index)
         {
             int bitIndex = index & 0x3;
             var value = GetValue(index);
 
-            return ((value >> bitIndex) & 0x10) != 0;
+            return ((value >> bitIndex) & VALUE_MASK) != 0;
         }
 
         public void Remove(int index)
@@ -96,19 +110,19 @@ namespace NubiloSoft.CoverageExt.Data
             int byteIndex = index >> 2;
             int bitIndex = index & 0x3;
 
-            byte mask = (byte)(0xFF ^ (0x11 << bitIndex));
+            byte mask = (byte)(0xFF ^ (VALUE_MASK << bitIndex));
             data[byteIndex] = (byte)(mask & b);
         }
 
-        public IEnumerable<KeyValuePair<int, bool>> Enumerate()
+        public IEnumerable<KeyValuePair<int, CoverageState>> Enumerate()
         {
             var lastIndex = LastIndex;
             for (int index = 0; index <= lastIndex; ++index)
             {
                 if (IsFound(index))
                 {
-                    bool found = IsSet(index);
-                    yield return new KeyValuePair<int, bool>(index, found);
+                    CoverageState state = GetCoverageState(index);
+                    yield return new KeyValuePair<int, CoverageState>(index, state);
                 }
             }
         }
