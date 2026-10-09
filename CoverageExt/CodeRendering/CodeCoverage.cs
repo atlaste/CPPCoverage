@@ -31,8 +31,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal SolidColorBrush partialCoveredPenBrush;
         internal Pen partialCoveredPen;
 
-        private readonly EnvDTE.DTE dte;
-
         private readonly ITextDocumentFactoryService textDocumentFactory;
         private ITextDocument TextDocument;
         private DateTime currentReportDate;
@@ -40,9 +38,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private IFileCoverageData activeReport;
 
-        public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte, ITextDocumentFactoryService textDocumentFactory)
+        public CodeCoverage(IWpfTextView view, ITextDocumentFactoryService textDocumentFactory)
         {
-            this.dte = dte;
             this.view = view;
             this.textDocumentFactory = textDocumentFactory;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
@@ -82,7 +79,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private void HandleThemeChange(ThemeChangedEventArgs e)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
 
             InitializeColors();
             Redraw();
@@ -260,7 +257,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void Redraw()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
             UpdateLayer(view.TextViewLines);
         }
 
@@ -269,17 +265,10 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private bool InitCurrent()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             string activeFilename = GetActiveFilename();
             if (activeFilename == null) return false;
 
-            if (dte == null) return false;
-            string filename = dte.Solution.FileName;
-            if (filename == null) return false;
-            string solutionFolder = Path.GetDirectoryName(filename);
-
-            var dataProvider = ReportManagerSingleton.Instance(solutionFolder);
+            var dataProvider = ReportManagerSingleton.Instance();
             if (dataProvider == null) return false;
 
             var coverageData = dataProvider.UpdateData();
@@ -310,14 +299,11 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// </summary>
         private void OnLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
             UpdateLayer(e.NewOrReformattedLines);
         }
 
         private void UpdateLayer(IList<ITextViewLine> lines)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             if (Settings.Instance.ShowCodeCoverage)
             {
                 if (activeReport != null && lines.Count == 0)

@@ -9,12 +9,6 @@ namespace NubiloSoft.CoverageExt.Native
         public NativeV2ReportManager(string solutionFolder) : base(solutionFolder)
         { }
 
-        public override bool IsValid(Settings instance)
-        {
-            return !instance.UseOpenCppCoverageRunner
-              && instance.Format == CoverageFormat.NativeV2;
-        }
-
         public override ICoverageData Load(string filename)
         {
             ICoverageData report = null;

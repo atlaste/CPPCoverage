@@ -22,11 +22,6 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
         private readonly object lockObject = new object();
 
-        public bool IsValid(Settings instance)
-        {
-            return instance.Format == CoverageFormat.Cobertura;
-        }
-
         public ICoverageData UpdateData()
         {
             // It makes no sense to have multiple instances of our coverage data in our memory, so

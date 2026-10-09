@@ -22,12 +22,6 @@ namespace NubiloSoft.CoverageExt.Native
 
         protected object lockObject = new object();
 
-        public virtual bool IsValid(Settings instance)
-        {
-            return !instance.UseOpenCppCoverageRunner
-              && instance.Format == CoverageFormat.Native;
-        }
-
         ICoverageData IReportManager.UpdateData()
         {
             // It makes no sense to have multiple instances of our coverage data in our memory, so

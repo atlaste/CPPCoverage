@@ -52,7 +52,6 @@ namespace NubiloSoft.CoverageExt.Report
 
         public void Reload()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
             ((CoverageReport)base.Content).Update();
         }
     }

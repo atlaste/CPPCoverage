@@ -32,13 +32,11 @@ namespace NubiloSoft.CoverageExt
           string workingDirectory, string commandline, bool merge)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            if (Data.ReportManagerSingleton.Instance() == null) return;
 
             // We want 1 thread to do this; never more.
             if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
-                // Allocate Report before enter to thread
-                Data.ReportManagerSingleton.Instance(solutionFolder);
-
                 Thread t = new Thread(() => StartImpl(solutionFolder, codePaths, platform, dllFolder, dllFilename, workingDirectory, commandline, merge))
                 {
                     IsBackground = true,
@@ -417,7 +415,7 @@ namespace NubiloSoft.CoverageExt
             {
                 Logger.Info("Uncaught error during coverage execution: {0}", ex.Message);
             }
-            Data.ReportManagerSingleton.Instance(solutionFolder).ResetData();
+            Data.ReportManagerSingleton.Instance().ResetData();
             Settings.Instance.TriggerRedraw();
             Interlocked.Exchange(ref running, 0);
         }
