@@ -4,6 +4,5 @@
     {
         ICoverageData UpdateData();
         void ResetData();
-        bool IsValid(Settings instance);
     }
 }

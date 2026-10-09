@@ -1,4 +1,7 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using EnvDTE80;
+using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Events;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.VCProjectEngine;
@@ -73,6 +76,10 @@ namespace NubiloSoft.CoverageExt
             GeneralOptionPageGrid page = (GeneralOptionPageGrid)GetDialogPage(typeof(GeneralOptionPageGrid));
             page.UpdateSettings();
 
+            // try to create a report manager
+            RecreateReportManager();
+            SolutionEvents.OnAfterOpenSolution += OnAfterOpenSolution;
+
             // Add our command handlers for menu (commands must exist in the .vsct file)
             if (await GetServiceAsync(typeof(IMenuCommandService)) is OleMenuCommandService mcs)
             {
@@ -116,6 +123,32 @@ namespace NubiloSoft.CoverageExt
                     mcs.AddCommand(menuItem);
                 }
             }
+        }
+
+        private void OnAfterOpenSolution(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            RecreateReportManager();
+        }
+
+        private void RecreateReportManager()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (dte == null) return;
+            if (dte.DTE.Solution.FileName == null) return;
+            var solutionFolder = Path.GetDirectoryName(dte.DTE.Solution.FileName);
+            ReportManagerSingleton.OnLoadedSolution(solutionFolder);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                SolutionEvents.OnAfterOpenSolution -= OnAfterOpenSolution;
+            }
+
+            base.Dispose(disposing);
         }
 
         // See http://www.mztools.com/articles/2013/MZ2013029.aspx
@@ -393,7 +426,7 @@ namespace NubiloSoft.CoverageExt
                 var solutionFolder = Path.GetDirectoryName(dte.Solution.FileName);
 
                 // Clean data
-                ReportManagerSingleton.Instance(solutionFolder).ResetData();
+                ReportManagerSingleton.Instance()?.ResetData();
 
                 // Remove files
                 CoverageExecution.CleanCoverageFrom(solutionFolder);
