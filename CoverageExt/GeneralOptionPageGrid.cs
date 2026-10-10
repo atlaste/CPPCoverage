@@ -163,6 +163,7 @@ namespace NubiloSoft.CoverageExt
             Settings.Instance.PartialCoveredDarkPenColor = convert(PartialCoveredDarkPen);
 
             Settings.Instance.TriggerSettingsChanged();
+            Data.ReportManagerSingleton.OnChangedSettings();
         }
     }
 }

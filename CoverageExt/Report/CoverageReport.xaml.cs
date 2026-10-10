@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -27,8 +28,7 @@ namespace NubiloSoft.CoverageExt.Report
         {
             get
             {
-                var d = dte();
-                return d == null ? null : Data.ReportManagerSingleton.Instance(d);
+                return Data.ReportManagerSingleton.Instance();
             }
         }
 
@@ -79,16 +79,16 @@ namespace NubiloSoft.CoverageExt.Report
             }
         }
 
-        private void Load()
+        public void Update()
         {
             try
             {
-                LoadImpl();
+                UpdateImpl();
             }
             catch { }
         }
 
-        private void LoadImpl()
+        private void UpdateImpl()
         {
             var manager = Manager;
             if (manager == null)
@@ -183,16 +183,12 @@ namespace NubiloSoft.CoverageExt.Report
 
         private void MyToolWindow_GotFocus(object sender, RoutedEventArgs e)
         {
-            var d = dte();
-            if (d != null)
-            {
-                Load();
-            }
+            Update();
         }
 
         private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (sender != null)
             {
                 DataGrid grid = sender as DataGrid;
@@ -208,11 +204,6 @@ namespace NubiloSoft.CoverageExt.Report
                     }
                 }
             }
-        }
-
-        public void Update()
-        {
-            Load();
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)

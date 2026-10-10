@@ -1,47 +1,73 @@
-﻿using EnvDTE;
-
-namespace NubiloSoft.CoverageExt.Data
+﻿namespace NubiloSoft.CoverageExt.Data
 {
-    /// <summary>
-    /// Unfortunately we need a singleton because we cannot pass objects across the boundaries of DTE instances.
-    /// </summary>
     public class ReportManagerSingleton
     {
         private static IReportManager instance = null;
-        private static object lockObject = new object();
+        private static string solutionFolder = null;
+        private static CoverageFormat format = CoverageFormat.Native;
+        private static bool isSettingsInit = false;
+        private static readonly object lockObject = new object();
 
-        public static IReportManager Instance(DTE dte)
+        private static void CreateInstance()
         {
-            if (dte != null)
-            {
-                lock (lockObject)
-                {
-                    if (instance == null || !instance.IsValid(Settings.Instance))
-                    {
-                        if (!Settings.Instance.UseOpenCppCoverageRunner)
-                        {
-                            switch (Settings.Instance.Format)
-                            {
-                                case CoverageFormat.Native:
-                                    instance = new Native.NativeReportManager(dte);
-                                    break;
-                                case CoverageFormat.NativeV2:
-                                    instance = new Native.NativeV2ReportManager(dte);
-                                    break;
-                                case CoverageFormat.Cobertura:
-                                    instance = new Cobertura.CoberturaReportManager(dte);
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            instance = new Cobertura.CoberturaReportManager(dte);
-                        }
-                    }
-                }
-            }
+            instance = null;
 
-            return instance;
+            if (solutionFolder == null) return;
+            if (!isSettingsInit) return;
+
+            switch (format)
+            {
+                default:
+                    instance = new Native.NativeReportManager(solutionFolder);
+                    break;
+                case CoverageFormat.NativeV2:
+                    instance = new Native.NativeV2ReportManager(solutionFolder);
+                    break;
+                case CoverageFormat.Cobertura:
+                    instance = new Cobertura.CoberturaReportManager(solutionFolder);
+                    break;
+            }
+        }
+
+        public static IReportManager Instance()
+        {
+            lock (lockObject)
+            {
+                return instance;
+            }
+        }
+
+        public static void OnLoadedSolution(string folder)
+        {
+            lock (lockObject)
+            {
+                // Nothing changed
+                if (solutionFolder == folder) return;
+
+                solutionFolder = folder;
+                CreateInstance();
+            }
+        }
+
+        private static CoverageFormat FormatFromSettings()
+        {
+            if (Settings.Instance.UseOpenCppCoverageRunner) return CoverageFormat.Cobertura;
+            return Settings.Instance.Format;
+        }
+
+        public static void OnChangedSettings()
+        {
+            CoverageFormat newFormat = FormatFromSettings();
+
+            lock (lockObject)
+            {
+                // create the object if the settings are being loaded for the first time or when the format changes.
+                if (isSettingsInit && (format == newFormat)) return;
+
+                isSettingsInit = true;
+                format = newFormat;
+                CreateInstance();
+            }
         }
     }
 }

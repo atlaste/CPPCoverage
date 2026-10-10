@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using DTE = EnvDTE.DTE;
 
 
 namespace NubiloSoft.CoverageExt.CodeRendering
@@ -39,12 +38,10 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         /// <param name="textView">The <see cref="IWpfTextView"/> upon which the adornment should be placed</param>
         public void TextViewCreated(IWpfTextView textView)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-
-            DTE dte = (DTE)ServiceProvider.GetService(typeof(DTE));
+            ThreadHelper.ThrowIfNotOnUIThread();
 
             // Store this thing somewhere so our GC doesn't incidentally destroy it.
-            var cover = new CodeCoverage(textView, dte, textDocumentFactory);
+            var cover = new CodeCoverage(textView, textDocumentFactory);
 
             textView.Closed += (object sender, EventArgs e) => {
                 cover.Close();

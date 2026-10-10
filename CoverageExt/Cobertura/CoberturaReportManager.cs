@@ -1,37 +1,29 @@
-﻿extern alias EnvDTE;
-using NubiloSoft.CoverageExt.Data;
+﻿using NubiloSoft.CoverageExt.Data;
 using NubiloSoft.CoverageExt.Loggers;
 using System;
 using System.IO;
 
 namespace NubiloSoft.CoverageExt.Cobertura
 {
-    public class CoberturaReportManager : Data.IReportManager
+    public class CoberturaReportManager : IReportManager
     {
-        public CoberturaReportManager(EnvDTE.DTE dte)
+        public CoberturaReportManager(string solutionFolder)
         {
-            this.dte = dte;
+            this.solutionFolder = solutionFolder;
 
-            this.activeCoverageReport = null;
-            this.activeCoverageFilename = null;
+            activeCoverageReport = null;
+            activeCoverageFilename = null;
         }
 
-        private readonly EnvDTE.DTE dte;
+        private readonly string solutionFolder;
 
         private Data.ICoverageData activeCoverageReport;
         private string activeCoverageFilename;
 
         private readonly object lockObject = new object();
 
-        public bool IsValid(Settings instance)
-        {
-            return instance.Format == CoverageFormat.Cobertura;
-        }
-
         public ICoverageData UpdateData()
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-
             // It makes no sense to have multiple instances of our coverage data in our memory, so
             // this is exposed as a singleton. Updating needs concurrency control. It's pretty fast, so 
             // a simple lock will do.
@@ -54,12 +46,9 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
         private ICoverageData UpdateDataImpl()
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
-                string filename = dte.Solution.FileName;
-                string folder = System.IO.Path.GetDirectoryName(filename);
-                string coverageFile = System.IO.Path.Combine(folder, "CodeCoverage.xml");
+                string coverageFile = Path.Combine(solutionFolder, "CodeCoverage.xml");
 
                 if (activeCoverageFilename != coverageFile)
                 {
@@ -93,14 +82,12 @@ namespace NubiloSoft.CoverageExt.Cobertura
 
         private ICoverageData Load(string filename)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-
             ICoverageData report = null;
             if (filename != null)
             {
                 try
                 {
-                    report = new Cobertura.CoberturaData();
+                    report = new CoberturaData();
                     report.Parsing(filename);
                 }
                 catch (Exception e)
