@@ -6,15 +6,13 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
-using DTE = EnvDTE.DTE;
 
 namespace NubiloSoft.CoverageExt
 {
     public class CoverageExecution
     {
-        public CoverageExecution(DTE dte)
+        public CoverageExecution()
         {
-            this.dte = dte;
         }
 
         private static readonly string ProgramFilesX86Path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
@@ -22,8 +20,6 @@ namespace NubiloSoft.CoverageExt
 
         private readonly StringBuilder tb = new StringBuilder();
         private DateTime lastEvent = DateTime.UtcNow;
-
-        private readonly DTE dte;
 
         private int running = 0;
 
@@ -36,13 +32,11 @@ namespace NubiloSoft.CoverageExt
           string workingDirectory, string commandline, bool merge)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            if (Data.ReportManagerSingleton.Instance() == null) return;
 
             // We want 1 thread to do this; never more.
             if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
             {
-                // Allocate Report before enter to thread
-                Data.ReportManagerSingleton.Instance(dte);
-
                 Thread t = new Thread(() => StartImpl(solutionFolder, codePaths, platform, dllFolder, dllFilename, workingDirectory, commandline, merge))
                 {
                     IsBackground = true,
@@ -421,7 +415,7 @@ namespace NubiloSoft.CoverageExt
             {
                 Logger.Info("Uncaught error during coverage execution: {0}", ex.Message);
             }
-            Data.ReportManagerSingleton.Instance(dte).ResetData();
+            Data.ReportManagerSingleton.Instance().ResetData();
             Settings.Instance.TriggerRedraw();
             Interlocked.Exchange(ref running, 0);
         }
