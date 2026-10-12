@@ -1,3 +1,4 @@
+using Microsoft.VisualStudio.Threading;
 using NubiloSoft.CoverageExt.Loggers;
 using System;
 using System.Collections.Generic;
@@ -5,54 +6,31 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
-using DTE = EnvDTE.DTE;
 
 namespace NubiloSoft.CoverageExt
 {
     public class CoverageExecution
     {
-        public CoverageExecution(DTE dte)
+        public CoverageExecution()
         {
-            this.dte = dte;
         }
 
         private static readonly string ProgramFilesX86Path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
         private static readonly string ProgramFilesX64Path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
         private readonly StringBuilder tb = new StringBuilder();
-        private DateTime lastEvent = DateTime.UtcNow;
 
-        private readonly DTE dte;
+        private readonly object activityLock = new object();
+        private TaskCompletionSource<bool> activitySignal =
+            new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         private int running = 0;
 
         private static string PathWithQuotes(string path)
         {
             return @"""" + path + @"""";
-        }
-
-        public void Start(string solutionFolder, List<string> codePaths, string platform, string dllFolder, string dllFilename,
-          string workingDirectory, string commandline, bool merge)
-        {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-
-            // We want 1 thread to do this; never more.
-            if (Interlocked.CompareExchange(ref running, 1, 0) == 0)
-            {
-                // Allocate Report before enter to thread
-                Data.ReportManagerSingleton.Instance(dte);
-
-                Thread t = new Thread(() => StartImpl(solutionFolder, codePaths, platform, dllFolder, dllFilename, workingDirectory, commandline, merge))
-                {
-                    IsBackground = true,
-                    Name = "Code coverage generator thread"
-                };
-
-                Logger.Info("Calculating code coverage...");
-
-                t.Start();
-            }
         }
 
         static public (string, string) CoverageReportPaths(string solutionFolder)
@@ -283,9 +261,72 @@ namespace NubiloSoft.CoverageExt
         // logic in the runner takes care of the rest.
         private const string ArchitectureMismatchMarker = "x86/x64 mix-up";
 
-        private void StartImpl(string solutionFolder, List<string> codePaths, string platform, string dllFolder, string dllFilename,
-          string workingDirectory, string commandline, bool merge)
+        private void SignalActivity()
         {
+            lock (activityLock)
+            {
+                activitySignal.TrySetResult(true);
+
+                activitySignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
+        }
+
+        private async Task<bool> WaitForExitAsync(Process process, TimeSpan timeout)
+        {
+            var exitTcs = new TaskCompletionSource<bool>();
+
+            process.EnableRaisingEvents = true;
+
+            EventHandler handler = null;
+            handler = (sender, e) =>
+            {
+                process.Exited -= handler;
+                exitTcs.TrySetResult(true);
+            };
+
+            process.Exited += handler;
+
+            try
+            {
+                while (true) {
+                    if (process.HasExited)
+                    {
+                        return true;
+                    }
+
+                    Task activityTask;
+
+                    lock (activityLock)
+                    {
+                        activityTask = activitySignal.Task;
+                    }
+
+                    Task timeoutTask = Task.Delay(timeout);
+
+                    Task completed = await Task.WhenAny(exitTcs.Task, activityTask, timeoutTask);
+
+                    if (completed == exitTcs.Task)
+                        return true;
+
+                    if (completed == timeoutTask)
+                        return false;
+                }
+            }
+            finally
+            {
+                process.Exited -= handler;
+            }
+        }
+
+
+        public async Task RunAsync(string solutionFolder, List<string> codePaths, string platform, string dllFolder, string dllFilename,
+            string workingDirectory, string commandline, bool merge)
+        {
+            // We want 1 thread to do this; never more.
+            if (Interlocked.CompareExchange(ref running, 1, 0) != 0) return;
+
+            Logger.Info("Calculating code coverage...");
+
             try
             {
                 // Delete old coverage file (only once; survives retries)
@@ -309,7 +350,6 @@ namespace NubiloSoft.CoverageExt
                     // Reset per-attempt state so a retry has a clean slate for
                     // both the console-output buffer and the watchdog timer.
                     tb.Clear();
-                    lastEvent = DateTime.UtcNow;
 
                     // Create your Process
                     Process process = new Process();
@@ -340,11 +380,7 @@ namespace NubiloSoft.CoverageExt
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
 
-                    bool exited = false;
-                    while (!exited && lastEvent.AddMinutes(15) > DateTime.UtcNow)
-                    {
-                        exited = process.WaitForExit(1000 * 60);
-                    }
+                    bool exited = await WaitForExitAsync(process, TimeSpan.FromMinutes(15));
 
                     if (!exited)
                     {
@@ -352,6 +388,9 @@ namespace NubiloSoft.CoverageExt
                         process.Kill();
                         throw new Exception("Creating code coverage timed out (more than 15min).");
                     }
+
+                    // The process has already finished. Finish handling the async stdout/stderr.
+                    process.WaitForExit();
 
                     string consoleOutput = tb.ToString();
 
@@ -421,9 +460,12 @@ namespace NubiloSoft.CoverageExt
             {
                 Logger.Info("Uncaught error during coverage execution: {0}", ex.Message);
             }
-            Data.ReportManagerSingleton.Instance(dte).ResetData();
-            Settings.Instance.TriggerRedraw();
-            Interlocked.Exchange(ref running, 0);
+            finally
+            {
+                Data.ReportManagerSingleton.Instance().ResetData();
+                Settings.Instance.TriggerRedraw();
+                Interlocked.Exchange(ref running, 0);
+            }
         }
 
         private void OutputHandler(object sender, DataReceivedEventArgs e)
@@ -436,7 +478,7 @@ namespace NubiloSoft.CoverageExt
                 tb.AppendLine(s);
                 Logger.Info(s);
 
-                lastEvent = DateTime.UtcNow;
+                SignalActivity();
             }
         }
     }

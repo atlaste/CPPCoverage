@@ -31,8 +31,6 @@ namespace NubiloSoft.CoverageExt.CodeRendering
         internal SolidColorBrush partialCoveredPenBrush;
         internal Pen partialCoveredPen;
 
-        private readonly EnvDTE.DTE dte;
-
         private readonly ITextDocumentFactoryService textDocumentFactory;
         private ITextDocument TextDocument;
         private DateTime currentReportDate;
@@ -40,9 +38,8 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private IFileCoverageData activeReport;
 
-        public CodeCoverage(IWpfTextView view, EnvDTE.DTE dte, ITextDocumentFactoryService textDocumentFactory)
+        public CodeCoverage(IWpfTextView view, ITextDocumentFactoryService textDocumentFactory)
         {
-            this.dte = dte;
             this.view = view;
             this.textDocumentFactory = textDocumentFactory;
             this.layer = view.GetAdornmentLayer("CodeCoverage");
@@ -82,7 +79,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
 
         private void HandleThemeChange(ThemeChangedEventArgs e)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
 
             InitializeColors();
             Redraw();
@@ -271,7 +268,7 @@ namespace NubiloSoft.CoverageExt.CodeRendering
             string activeFilename = GetActiveFilename();
             if (activeFilename == null) return false;
 
-            var dataProvider = ReportManagerSingleton.Instance(dte);
+            var dataProvider = ReportManagerSingleton.Instance();
             if (dataProvider == null) return false;
 
             var coverageData = dataProvider.UpdateData();

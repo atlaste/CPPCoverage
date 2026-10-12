@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Events;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.VCProjectEngine;
@@ -53,6 +54,7 @@ namespace NubiloSoft.CoverageExt
 
         private EnvDTE.DTE dte;
         private DteInitializer dteInitializer;
+        private int runningProcess = 0;
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -72,6 +74,10 @@ namespace NubiloSoft.CoverageExt
             // this forces the options to be loaded, since it call the Load function on the OptionPageGrid
             GeneralOptionPageGrid page = (GeneralOptionPageGrid)GetDialogPage(typeof(GeneralOptionPageGrid));
             page.UpdateSettings();
+
+            // try to create a report manager
+            RecreateReportManager();
+            SolutionEvents.OnAfterOpenSolution += OnAfterOpenSolution;
 
             // Add our command handlers for menu (commands must exist in the .vsct file)
             if (await GetServiceAsync(typeof(IMenuCommandService)) is OleMenuCommandService mcs)
@@ -118,22 +124,48 @@ namespace NubiloSoft.CoverageExt
             }
         }
 
+        private void OnAfterOpenSolution(object sender, EventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            RecreateReportManager();
+        }
+
+        private void RecreateReportManager()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (dte == null) return;
+            if (string.IsNullOrEmpty(dte.DTE.Solution.FileName)) return;
+            var solutionFolder = Path.GetDirectoryName(dte.DTE.Solution.FileName);
+            ReportManagerSingleton.OnLoadedSolution(solutionFolder);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                SolutionEvents.OnAfterOpenSolution -= OnAfterOpenSolution;
+            }
+
+            base.Dispose(disposing);
+        }
+
         // See http://www.mztools.com/articles/2013/MZ2013029.aspx
         private void InitializeDTE()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            this.dte = this.GetService(typeof(SDTE)) as EnvDTE80.DTE2;
+            dte = GetService(typeof(SDTE)) as EnvDTE80.DTE2;
 
-            if (this.dte == null) // The IDE is not yet fully initialized
+            if (dte == null) // The IDE is not yet fully initialized
             {
                 var shellService = this.GetService(typeof(SVsShell)) as IVsShell;
-                this.dteInitializer = new DteInitializer(shellService, this.InitializeDTE);
+                dteInitializer = new DteInitializer(shellService, InitializeDTE);
             }
             else
             {
                 Logger.Initialize(dte);
-                this.dteInitializer = null;
+                dteInitializer = null;
             }
         }
 
@@ -180,6 +212,7 @@ namespace NubiloSoft.CoverageExt
                     if (project.Object is VCProject)
                     {
                         menuCommand.Visible = true;
+                        menuCommand.Enabled = Volatile.Read(ref runningProcess) == 0;
                     }
                 }
             }
@@ -188,50 +221,55 @@ namespace NubiloSoft.CoverageExt
         private void ProjectContextMenuItemCallback(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            ContextMenuRunCoverage(sender, false);
+            JoinableTaskFactory.RunAsync(() => ContextMenuRunCoverageAsync(sender, false))
+                .FileAndForget(nameof(ContextMenuRunCoverageAsync));
         }
 
         private void RunCoverageMergeItemCallback(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            ContextMenuRunCoverage(sender, true);
+            JoinableTaskFactory.RunAsync(() => ContextMenuRunCoverageAsync(sender, true))
+                .FileAndForget(nameof(ContextMenuRunCoverageAsync));
         }
 
-        private void ContextMenuRunCoverage(object sender, bool merge)
+        private async Task ContextMenuRunCoverageAsync(object sender, bool merge)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (Interlocked.CompareExchange(ref runningProcess, 1, 0) != 0) return;
 
             var dte = this.dte.DTE;
             try
             {
-                if (sender is OleMenuCommand menuCommand && dte != null)
+                if (!(sender is OleMenuCommand) || dte == null) return;
+                Logger.Clear();
+
+                Array selectedProjects = (Array)dte.ActiveSolutionProjects;
+                //only support 1 selected project
+                if (selectedProjects.Length != 1) return;
+
+                EnvDTE.Project project = (EnvDTE.Project)selectedProjects.GetValue(0);
+                if (!(project.Object is VCProject vcproj)) return;
+
+                // build
+                if (Settings.Instance.CompileBeforeRunning)
                 {
-                    Logger.Clear();
-                    Array selectedProjects = (Array)dte.ActiveSolutionProjects;
-                    //only support 1 selected project
-                    if (selectedProjects.Length == 1)
-                    {
-                        EnvDTE.Project project = (EnvDTE.Project)selectedProjects.GetValue(0);
-                        if (project.Object is VCProject vcproj)
-                        {
-                            if (Settings.Instance.CompileBeforeRunning)
-                            {
-                                var solutionConfiguration = dte.Solution.Properties.Item("ActiveConfig").Value.ToString();
-                                var projectBuilder = new ProjectBuilder(dte, project.UniqueName, solutionConfiguration,
-                                    () => RunCoverage(dte, vcproj, merge));
-                                projectBuilder.Build();
-                            }
-                            else
-                            {
-                                RunCoverage(dte, vcproj, merge);
-                            }
-                        }
-                    }
+                    var solutionConfiguration = dte.Solution.Properties.Item("ActiveConfig").Value.ToString();
+                    var projectBuilder = new ProjectBuilder(dte, project.UniqueName, solutionConfiguration);
+                    bool buildSucceeded = await projectBuilder.BuildAsync();
+                    if (!buildSucceeded) return;
                 }
+
+                // run coverage
+                var solutionFolder = Path.GetDirectoryName(dte.Solution.FileName);
+                await Task.Run(() => RunCoverageAsync(solutionFolder, vcproj, merge));
             }
             catch (Exception ex)
             {
                 Logger.Info("Unexpected code coverage failure; error: {0}", ex.ToString());
+            }
+            finally
+            {
+                Interlocked.Exchange(ref runningProcess, 0);
             }
         }
 
@@ -267,9 +305,8 @@ namespace NubiloSoft.CoverageExt
             return filePaths;
         }
 
-        private void RunCoverage(EnvDTE.DTE dte, VCProject vcproj, bool merge)
+        private async Task RunCoverageAsync(string solutionFolder, VCProject vcproj, bool merge)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 IVCCollection configs = (IVCCollection)vcproj.Configurations;
@@ -322,10 +359,9 @@ namespace NubiloSoft.CoverageExt
                 if (command != null)
                 {
                     var codePaths = GetCodePaths(vcproj);
-                    var solutionFolder = Path.GetDirectoryName(dte.Solution.FileName);
 
-                    CoverageExecution executor = new CoverageExecution(dte);
-                    executor.Start(
+                    CoverageExecution executor = new CoverageExecution();
+                    await executor.RunAsync(
                         solutionFolder,
                         codePaths,
                         platform,
@@ -393,7 +429,7 @@ namespace NubiloSoft.CoverageExt
                 var solutionFolder = Path.GetDirectoryName(dte.Solution.FileName);
 
                 // Clean data
-                ReportManagerSingleton.Instance(dte).ResetData();
+                ReportManagerSingleton.Instance()?.ResetData();
 
                 // Remove files
                 CoverageExecution.CleanCoverageFrom(solutionFolder);
