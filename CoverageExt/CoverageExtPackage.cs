@@ -54,6 +54,7 @@ namespace NubiloSoft.CoverageExt
 
         private EnvDTE.DTE dte;
         private DteInitializer dteInitializer;
+        private int runningProcess = 0;
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -211,6 +212,7 @@ namespace NubiloSoft.CoverageExt
                     if (project.Object is VCProject)
                     {
                         menuCommand.Visible = true;
+                        menuCommand.Enabled = Volatile.Read(ref runningProcess) == 0;
                     }
                 }
             }
@@ -233,6 +235,8 @@ namespace NubiloSoft.CoverageExt
         private async Task ContextMenuRunCoverageAsync(object sender, bool merge)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (Interlocked.CompareExchange(ref runningProcess, 1, 0) != 0) return;
+
             var dte = this.dte.DTE;
             try
             {
@@ -262,6 +266,10 @@ namespace NubiloSoft.CoverageExt
             catch (Exception ex)
             {
                 Logger.Info("Unexpected code coverage failure; error: {0}", ex.ToString());
+            }
+            finally
+            {
+                Interlocked.Exchange(ref runningProcess, 0);
             }
         }
 
