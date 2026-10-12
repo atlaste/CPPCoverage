@@ -8,7 +8,7 @@
              mc:Ignorable="d"
              Loaded="UserControl_Loaded"
              d:DesignHeight="600" d:DesignWidth="1000"
-             Name="MyToolWindow" GotFocus="MyToolWindow_GotFocus" LayoutUpdated="MyToolWindow_LayoutUpdated" RequestBringIntoView="MyToolWindow_RequestBringIntoView">
+             Name="MyToolWindow">
     <UserControl.Resources>
         <CollectionViewSource x:Key="ItemCollectionViewSource"  CollectionViewType="ListCollectionView"/>
     </UserControl.Resources>
@@ -24,12 +24,14 @@
             ScrollViewer.VerticalScrollBarVisibility="Auto"
             ScrollViewer.HorizontalScrollBarVisibility="Auto" MouseDoubleClick="DataGrid_MouseDoubleClick"
             >
+
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding Path=Name}" Header="Name" Width="80*" IsReadOnly="True" />
                 <DataGridTextColumn Binding="{Binding Path=Total}" Header="Total lines" Width="100" IsReadOnly="True" />
                 <DataGridTextColumn Binding="{Binding Path=Count}" Header="Covered lines"  Width="100" IsReadOnly="True" />
                 <DataGridTextColumn Binding="{Binding Path=Percentage}" Header="Coverage %"  Width="100" IsReadOnly="True" />
             </DataGrid.Columns>
+
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                     <Setter Property="Background" Value="{Binding RelativeSource={RelativeSource Self}, Path=Item.Color}"/>

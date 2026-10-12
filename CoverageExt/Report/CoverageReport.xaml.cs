@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -27,8 +28,7 @@ namespace NubiloSoft.CoverageExt.Report
         {
             get
             {
-                var d = dte();
-                return d == null ? null : Data.ReportManagerSingleton.Instance(d);
+                return Data.ReportManagerSingleton.Instance();
             }
         }
 
@@ -43,15 +43,14 @@ namespace NubiloSoft.CoverageExt.Report
 
             // Link data to UI.
             CollectionViewSource itemCollectionViewSource = (CollectionViewSource)(FindResource("ItemCollectionViewSource"));
-            itemCollectionViewSource.Source = new ObservableCollection<FileCoverage>();
             itemCollectionViewSource.Source = this.loaded;
 
             BindingOperations.EnableCollectionSynchronization(this.loaded, lockObject);
         }
 
-        private readonly List<FileCoverage> loaded = new List<FileCoverage>();
+        private readonly ObservableCollection<FileCoverage> loaded = new ObservableCollection<FileCoverage>();
 
-        public List<FileCoverage> LoadedData { get { return loaded; } }
+        public ObservableCollection<FileCoverage> LoadedData { get { return loaded; } }
 
         public class FileCoverage
         {
@@ -79,16 +78,16 @@ namespace NubiloSoft.CoverageExt.Report
             }
         }
 
-        private void Load()
+        public void Update()
         {
             try
             {
-                LoadImpl();
+                UpdateImpl();
             }
             catch { }
         }
 
-        private void LoadImpl()
+        private void UpdateImpl()
         {
             var manager = Manager;
             if (manager == null)
@@ -181,18 +180,9 @@ namespace NubiloSoft.CoverageExt.Report
             }
         }
 
-        private void MyToolWindow_GotFocus(object sender, RoutedEventArgs e)
-        {
-            var d = dte();
-            if (d != null)
-            {
-                Load();
-            }
-        }
-
         private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (sender != null)
             {
                 DataGrid grid = sender as DataGrid;
@@ -208,30 +198,6 @@ namespace NubiloSoft.CoverageExt.Report
                     }
                 }
             }
-        }
-
-        public void Update()
-        {
-            Load();
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            Update();
-        }
-
-        private void Grid_GotFocus(object sender, RoutedEventArgs e)
-        {
-            Update();
-        }
-
-        private void MyToolWindow_LayoutUpdated(object sender, EventArgs e)
-        {
-        }
-
-        private void MyToolWindow_RequestBringIntoView(object sender, RequestBringIntoViewEventArgs e)
-        {
-            Update();
         }
     }
 }

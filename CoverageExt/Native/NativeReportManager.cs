@@ -1,37 +1,29 @@
-﻿using EnvDTE;
-using NubiloSoft.CoverageExt.Data;
+﻿using NubiloSoft.CoverageExt.Data;
 using NubiloSoft.CoverageExt.Loggers;
 using System;
 using System.IO;
 
 namespace NubiloSoft.CoverageExt.Native
 {
-    public class NativeReportManager : Data.IReportManager
+    public class NativeReportManager : IReportManager
     {
-        public NativeReportManager(DTE dte)
+        public NativeReportManager(string solutionFolder)
         {
-            this.dte = dte;
+            this.solutionFolder = solutionFolder;
 
-            this.activeCoverageReport = null;
-            this.activeCoverageFilename = null;
+            activeCoverageReport = null;
+            activeCoverageFilename = null;
         }
 
-        protected DTE dte;
+        protected string solutionFolder;
 
-        protected Data.ICoverageData activeCoverageReport;
+        protected ICoverageData activeCoverageReport;
         protected string activeCoverageFilename;
 
         protected object lockObject = new object();
 
-        public virtual bool IsValid(Settings instance)
+        ICoverageData IReportManager.UpdateData()
         {
-            return !instance.UseOpenCppCoverageRunner
-              && instance.Format == CoverageFormat.Native;
-        }
-
-        ICoverageData Data.IReportManager.UpdateData()
-        {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             // It makes no sense to have multiple instances of our coverage data in our memory, so
             // this is exposed as a singleton. Updating needs concurrency control. It's pretty fast, so 
             // a simple lock will do.
@@ -48,18 +40,15 @@ namespace NubiloSoft.CoverageExt.Native
         {
             lock (lockObject)
             {
-                this.activeCoverageReport = null;
+                activeCoverageReport = null;
             }
         }
 
         private ICoverageData UpdateDataImpl()
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
-                string filename = dte.Solution.FileName;
-                string folder = Path.GetDirectoryName(filename);
-                string coverageFile = Path.Combine(folder, "CodeCoverage.cov");
+                string coverageFile = Path.Combine(solutionFolder, "CodeCoverage.cov");
 
                 if (activeCoverageFilename != coverageFile)
                 {
@@ -95,21 +84,19 @@ namespace NubiloSoft.CoverageExt.Native
             return activeCoverageReport;
         }
 
-        public Data.ICoverageData UpdateData()
+        public ICoverageData UpdateData()
         {
             throw new NotImplementedException();
         }
 
         virtual public ICoverageData Load(string filename)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-
             ICoverageData report = null;
             if (filename != null)
             {
                 try
                 {
-                    report = new Native.NativeData();
+                    report = new NativeData();
                     report.Parsing(filename);
                 }
                 catch (Exception e)

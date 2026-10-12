@@ -1,5 +1,8 @@
-﻿using NubiloSoft.CoverageExt.Loggers;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
+using NubiloSoft.CoverageExt.Loggers;
 using System;
+using System.Threading.Tasks;
 
 namespace NubiloSoft.CoverageExt
 {
@@ -9,38 +12,44 @@ namespace NubiloSoft.CoverageExt
 
         private readonly string projectName;
         private readonly string configName;
-        private readonly Action onSuccessAction;
 
-        public ProjectBuilder(EnvDTE.DTE dte, string projectName, string configName, Action onSuccessAction)
+        private readonly AsyncManualResetEvent buildCompleted = new AsyncManualResetEvent();
+        private bool buildSucceeded = false;
+
+        public ProjectBuilder(EnvDTE.DTE dte, string projectName, string configName)
         {
             this.dte = dte;
             this.projectName = projectName;
             this.configName = configName;
-            this.onSuccessAction = onSuccessAction;
         }
 
-        public void Build()
+        public async Task<bool> BuildAsync()
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            dte.Events.BuildEvents.OnBuildProjConfigDone += OnBuildDone;
-            Logger.Info("Start building the {0} project in {1} configuration", projectName, configName);
-            dte.Solution.SolutionBuild.BuildProject(configName, projectName, false);
+            var buildEvents = dte.Events.BuildEvents;
+            buildEvents.OnBuildProjConfigDone += OnBuildDone;
+
+            try
+            {
+                Logger.Info($"Start building the {projectName} project in {configName} configuration");
+                dte.Solution.SolutionBuild.BuildProject(configName, projectName, false);
+                await buildCompleted.WaitAsync();
+                return buildSucceeded;
+            }
+            finally
+            {
+                buildEvents.OnBuildProjConfigDone -= OnBuildDone;
+            }
         }
 
         private void OnBuildDone(string project, string projectConfig, string platform, string solutionConfig, bool success)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            if (project != projectName || solutionConfig != configName) return;
+            Logger.Info($"Build completed, result: {success}");
 
-            if (project == projectName && solutionConfig == configName)
-            {
-                Logger.Info("Build completed, result: {0}", success.ToString());
-                dte.Events.BuildEvents.OnBuildProjConfigDone -= OnBuildDone;
-                if (success)
-                {
-                    onSuccessAction();
-                }
-            }
+            buildSucceeded = success;
+            buildCompleted.Set();
         }
     }
 }
