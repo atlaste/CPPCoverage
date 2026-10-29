@@ -27,10 +27,11 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 class Base64 {
 public:
-  static std::string Encode(const std::string& data) {
+  static std::string Encode(const uint8_t* data, const size_t size) {
     static constexpr char sEncodingTable[] = {
       'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
       'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -39,7 +40,7 @@ public:
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
     };
 
-    size_t in_len = data.size();
+    size_t in_len = size;
     size_t out_len = 4 * ((in_len + 2) / 3);
     std::string ret(out_len, '\0');
     size_t i;
@@ -74,7 +75,7 @@ public:
     return ret;
   }
 
-  static void Decode(const std::string& input, std::string& out) {
+  static void Decode(const std::string& input, std::vector<uint8_t>& out) {
     static constexpr unsigned char kDecodingTable[] = {
       64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
       64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,

@@ -4,10 +4,29 @@
 #include <cassert>
 #include <format>
 
-FileCoverageV2::FileCoverageV2(size_t nbLines) :
-  _nbLinesFile(nbLines)
+FileCoverageV2::FileCoverageV2(const FileInfo& info, const std::string_view& md5)
 {
-  _code.resize(nbLines);
+  assert(info.relevant.size() == info.lines.size());
+  auto itRelevant = info.relevant.cbegin();
+  _code.resize(info.lines.size());
+  md5Code = md5;
+
+  auto itCoverage = _code.begin();
+
+  for (const auto& line : info.lines)
+  {
+    *itCoverage = encodeLine(*itRelevant, line);
+    ++itCoverage;
+    ++itRelevant;
+  }
+}
+
+FileCoverageV2::FileCoverageV2(const std::vector<uint8_t>& coverage, const std::string_view& md5)
+{
+  _code.resize(coverage.size() / sizeof(LineArray::value_type));
+
+  md5Code = md5;
+  std::memcpy(_code.data(), coverage.data(), coverage.size());
 }
 
 FileCoverageV2::LineArray::value_type FileCoverageV2::encodeLine(bool isCode, const FileLineInfo& line)
@@ -20,37 +39,32 @@ FileCoverageV2::LineArray::value_type FileCoverageV2::encodeLine(bool isCode, co
     if (line.DebugCount > 0)
     {
       code |= FileCoverageV2::maskIsCode;
-      _nbLinesCode += 1;
     }
-    if (line.HitCount > 0)
+    if ((line.HitCount > 0) && (line.DebugCount != line.HitCount))
     {
-      if (line.DebugCount != line.HitCount)
-      {
-        code |= FileCoverageV2::maskIsPartial;
-      }
-      _nbLinesCovered += 1;
+      code |= FileCoverageV2::maskIsPartial;
     }
-    code |= std::min<FileCoverageV2::LineArray::value_type>(line.HitCount, FileCoverageV2::maskCount);
+    code |= std::min<LineArray::value_type>(line.HitCount, FileCoverageV2::maskCount);
   }
   return code;
 }
 
-void FileCoverageV2::updateStats()
+std::pair<size_t, size_t> FileCoverageV2::stats() const
 {
-  _nbLinesCovered = 0;
-  _nbLinesCode = 0;
+  size_t nbLinesCovered = 0;
+  size_t nbLinesCode = 0;
   for (const auto& line : _code)
   {
     if ((line & maskIsCode) == maskIsCode)
     {
-      _nbLinesCode++;
+      nbLinesCode++;
       if ((line & maskCount) > 0)
       {
-        _nbLinesCovered++;
+        nbLinesCovered++;
       }
     }
   }
-  assert(_nbLinesCovered <= _nbLinesCode);
+  return { nbLinesCode, nbLinesCovered };
 }
 
 bool FileCoverageV2::merge(const FileCoverageV2& other)
@@ -73,7 +87,6 @@ bool FileCoverageV2::merge(const FileCoverageV2& other)
 
     ++src;
   }
-  updateStats();
   return true;
 }
 
@@ -102,8 +115,9 @@ void FileCoverageV2::writeFooter(std::ostream& ofs)
 
 void FileCoverageV2::write(const std::string& filepath, std::ostream& ofs) const
 {
+  const auto& [codeLines, coveredLines] = stats();
   ofs << std::format(R"(		<file path="{0}" md5="{1}">)", filepath, md5Code) << std::endl;
-  ofs << std::format(R"(			<stats nbLinesInFile="{0}" nbLinesOfCode="{1}" nbLinesCovered="{2}"/>)", _nbLinesFile, _nbLinesCode, _nbLinesCovered) << std::endl;
-  ofs << R"(			<coverage>)" << Base64::Encode(std::string(reinterpret_cast<const char*>(_code.data()), _code.size() * sizeof(LineArray::value_type))) << "</coverage>" << std::endl;
+  ofs << std::format(R"(			<stats nbLinesInFile="{0}" nbLinesOfCode="{1}" nbLinesCovered="{2}"/>)", _code.size(), codeLines, coveredLines) << std::endl;
+  ofs << R"(			<coverage>)" << Base64::Encode(reinterpret_cast<const uint8_t*>(_code.data()), _code.size() * sizeof(LineArray::value_type)) << "</coverage>" << std::endl;
   ofs << R"(		</file>)" << std::endl;
 }

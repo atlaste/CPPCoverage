@@ -356,23 +356,6 @@ private:
 
   void WriteNativeV2(std::ostream& stream)
   {
-    const auto encodeCoverage = [](const FileInfo& info) -> FileCoverageV2
-    {
-      assert(info.relevant.size() == info.lines.size());
-      auto itRelevant = info.relevant.cbegin();
-      FileCoverageV2 coverage(info.lines.size());
-
-      auto itCoverage = coverage._code.begin();
-
-      for (const auto& line : info.lines)
-      {
-        *itCoverage = coverage.encodeLine(*itRelevant, line);
-        ++itCoverage;
-        ++itRelevant;
-      }
-      return coverage;
-    };
-
     MD5 md5;
 
     FileCoverageV2::writeHeader(stream);
@@ -410,9 +393,11 @@ private:
           FileCoverageV2::openDirectory(stream, dirPath);
         }
 
-        auto coverage = encodeCoverage(*it.second.get());
-        coverage.md5Code = md5.encode(it.first);
-        coverage.write(filepath, stream);
+        {
+          const auto md5Code = md5.encode(it.first);
+          FileCoverageV2 coverage(*it.second.get(), md5Code);
+          coverage.write(filepath, stream);
+        }
 
         filepaths.erase(std::remove(filepaths.begin(), filepaths.end(), it.first), filepaths.end());
       }
