@@ -3,6 +3,9 @@
 #include "MergeRunnerV1.h"
 #include "MergeRunnerV2.h"
 
+#include <filesystem>
+#include <fstream>
+
 MergeRunner::MergeRunner(const RuntimeOptions& opts) :
   options(opts)
 {
