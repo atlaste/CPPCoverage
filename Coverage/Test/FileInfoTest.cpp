@@ -256,5 +256,26 @@ namespace TestFile
 			std::vector<bool> expectRelevant{ true, true, true, false, false, false, false, false };
 			DoTest(expectRelevant, stream);
 		}
+
+		TEST_METHOD(DisableCodeCoverageLineTest)
+		{
+			std::stringstream stream;
+			stream << "void func()\n";
+			stream << "{\n";
+			stream << "#pragma DisableCodeCoverageLine\n";
+			stream << "	std::cout << \"Show\" << std::endl;\n";
+			stream << "	// DisableCodeCoverageLine\n";
+			stream << "	std::cout << \"Show\" << std::endl;\n";
+			stream << "	std::cout << \"Not show\" << std::endl; //DisableCodeCoverageLine\n";
+			stream << "	std::cout << \"Show\" << std::endl; //DisableCodeCoverageLineX\n";
+			stream << "	std::cout << \"Not show\" << std::endl; // DisableCodeCoverageLine\n";
+			stream << "	std::cout << \"Show\" << std::endl; // DisableCodeCoverageLineX\n";
+			stream << "	std::cout << \"Not show\" << std::endl; // DisableCodeCoverageLine necessary comment\n";
+			stream << "	std::cout << \"Show\" << std::endl; // necessary comment DisableCodeCoverageLine\n";
+			stream << "}\n";
+
+			std::vector<bool> expectRelevant{ true, true, false, true, false, true, false, true, false, true, false, true, true };
+			DoTest(expectRelevant, stream);
+		}
 	};
 }

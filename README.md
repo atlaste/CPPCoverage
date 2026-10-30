@@ -49,6 +49,10 @@ Alternative system is to use single comment: // DisableCodeCoverage and // Enabl
 
 ![alt tag](Screenshots/comment_forward_slash.png)
 
+You can exclude a single line of code from coverage detection, just use: // DisableCodeCoverageLine
+
+![alt tag](Screenshots/DisableCodeCoverageLine.png)
+
 - Sampling-based profiling data is gathered as a by-product
 
 ![alt tag](Screenshots/ProfileData.png)

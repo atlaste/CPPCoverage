@@ -10,6 +10,7 @@ struct FileInfo
 {
 private:
   static constexpr std::string_view DISABLE_COVERAGE = "DisableCodeCoverage";
+  static constexpr std::string_view DISABLE_COVERAGE_LINE = "DisableCodeCoverageLine";
   static constexpr std::string_view ENABLE_COVERAGE = "EnableCodeCoverage";
   static constexpr std::string_view PRAGMA_LINE = "#pragma";
   static constexpr std::string_view DOUBLE_FORWARD_SLASH_LINE = "//";
@@ -18,7 +19,8 @@ private:
   {
     CODE,
     ENABLE_COVERAGE,
-    DISABLE_COVERAGE
+    DISABLE_COVERAGE,
+    DISABLE_COVERAGE_LINE
   };
 
   bool IsCoverageFlag(const std::string::const_iterator& iter, const ptrdiff_t iterSize, const std::string_view& coverageFlag);

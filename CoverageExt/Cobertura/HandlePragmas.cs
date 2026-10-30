@@ -14,6 +14,7 @@ namespace NubiloSoft.CoverageExt.Cobertura
     public class HandlePragmas
     {
         private static readonly string DISABLE_COVERAGE = "DisableCodeCoverage";
+        private static readonly string DISABLE_COVERAGE_LINE = "DisableCodeCoverageLine";
         private static readonly string ENABLE_COVERAGE = "EnableCodeCoverage";
         private static readonly string PRAGMA_LINE = "#pragma";
         private static readonly string DOUBLE_FORWARD_SLASH_LINE = "//";
@@ -22,7 +23,8 @@ namespace NubiloSoft.CoverageExt.Cobertura
         {
             CODE,
             ENABLE_COVERAGE,
-            DISABLE_COVERAGE
+            DISABLE_COVERAGE,
+            DISABLE_COVERAGE_LINE
         }
 
         private static bool IsCoverageFlag(ReadOnlySpan<char> lineSpan, string coverageFlag)
@@ -88,6 +90,10 @@ namespace NubiloSoft.CoverageExt.Cobertura
                 {
                     return LineType.DISABLE_COVERAGE;
                 }
+                if (IsCoverageFlag(value, DISABLE_COVERAGE_LINE))
+                {
+                    return LineType.DISABLE_COVERAGE_LINE;
+                }
             }
             return LineType.CODE;
         }
@@ -111,6 +117,10 @@ namespace NubiloSoft.CoverageExt.Cobertura
                     else if (flag == LineType.DISABLE_COVERAGE)
                     {
                         enabled = false;
+                        data.Remove(i);
+                    }
+                    else if (flag == LineType.DISABLE_COVERAGE_LINE)
+                    {
                         data.Remove(i);
                     }
                     else

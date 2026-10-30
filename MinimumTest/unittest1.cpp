@@ -54,6 +54,20 @@ namespace MinimumTest
 #pragma EnableCodeCoverage
 		}
 
+		TEST_METHOD(TestDisableCoverageLine)
+		{
+#pragma DisableCodeCoverageLine
+			std::cout << "This show up in code coverage." << std::endl;
+			// DisableCodeCoverageLine
+			std::cout << "This show up in code coverage." << std::endl;
+			std::cout << "This won't show up in code coverage." << std::endl; //DisableCodeCoverageLine
+			std::cout << "This show up in code coverage." << std::endl; //DisableCodeCoverageLineX
+			std::cout << "This won't show up in code coverage." << std::endl; // DisableCodeCoverageLine
+			std::cout << "This show up in code coverage." << std::endl; // DisableCodeCoverageLineX
+			std::cout << "This won't show up in code coverage." << std::endl; // DisableCodeCoverageLine necessary comment
+			std::cout << "This show up in code coverage." << std::endl; // necessary comment DisableCodeCoverageLine
+		}
+
 		TEST_METHOD(TestDisableCoverageSingleLineComment)
 		{
 			// DisableCodeCoverage

@@ -21,6 +21,10 @@ FileInfo::FileInfo(const std::string& filename)
       current = false;
       relevant.push_back(current);
     }
+    else if (lineType == LineType::DISABLE_COVERAGE_LINE)
+    {
+      relevant.push_back(false);
+    }
     else if (lineType == LineType::ENABLE_COVERAGE)
     {
       relevant.push_back(current);
@@ -87,6 +91,10 @@ FileInfo::LineType FileInfo::GetLineType(const std::string& line)
     if (IsCoverageFlag(coverageBeginValue, size, DISABLE_COVERAGE))
     {
       return LineType::DISABLE_COVERAGE;
+    }
+    if (IsCoverageFlag(coverageBeginValue, size, DISABLE_COVERAGE_LINE))
+    {
+      return LineType::DISABLE_COVERAGE_LINE;
     }
     if (IsCoverageFlag(coverageBeginValue, size, ENABLE_COVERAGE))
     {
